@@ -1,0 +1,27 @@
+{
+  "name": "unitjs",
+  "version": "0.0.1",
+  "description": "JavaScript library for unit conversion and arithmetic",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'Coming soon'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ericman314/unitjs.git"
+  },
+  "keywords": [
+    "unit",
+    "conversion",
+    "arithmetic",
+    "math",
+    "engineering",
+    "science"
+  ],
+  "author": "Eric Mansfield",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ericman314/unitjs/issues"
+  },
+  "homepage": "https://github.com/ericman314/unitjs#readme"
+}
