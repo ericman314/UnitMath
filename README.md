@@ -8,3 +8,7 @@ JavaScript library for unit conversion and arithmetic
 ## Use
 
 `const unit = require('unitmath')`
+
+## What it does
+
+It just prints `Hello, World!` when the module is loaded.
