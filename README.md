@@ -1,4 +1,4 @@
-# unitmath
+# Unitmath
 Unitmath is a JavaScript library for unit conversion and arithmetic. 
 
 ## Install
@@ -88,7 +88,7 @@ TODO: List the options here
 
 #### Advanced Configuration
 
-You can have multiple configurations active in the same program:
+You can use multiple configurations at the same time:
 
 ```js
 const unit = require('unitmath').config(options)    // TODO: use actual options
@@ -110,20 +110,13 @@ unit.add(x, y)      // Uses options of unit
 newUnit.add(x, y)   // Uses options of newUnit
 ```
 
-**Important:** `config(options)` returns a *new* instance of the factory function, so you must assign the return value of `unit.config(options)` to some variable, or the new options won't take effect:
+**Important:** `config(options)` returns a *new* instance of the factory function, so you must assign the return value of `unit.config(options)` to some variable, otherwise the new options won't take effect:
 
 ```js
 let unit = require('unitmath')
 
-unit = unit.config(options)
-```
-
-The following WILL NOT work as expected:
-
-```js
-const unit = require('unitmath')
-
-unit.config(options)    // DOES NOT WORK
+// The next line has no effect
+unit.config(options)
 ```
 
 #### Extending unitmath
@@ -144,3 +137,15 @@ let apUnit = unit(apNumber(2.74518864784926316174649567946), 'm')
 ```
 
 You must at least extend the `add`, `mul`, ... functions. If you try to use custom types without extending all of unitmath's internal arithmetic functions, you will probably receive a `TypeError`. 
+
+## Contributing
+
+This is a community-supported project; all contributions are welcome. Please open an issue or submit a pull request.
+
+## Acknowledgements
+
+Many thanks to Jos de Jong (@josdejong), the original author of `Unit.js`, who suggested the idea of splitting the file off from [Math.js](https://mathjs.org/) and into its own library.
+
+## License
+
+Unitmath is released under the Apache-2.0 license.
