@@ -34,6 +34,18 @@ describe('unitmath', () => {
       assert.strictEqual(typeof unit.config(), 'object')
     })
 
+    it('should clone the options argument', () => {
+      let options = { levelOfAwesomeness: 12 }
+      let newUnit = unit.config(options)
+      assert.notStrictEqual(options, newUnit.config())
+    })
+
+    it('should freeze the options', () => {
+      let newUnit = unit.config({})
+      let options = newUnit.config()
+      assert.throws(() => { options.levelOfAwesomeness = 0 })
+    })
+
     it('should set new config options', () => {
       let newUnit = unit.config({ levelOfAwesomeness: 12 })
       assert.strictEqual(unit.config().levelOfAwesomeness, 11)
