@@ -1,5 +1,5 @@
-# Unitmath
-Unitmath is a JavaScript library for unit conversion and arithmetic. 
+# UnitMath
+UnitMath is a JavaScript library for unit conversion and arithmetic. 
 
 ## Install
 
@@ -36,8 +36,16 @@ Units can be simple (`4 kg`) or compound (`8.314 J/mol K`). They may also be val
 
 ### Performing operations on units
 
+#### Arithmetic
+
 ```js
 a.div(b)    // 40 mile / hour
+```
+
+#### Conversion
+
+```js
+a.to('km')   // TODO: output
 ```
 
 Multiple operations can be chained together:
@@ -72,7 +80,7 @@ Use either the `toString` or `format` methods to format a unit as a string:
 
 ### Configuring
 
-Unitmath can be configured using various options. The factory method `config(options)` returns a ***new*** instance of unitmath with the specified configuration options:
+UnitMath can be configured using various options. The factory method `config(options)` returns a ***new*** instance of UnitMath with the specified configuration options:
 
 ```js
 const unit = require('unitmath').config(options)    // TODO: show simple example using actual options
@@ -119,24 +127,24 @@ let unit = require('unitmath')
 unit.config(options)
 ```
 
-#### Extending unitmath
+#### Extending UnitMath
 
-You can easily extend unitmath to work with data types other than `number` by setting the `extendType` option. This replaces the internal arithmetic functions used by unitmath with functions you specify. For example, if you wrote an arbitrary-precision number library, and would like to use arbitrary-precision numbers with unitmath:
+You can easily extend UnitMath to work with custom data types by setting the `custom...` options. These replace the normal `+`, `-`, `*`, `/`, and other arithmetic operators used by UnitMath with functions you specify. For example, if you wrote an arbitrary-precision number library, and would like to use arbitrary-precision numbers with UnitMath:
 
 ```js
 const apNumber = require('my-arbitrary-precision-number')
 const unit = require('unitmath').config({
-  extendType: {
-    add: apNumber.add,
-    mul: apNumber.mul,
-    ...
-  }
+  customAdd: apNumber.add,
+  customMul: apNumber.mul,
+  ...
 })
 
 let apUnit = unit(apNumber(2.74518864784926316174649567946), 'm')
 ```
 
-You must at least extend the `add`, `mul`, ... functions. If you try to use custom types without extending all of unitmath's internal arithmetic functions, you will probably receive a `TypeError`. 
+You must at least extend the `customAdd`, `customMul`, ... functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. 
+
+When using custom types, the two-argument `unit(value, unitString)` must be used. To see why this is, consider the string `"1 / 2 kg"`, which the user of a fraction library may wish to parse. UnitMath's parser wouldn't know what to do with `1 / 2`, and the fraction library's parser might choke when it encountered `kg`. The proper way to create this unit would be `unit(fraction(1, 2), 'kg')`.
 
 ## Contributing
 
@@ -148,4 +156,4 @@ Many thanks to Jos de Jong (@josdejong), the original author of `Unit.js`, who s
 
 ## License
 
-Unitmath is released under the Apache-2.0 license.
+UnitMath is released under the Apache-2.0 license.
