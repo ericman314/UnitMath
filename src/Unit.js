@@ -18,6 +18,8 @@ TODO: Store value in the original units, so that there is no round-off error. Up
 
 TODO: Change normalize and denormalize to something more intuitive
 
+TODO: Make a function that combines equal units (ft ft becomes ft^2, for instance)
+
 */
 
 /* Will any of the configuration options affect parsing? They might. So we will also create a new parse function every time config is called. */
@@ -142,6 +144,19 @@ let _config = function _config(options) {
     return unit
   }
 
+
+  /**
+   * Calculate the power of a unit
+   * @memberof Unit
+   * @param {number|custom} p
+   * @returns {Unit}      The result: this^p
+   */
+  Unit.prototype.pow = function (p) {
+    let unit = _pow(this, p)
+    Object.freeze(unit)
+    return unit
+  }
+  
 
   // These private functions do not freeze the units before returning, so that we can do mutations on the units before returning the final, frozen unit to the user.
 
@@ -275,6 +290,32 @@ let _config = function _config(options) {
 
     return result
   }
+
+  /**
+   * Private function _pow
+   * @param {Unit} unit The unit
+   * @param {number|custom} p The exponent
+   */
+  function _pow(unit, p) {
+    const result = _clone(unit)
+    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
+      result.dimensions[i] = unit.dimensions[i] * p
+    }
+
+    // Adjust the power of each unit in the list
+    for (let i = 0; i < result.units.length; i++) {
+      result.units[i].power *= p
+    }
+
+    if (result.value !== null) {
+      result.value = options.pow(result.value, p)
+    } else {
+      result.value = null
+    }
+
+    return result
+  }
+
 
   /**
    * Normalize a value, based on its currently set unit(s)

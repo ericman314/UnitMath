@@ -881,6 +881,15 @@ describe('unitmath', () => {
     })
   })
 
+  describe('pow', () => {
+    it('should calculate the power of a unit', () => {
+
+      assert.deepStrictEqual(unit('4 N').pow(2), unit('16 N^2'))
+      assert.deepStrictEqual(unit('0.25 m/s').pow(-0.5), unit('2 m^-0.5 s^0.5'))
+      assert.deepStrictEqual(unit('123 hogshead').pow(0), unit('1 hogshead'))
+    })
+  })
+
   describe.skip('multiply, divide, and pow', function () {
     it('should return a Unit that will be automatically simplified', function () {
       const unit1 = unit(10, 'kg')
