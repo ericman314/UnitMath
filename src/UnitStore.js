@@ -954,42 +954,39 @@ export default function createUnitStore(options) {
       value: 1,
       offset: 0
     },
-    // deg = rad / (2*pi) * 360 = rad / 0.017453292519943295769236907684888
     deg: {
       name: 'deg',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.SHORT,
-      value: null, // will be filled in by calculateAngleValues()
+      value: Math.PI / 180,
       offset: 0
     },
     degree: {
       name: 'degree',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.LONG,
-      value: null, // will be filled in by calculateAngleValues()
+      value: Math.PI / 180,
       offset: 0
     },
-    // grad = rad / (2*pi) * 400  = rad / 0.015707963267948966192313216916399
     grad: {
       name: 'grad',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.SHORT,
-      value: null, // will be filled in by calculateAngleValues()
+      value: Math.PI / 200,
       offset: 0
     },
     gradian: {
       name: 'gradian',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.LONG,
-      value: null, // will be filled in by calculateAngleValues()
+      value: Math.PI / 200,
       offset: 0
     },
-    // cycle = rad / (2*pi) = rad / 6.2831853071795864769252867665793
     cycle: {
       name: 'cycle',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.NONE,
-      value: null, // will be filled in by calculateAngleValues()
+      value: 2*Math.pi,
       offset: 0
     },
     // arcsec = rad / (3600 * (360 / 2 * pi)) = rad / 0.0000048481368110953599358991410235795
@@ -997,7 +994,7 @@ export default function createUnitStore(options) {
       name: 'arcsec',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.NONE,
-      value: null, // will be filled in by calculateAngleValues()
+      value: 0.05 / Math.pi,
       offset: 0
     },
     // arcmin = rad / (60 * (360 / 2 * pi)) = rad / 0.00029088820866572159615394846141477
@@ -1005,7 +1002,7 @@ export default function createUnitStore(options) {
       name: 'arcmin',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.NONE,
-      value: null, // will be filled in by calculateAngleValues()
+      value: 3 / Math.pi,
       offset: 0
     },
 

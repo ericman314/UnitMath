@@ -46,6 +46,10 @@ a.div(b)    // 40 mile / hour
 
 ```js
 a.to('km')   // TODO: output
+
+unit('10 kg').to('lbm')    // TODO: output
+
+unit('kg').to('lbm').value   // TODO: output
 ```
 
 Multiple operations can be chained together:

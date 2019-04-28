@@ -107,10 +107,11 @@ let _config = function _config(options) {
 
   /**
    * Adds two units. Both units' dimensions must be equal.
-   * @param {Unit} other The unit to add to this one.
+   * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
    * @returns {Unit} The result of adding this and the other unit.
    */
   Unit.prototype.add = function(other) {
+    other = _assertParamIsUnit(other)
     let unit = _add(this, other)
     Object.freeze(unit)
     return unit
@@ -118,10 +119,11 @@ let _config = function _config(options) {
 
   /**
    * Subtracts two units. Both units' dimensions must be equal.
-   * @param {Unit} other The unit to add to this one.
+   * @param {Unit|string} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
    * @returns {Unit} The result of subtract this and the other unit.
    */
   Unit.prototype.sub = function(other) {
+    other = _assertParamIsUnit(other)
     let unit = _sub(this, other)
     Object.freeze(unit)
     return unit
@@ -129,10 +131,11 @@ let _config = function _config(options) {
 
   /**
    * Multiplies two units. 
-   * @param {Unit} other The unit to multiply to this one.
+   * @param {Unit|string} other The unit to multiply to this one.
    * @returns {Unit} The result of multiplying this and the other unit.
    */
   Unit.prototype.mul = function(other) {
+    other = _assertParamIsUnit(other)
     let unit = _mul(this, other)
     Object.freeze(unit)
     return unit
@@ -140,10 +143,11 @@ let _config = function _config(options) {
 
   /**
    * Divides two units. 
-   * @param {Unit} other The unit to divide this unit by.
+   * @param {Unit|string} other The unit to divide this unit by.
    * @returns {Unit} The result of dividing this by the other unit.
    */
   Unit.prototype.div = function(other) {
+    other = _assertParamIsUnit(other)
     let unit = _div(this, other)
     Object.freeze(unit)
     return unit
@@ -161,9 +165,50 @@ let _config = function _config(options) {
     Object.freeze(unit)
     return unit
   }
+
+
+  /**
+   * Convert the unit to a specific unit name.
+   * @memberof Unit
+   * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm"
+   * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+   */
+  Unit.prototype.to = function (valuelessUnit) {
+    valuelessUnit = _assertParamIsUnit(valuelessUnit)
+    let unit = _to(this, valuelessUnit)
+    Object.freeze(unit)
+    return unit
+  }
+
+  /**
+   * Returns this unit without a value.
+   * @memberof Unit
+   * @returns {Unit} A new unit formed by removing the value from this unit.
+   */
+  Unit.prototype.units = function() {
+    let result = _clone(this)
+    result.value = null
+    Object.freeze(result)
+    return result
+  }
   
 
   // These private functions do not freeze the units before returning, so that we can do mutations on the units before returning the final, frozen unit to the user.
+
+  /**
+   * Converts the supplied string to a frozen unit, or, if a unit was supplied, returns it unchanged.
+   * @param {Unit|string} unitOrString 
+   * @returns {Unit} The frozen unit that was converted from a string, or the original unit.
+   */
+  function _assertParamIsUnit(unitOrString) {
+    if(typeof unitOrString === 'string') {
+      unitOrString = unitmath(unitOrString)
+    }
+    else if(unitOrString.type !== 'Unit') {
+      throw new TypeError('Parameter must be a Unit or a string.')
+    }
+    return unitOrString
+  }
 
   /**
    * Private function _clone
@@ -172,7 +217,7 @@ let _config = function _config(options) {
   function _clone(unit1) {
     const result = new Unit()
 
-    result.value = options.clone(unit1.value)
+    result.value = unit1.value === null ? null : options.clone(unit1.value)
     result.dimensions = unit1.dimensions.slice(0)
     result.units = []
     for (let i = 0; i < unit1.units.length; i++) {
@@ -238,7 +283,7 @@ let _config = function _config(options) {
       result.dimensions[i] = unit1.dimensions[i] + unit2.dimensions[i]
     }
 
-    // Append other's units list onto res
+    // Append other's units list onto result
     for (let i = 0; i < unit2.units.length; i++) {
       // Make a deep copy
       const inverted = {}
@@ -273,7 +318,7 @@ let _config = function _config(options) {
       result.dimensions[i] = unit1.dimensions[i] - unit2.dimensions[i]
     }
 
-    // Invert and append other's units list onto res
+    // Invert and append other's units list onto result
     for (let i = 0; i < unit2.units.length; i++) {
       // Make a deep copy
       const inverted = {}
@@ -336,16 +381,16 @@ let _config = function _config(options) {
     } else if (unit._isCompound()) {
       // unit is a compound unit, so do not apply offsets.
       // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
-      let res = value
+      let result = value
 
       for (let i = 0; i < unit.units.length; i++) {
         unitValue = options.conv(unit.units[i].unit.value)
         unitPrefixValue = options.conv(unit.units[i].prefix.value)
         unitPower = options.conv(unit.units[i].power)
-        res = options.mul(res, options.pow(options.mul(unitValue, unitPrefixValue), unitPower))
+        result = options.mul(result, options.pow(options.mul(unitValue, unitPrefixValue), unitPower))
       }
 
-      return res
+      return result
     } else {
       // unit is a single unit of power 1, like kg or degC
       unitValue = options.conv(unit.units[0].unit.value)
@@ -372,16 +417,16 @@ let _config = function _config(options) {
       // unit is a compound unit, so do not apply offsets.
       // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
       // Also, prefixValue is ignored--but we will still use the prefix value stored in each unit, since kg is usually preferable to g unless the user decides otherwise.
-      let res = value
+      let result = value
 
       for (let i = 0; i < unit.units.length; i++) {
         unitValue = options.conv(unit.units[i].unit.value)
         unitPrefixValue = options.conv(unit.units[i].prefix.value)
         unitPower = options.conv(unit.units[i].power)
-        res = options.div(res, options.pow(options.mul(unitValue, unitPrefixValue), unitPower))
+        result = options.div(result, options.pow(options.mul(unitValue, unitPrefixValue), unitPower))
       }
 
-      return res
+      return result
     } else {
       // unit is a single unit of power 1, like kg or degC
 
@@ -395,6 +440,26 @@ let _config = function _config(options) {
         return options.sub(options.div(options.div(value, unitValue), prefixValue), unitOffset)
       }
     }
+  }
+
+  /**
+   * Private function _to
+   * @param {Unit} unit The unit to convert.
+   * @param {Unit} valuelessUnit The valueless unit to convert it to.
+   */
+  function _to(unit, valuelessUnit) {
+    let result
+    const value = unit.value === null ? _normalize(unit, 1) : unit.value
+
+    if (!unit._equalDimension(valuelessUnit)) {
+      throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
+    }
+    if (valuelessUnit.value !== null) {
+      throw new Error(`Cannot convert ${unit.toString()}: target unit must be valueless`)
+    }
+    result = _clone(valuelessUnit)
+    result.value = options.clone(_denormalize(result, _normalize(unit, value)))
+    return result
   }
 
   /**
@@ -432,14 +497,13 @@ let _config = function _config(options) {
 
   /**
    * Check if this unit has a dimension equal to another unit
-   * @memberof Unit
    * @param {Unit} other
    * @return {boolean} true if equal dimensions
    */
-  Unit.prototype._equalDimension = function (other) {
+  Unit.prototype._equalDimension = function(other) {
     // All dimensions must be the same
     for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      if (Math.abs((this.dimensions[i] || 0) - (other.dimensions[i] || 0)) > 1e-12) {
+      if (Math.abs(this.dimensions[i] - other.dimensions[i]) > 1e-12) {
         return false
       }
     }
@@ -497,7 +561,7 @@ let eq = (a, b) => a === b
 let conv = a => a
 let clone = (a) => {
   if(typeof(a) !== 'number') {
-    throw new TypeError('To clone units with value types other than \'number\', you must configure a custom \'clone\' method.')
+    throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof(a)})`)
   }
   return a
 }
