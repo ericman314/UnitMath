@@ -2,6 +2,10 @@ import assert from 'assert'
 import approx from '../src/approx'
 import unit from '../src/Unit'
 
+// TODO: Bring in any other tests that use units from math.js
+
+// TODO: Implement implicit conversion of strings to units in add, sub, mul, etc.
+
 describe('unitmath', () => {
 
   describe('unitmath namespace', () => {
@@ -23,8 +27,14 @@ describe('unitmath', () => {
     })
 
     it('should have the correct default config options', () => {
-      let defaultOptions = { levelOfAwesomeness: 11 }
-      assert.deepStrictEqual(unit.config(), defaultOptions)
+      let optionsToCheckEquality = { levelOfAwesomeness: 11 }
+      let actualOptions = unit.config()
+      for(let key in optionsToCheckEquality) {
+        assert.strictEqual(optionsToCheckEquality[key], actualOptions[key])
+      }
+
+      let optionsToCheckExistence = [ 'add', 'sub', 'mul', 'div', 'pow', 'eq', 'conv', 'clone' ]
+      optionsToCheckExistence.forEach(key => { assert(actualOptions.hasOwnProperty(key), `${key} does not exist`) })
     })
   })
 
@@ -79,14 +89,20 @@ describe('unitmath', () => {
       })
       assert.strictEqual(u1.add, u2.add)
     })
+
+    it('should be frozen', () => {
+      assert(Object.isFrozen(unit(1, 'm')))
+    })
   })
 
-  describe.skip('factory function', function () {
-
-
+  describe('factory function', function () {
 
     it('should create unit correctly', function () {
-      let unit1 = unit(5000, 'cm')
+      let unit1 = unit()
+      assert.strictEqual(unit1.value, null)
+      assert.strictEqual(unit1.units.length, 0)
+
+      unit1 = unit(5000, 'cm')
       assert.strictEqual(unit1.value, 50)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
 
@@ -115,7 +131,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].unit.name, 's')
     })
 
-    it('should ignore properties on Object.prototype', function () {
+    it.skip('should ignore properties on Object.prototype', function () {
       Object.prototype.foo = Unit.UNITS['meter'] // eslint-disable-line no-extend-native
 
       assert.throws(function () { console.log(unit(1, 'foo')) }, /Unit "foo" not found/)
@@ -124,66 +140,46 @@ describe('unitmath', () => {
     })
 
     it('should throw an error if called with wrong type of arguments', function () {
-      assert.throws(function () { console.log(unit('24', 'inch')) })
       assert.throws(function () { console.log(unit(0, 'bla')) })
-      assert.throws(function () { console.log(unit(4, '')) })
       assert.throws(function () { console.log(unit(0, 3)) })
     })
 
-    it('should skip automatic simplification if created directly in the constructor', function () {
-      const unit1 = unit(9.81, 'kg m/s^2')
-      assert.strictEqual(unit1.skipAutomaticSimplification, true)
-      assert.strictEqual(unit1.toString(), '9.81 (kg m) / s^2')
+  })
 
-      const unit2 = unit(null, 'kg m/s^2')
-      assert.strictEqual(unit2.skipAutomaticSimplification, true)
-      assert.strictEqual(unit2.toString(), '(kg m) / s^2')
+  describe('exists', function () {
+    it('should return true if the string contains unit plus a prefix', function () {
+      assert.strictEqual(unit.exists('cm'), true)
+      assert.strictEqual(unit.exists('inch'), true)
+      assert.strictEqual(unit.exists('kb'), true)
+      assert.strictEqual(unit.exists('bla'), false)
+      assert.strictEqual(unit.exists('5cm'), false)
     })
   })
 
-  describe.skip('isValuelessUnit', function () {
-    it('should return true if the string is a plain unit', function () {
-      assert.strictEqual(Unit.isValuelessUnit('cm'), true)
-      assert.strictEqual(Unit.isValuelessUnit('inch'), true)
-      assert.strictEqual(Unit.isValuelessUnit('kb'), true)
-    })
-
-    it('should return false if the unit is not a plain unit', function () {
-      assert.strictEqual(Unit.isValuelessUnit('bla'), false)
-      assert.strictEqual(Unit.isValuelessUnit('5cm'), false)
+  describe.skip('getDimension', function () {
+    it('should return the first DIMENSION matching this unit', () => {
+      throw Error('Not implemented')
     })
   })
 
-  describe.skip('type', function () {
-    it('should have a property isUnit', function () {
-      const a = new math.Unit(5, 'cm')
-      assert.strictEqual(a.isUnit, true)
-    })
-
-    it('should have a property type', function () {
-      const a = new math.Unit(5, 'cm')
-      assert.strictEqual(a.type, 'Unit')
+  describe('hasDimension', function () {
+    it('should test whether a unit has a certain dimension', function () {
+      assert.strictEqual(unit(5, 'cm')._hasDimension('ANGLE'), false)
+      assert.strictEqual(unit(5, 'cm')._hasDimension('LENGTH'), true)
+      assert.strictEqual(unit(5, 'kg m / s ^ 2')._hasDimension('FORCE'), true)
     })
   })
 
-  describe.skip('hasBase', function () {
-    it('should test whether a unit has a certain base unit', function () {
-      assert.strictEqual(unit(5, 'cm').hasBase(Unit.BASE_UNITS.ANGLE), false)
-      assert.strictEqual(unit(5, 'cm').hasBase(Unit.BASE_UNITS.LENGTH), true)
-      assert.strictEqual(unit(5, 'kg m / s ^ 2').hasBase(Unit.BASE_UNITS.FORCE), true)
+  describe('equalDimension', function () {
+    it('should test whether two units have the same dimension', function () {
+      assert.strictEqual(unit(5, 'cm')._equalDimension(unit(10, 'm')), true)
+      assert.strictEqual(unit(5, 'cm')._equalDimension(unit(10, 'kg')), false)
+      assert.strictEqual(unit(5, 'N')._equalDimension(unit(10, 'kg m / s ^ 2')), true)
+      assert.strictEqual(unit(8.314, 'J / mol K')._equalDimension(unit(0.02366, 'ft^3 psi / mol degF')), true)
     })
   })
 
-  describe.skip('equalBase', function () {
-    it('should test whether two units have the same base unit', function () {
-      assert.strictEqual(unit(5, 'cm').equalBase(unit(10, 'm')), true)
-      assert.strictEqual(unit(5, 'cm').equalBase(unit(10, 'kg')), false)
-      assert.strictEqual(unit(5, 'N').equalBase(unit(10, 'kg m / s ^ 2')), true)
-      assert.strictEqual(unit(8.314, 'J / mol K').equalBase(unit(0.02366, 'ft^3 psi / mol degF')), true)
-    })
-  })
-
-  describe.skip('equals', function () {
+  describe('equals', function () {
     it('should test whether two units are equal', function () {
       assert.strictEqual(unit(100, 'cm').equals(unit(1, 'm')), true)
       assert.strictEqual(unit(100, 'cm').equals(unit(2, 'm')), false)
@@ -195,27 +191,21 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('clone', function () {
+  describe('clone', function () {
     it('should clone a unit', function () {
       const u1 = unit(100, 'cm')
       const u2 = u1.clone()
-      assert(u1 !== u2)
+      assert.notStrictEqual(u1, u2)
       assert.deepStrictEqual(u1, u2)
-
-      const u3 = unit(100, 'cm').to('inch')
-      const u4 = u3.clone()
-      assert(u3 !== u4)
-      assert.deepStrictEqual(u3, u4)
-
-      const u5 = unit(null, 'cm').to('inch')
-      const u6 = u5.clone()
-      assert(u5 !== u6)
-      assert.deepStrictEqual(u5, u6)
 
       const u7 = unit(8.314, 'kg m^2 / s^2 K mol')
       const u8 = u7.clone()
-      assert(u7 !== u8)
+      assert.notStrictEqual(u7, u8)
       assert.deepStrictEqual(u7, u8)
+    })
+
+    it('should freeze the returned unit', () => {
+      assert(Object.isFrozen(unit(100, 'cm').clone()))
     })
   })
 
@@ -229,7 +219,7 @@ describe('unitmath', () => {
       approx.equal(unit(101325, 'N/m^2').toNumber('lbf/in^2'), 14.6959487763741)
     })
 
-    it('should convert a unit with fixed prefix to a number', function () {
+    it.skip('should convert a unit with fixed prefix to a number', function () {
       const u1 = unit(5000, 'cm')
       const u2 = u1.to('km')
       approx.equal(u2.toNumber('mm'), 50000)
@@ -830,6 +820,64 @@ describe('unitmath', () => {
       const unit1 = Unit.parse('34 kg m / s^2')
       assert.strictEqual(unit1._isDerived(), true)
       assert.strictEqual(unit1.simplify()._isDerived(), false)
+    })
+  })
+
+  describe('add', function() {
+    it('should add two units', () => {
+      let unit1 = unit(300, 'm')
+      let unit2 = unit(3, 'km')
+      assert.deepStrictEqual(unit1.add(unit2), unit(3300, 'm'))
+    })
+
+    it('should return a frozen unit', () => {
+      let unit1 = unit(300, 'm')
+      let unit2 = unit(3, 'km')
+      assert(Object.isFrozen(unit1.add(unit2)))
+    })
+  })
+
+  describe('sub', function() {
+    it('should subtract two units', () => {
+      let unit1 = unit(300, 'm')
+      let unit2 = unit(3, 'km')
+      assert.deepStrictEqual(unit1.sub(unit2), unit(-2700, 'm'))
+    })
+
+    it('should return a frozen unit', () => {
+      let unit1 = unit(300, 'm')
+      let unit2 = unit(3, 'km')
+      assert(Object.isFrozen(unit1.sub(unit2)))
+    })
+  })
+
+  describe('mul', () => {
+    it('should multiply unit\'s values and combine their units', () => {
+      assert.deepStrictEqual(unit('2 kg').mul(unit('3 m')), unit('6 kg m'))
+      assert.deepStrictEqual(unit('2 m').mul(unit('4 m')), unit('8 m m'))
+      assert.deepStrictEqual(unit('2 ft').mul(unit('4 ft')), unit('8 ft ft'))
+      assert.deepStrictEqual(unit('65 mi/h').mul(unit('2 h')), unit('130 mi h^-1 h'))
+      assert.deepStrictEqual(unit('2 L').mul(unit('1 s^-1')), unit('2 L / s'))
+      assert.deepStrictEqual(unit('2 m/s').mul(unit('0.5 s/m')), unit('1 m s^-1 s m^-1'))
+    })
+
+    it('should return a frozen unit', () => {
+      assert(Object.isFrozen(unit('2 kg').mul(unit('3 m'))))
+    })
+  })
+
+  describe('div', () => {
+    it('should divide unit\'s values and combine their units', () => {
+      assert.deepStrictEqual(unit('6 kg').div(unit('3 m')), unit('2 kg m^-1'))
+      assert.deepStrictEqual(unit('2 m').div(unit('4 m')), unit('0.5 m m^-1'))
+      assert.deepStrictEqual(unit('4 ft').div(unit('2 ft')), unit('2 ft ft^-1'))
+      assert.deepStrictEqual(unit('65 mi/h').div(unit('2 h')), unit('32.5 mi h^-1 h^-1'))
+      assert.deepStrictEqual(unit('2 L').div(unit('1 s^-1')), unit('2 L s'))
+      assert.deepStrictEqual(unit('2 m/s').div(unit('0.5 s/m')), unit('4 m s^-1 s^-1 m'))
+    })
+
+    it('should return a frozen unit', () => {
+      assert(Object.isFrozen(unit('2 kg').div(unit('3 m'))))
     })
   })
 

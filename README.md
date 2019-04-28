@@ -78,6 +78,11 @@ Use either the `toString` or `format` methods to format a unit as a string:
 // TODO: example
 ```
 
+### Namespace Functions
+
+- `unit.config(options:object)` -- Configure a new unit namespace with the given options (see TODO: link)
+- `unit.exists(singleUnitString:string)` -- Tests if the given unit, optionally with a prefix, exists.
+
 ### Configuring
 
 UnitMath can be configured using various options. The factory method `config(options)` returns a ***new*** instance of UnitMath with the specified configuration options:
