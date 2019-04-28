@@ -103,7 +103,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units.length, 0)
 
       unit1 = unit(5000, 'cm')
-      assert.strictEqual(unit1.value, 50)
+      assert.strictEqual(unit1.value, 5000)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
 
       unit1 = unit(5, 'kg')
@@ -615,86 +615,86 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('parse', function () {
+  describe('parse', function () {
     it('should parse units correctly', function () {
       let unit1
 
-      unit1 = Unit.parse('5kg')
+      unit1 = unit('5kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('5 kg')
+      unit1 = unit('5 kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse(' 5 kg ')
+      unit1 = unit(' 5 kg ')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('5e-3kg')
+      unit1 = unit('5e-3kg')
       assert.strictEqual(unit1.value, 0.005)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('5e+3kg')
+      unit1 = unit('5e+3kg')
       assert.strictEqual(unit1.value, 5000)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('5e3kg')
+      unit1 = unit('5e3kg')
       assert.strictEqual(unit1.value, 5000)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('-5kg')
+      unit1 = unit('-5kg')
       assert.strictEqual(unit1.value, -5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('+5kg')
+      unit1 = unit('+5kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('.5kg')
+      unit1 = unit('.5kg')
       assert.strictEqual(unit1.value, 0.5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('-5mg')
-      approx.equal(unit1.value, -0.000005)
+      unit1 = unit('-5mg')
+      approx.equal(unit1.value, -5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'm')
 
-      unit1 = Unit.parse('5.2mg')
-      approx.equal(unit1.value, 0.0000052)
+      unit1 = unit('5.2mg')
+      approx.equal(unit1.value, 5.2)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[0].prefix.name, 'm')
 
-      unit1 = Unit.parse('300 kg/minute')
-      approx.equal(unit1.value, 5)
+      unit1 = unit('300 kg/minute')
+      approx.equal(unit1.value, 300)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'minute')
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('981 cm/s^2')
-      approx.equal(unit1.value, 9.81)
+      unit1 = unit('981 cm/s^2')
+      approx.equal(unit1.value, 981)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
       assert.strictEqual(unit1.units[1].unit.name, 's')
       assert.strictEqual(unit1.units[1].power, -2)
       assert.strictEqual(unit1.units[0].prefix.name, 'c')
 
-      unit1 = Unit.parse('981 cm*s^-2')
-      approx.equal(unit1.value, 9.81)
+      unit1 = unit('981 cm*s^-2')
+      approx.equal(unit1.value, 981)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
       assert.strictEqual(unit1.units[1].unit.name, 's')
       assert.strictEqual(unit1.units[1].power, -2)
       assert.strictEqual(unit1.units[0].prefix.name, 'c')
 
-      unit1 = Unit.parse('8.314 kg m^2 / s^2 / K / mol')
+      unit1 = unit('8.314 kg m^2 / s^2 / K / mol')
       approx.equal(unit1.value, 8.314)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'm')
@@ -708,28 +708,28 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[4].power, -1)
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('5exabytes')
-      approx.equal(unit1.value, 4e19)
+      unit1 = unit('5exabytes')
+      approx.equal(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'bytes')
 
-      unit1 = Unit.parse('1 / s')
+      unit1 = unit('1 / s')
       approx.equal(unit1.value, 1)
       assert.strictEqual(unit1.units[0].unit.name, 's')
       assert.strictEqual(unit1.units[0].power, -1)
 
-      unit1 = Unit.parse('1/s')
+      unit1 = unit('1/s')
       approx.equal(unit1.value, 1)
       assert.strictEqual(unit1.units[0].unit.name, 's')
       assert.strictEqual(unit1.units[0].power, -1)
 
-      unit1 = Unit.parse('1 * s')
+      unit1 = unit('1 * s')
       approx.equal(unit1.value, 1)
       assert.strictEqual(unit1.units[0].unit.name, 's')
       assert.strictEqual(unit1.units[0].power, 1)
     })
 
     it('should parse expressions with nested parentheses correctly', function () {
-      let unit1 = Unit.parse('8.314 kg (m^2 / (s^2 / (K^-1 / mol)))')
+      let unit1 = unit('8.314 kg (m^2 / (s^2 / (K^-1 / mol)))')
       approx.equal(unit1.value, 8.314)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'm')
@@ -743,7 +743,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[4].power, -1)
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
-      unit1 = Unit.parse('1 (m / ( s / ( kg mol ) / ( lbm / h ) K ) )')
+      unit1 = unit('1 (m / ( s / ( kg mol ) / ( lbm / h ) K ) )')
       assert.strictEqual(unit1.units[0].unit.name, 'm')
       assert.strictEqual(unit1.units[1].unit.name, 's')
       assert.strictEqual(unit1.units[2].unit.name, 'g')
@@ -759,12 +759,12 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[5].power, -1)
       assert.strictEqual(unit1.units[6].power, -1)
 
-      const unit2 = Unit.parse('1(m/(s/(kg mol)/(lbm/h)K))')
+      const unit2 = unit('1(m/(s/(kg mol)/(lbm/h)K))')
       assert.deepStrictEqual(unit1, unit2)
     })
 
     it('should parse units with correct precedence', function () {
-      const unit1 = Unit.parse('1  m^3 / kg s^2') // implicit multiplication
+      const unit1 = unit('1  m^3 / kg s^2') // implicit multiplication
 
       approx.equal(unit1.value, 1)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
@@ -777,21 +777,24 @@ describe('unitmath', () => {
     })
 
     it('should throw an exception when parsing an invalid unit', function () {
-      assert.throws(function () { Unit.parse('.meter') }, /Unexpected "\."/)
-      assert.throws(function () { Unit.parse('5e') }, /Unit "e" not found/)
-      assert.throws(function () { Unit.parse('5e.') }, /Unit "e" not found/)
-      assert.throws(function () { Unit.parse('5e1.3') }, /Unexpected "\."/)
-      assert.throws(function () { Unit.parse('5') }, /contains no units/)
-      assert.throws(function () { Unit.parse('') }, /contains no units/)
-      assert.throws(function () { Unit.parse('meter.') }, /Unexpected "\."/)
-      assert.throws(function () { Unit.parse('meter/') }, /Trailing characters/)
-      assert.throws(function () { Unit.parse('/meter') }, /Unexpected "\/"/)
-      assert.throws(function () { Unit.parse('1 */ s') }, /Unexpected "\/"/)
-      assert.throws(function () { Unit.parse('45 kg 34 m') }, /Unexpected "3"/)
+      assert.throws(function () { unit('.meter') }, /Unexpected "\."/)
+      assert.throws(function () { unit('5e') }, /Unit "e" not found/)
+      assert.throws(function () { unit('5e.') }, /Unit "e" not found/)
+      assert.throws(function () { unit('5e1.3') }, /Unexpected "\."/)
+      assert.throws(function () { unit('meter.') }, /Unexpected "\."/)
+      assert.throws(function () { unit('meter/') }, /Trailing characters/)
+      assert.throws(function () { unit('/meter') }, /Unexpected "\/"/)
+      assert.throws(function () { unit('1 */ s') }, /Unexpected "\/"/)
+      assert.throws(function () { unit('45 kg 34 m') }, /Unexpected "3"/)
     })
 
-    it('should throw an exception when parsing an invalid type of argument', function () {
-      assert.throws(function () { Unit.parse(123) }, /TypeError: Invalid argument in Unit.parse, string expected/)
+    it('should parse empty strings and only numbers', function () {
+      assert.strictEqual(unit(123).value, 123)
+      assert.strictEqual(unit(123).units.length, 0)
+      assert.strictEqual(unit('').value, null)
+      assert.strictEqual(unit('').units.length, 0)
+      assert.strictEqual(unit().value, null)
+      assert.strictEqual(unit().units.length, 0)
     })
 
   })
@@ -825,29 +828,23 @@ describe('unitmath', () => {
 
   describe('add', function() {
     it('should add two units', () => {
-      let unit1 = unit(300, 'm')
-      let unit2 = unit(3, 'km')
-      assert.deepStrictEqual(unit1.add(unit2), unit(3300, 'm'))
+      assert.deepStrictEqual(unit(300, 'm').add(unit(3, 'km')), unit(3300, 'm'))
+      assert.deepStrictEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
     })
 
     it('should return a frozen unit', () => {
-      let unit1 = unit(300, 'm')
-      let unit2 = unit(3, 'km')
-      assert(Object.isFrozen(unit1.add(unit2)))
+      assert(Object.isFrozen(unit(300, 'm').add(unit(3, 'km'))))
     })
   })
 
   describe('sub', function() {
     it('should subtract two units', () => {
-      let unit1 = unit(300, 'm')
-      let unit2 = unit(3, 'km')
-      assert.deepStrictEqual(unit1.sub(unit2), unit(-2700, 'm'))
+      assert.deepStrictEqual(unit(300, 'm').sub(unit(3, 'km')), unit(-2700, 'm'))
+      assert.deepStrictEqual(unit('2m').sub(unit('3ft')), unit('1.0856 m'))
     })
 
     it('should return a frozen unit', () => {
-      let unit1 = unit(300, 'm')
-      let unit2 = unit(3, 'km')
-      assert(Object.isFrozen(unit1.sub(unit2)))
+      assert(Object.isFrozen(unit(300, 'm').sub(unit(3, 'km'))))
     })
   })
 
@@ -881,7 +878,7 @@ describe('unitmath', () => {
     })
   })
 
-  describe('pow', () => {
+  describe.skip('pow', () => {
     it('should calculate the power of a unit', () => {
 
       assert.deepStrictEqual(unit('4 N').pow(2), unit('16 N^2'))

@@ -14,7 +14,7 @@ Units are immutable, so all public functions that return a new unit must freeze 
 
 TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
-TODO: Store value in the original units, so that there is no round-off error. Upon conversion or simplification, the internal value might change.
+TODO: Store value in the original units (the "denormalized" value), so that there is no round-off error. Upon conversion or simplification, the internal value might change.
 
 TODO: Change normalize and denormalize to something more intuitive
 
@@ -61,6 +61,7 @@ let _config = function _config(options) {
     
     // Allowed signatures:
     // Unit(string)
+    // Unit(*)
     // Unit(*, string)
 
     let parseResult
@@ -75,6 +76,10 @@ let _config = function _config(options) {
       parseResult = parser(unitString)
       parseResult.value = value
     }
+    else if(typeof unitString === 'undefined') {
+      parseResult = parser('')
+      parseResult.value = value
+    }
     else {
       throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
     }
@@ -83,7 +88,7 @@ let _config = function _config(options) {
     this.type = 'Unit'
     this.dimensions = parseResult.dimensions
     this.units = parseResult.units
-    this.value = (parseResult.value === undefined || parseResult.value === null) ? null : this._normalize(parseResult.value)
+    this.value = (parseResult.value === undefined || parseResult.value === null) ? null : parseResult.value
     
   }
 
@@ -196,7 +201,7 @@ let _config = function _config(options) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = options.add(unit1.value, unit2.value)
+    result.value = _denormalize(unit1, options.add(_normalize(unit1, unit1.value), _normalize(unit2, unit2.value)))
     return result
   }
 
@@ -214,7 +219,7 @@ let _config = function _config(options) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = options.sub(unit1.value, unit2.value)
+    result.value = _denormalize(unit1, options.sub(_normalize(unit1, unit1.value), _normalize(unit2, unit2.value)))
     return result
   }
 
@@ -245,8 +250,8 @@ let _config = function _config(options) {
 
     // If at least one operand has a value, then the result should also have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? unit1._normalize(1) : unit1.value
-      const val2 = unit2.value === null ? unit2._normalize(1) : unit2.value
+      const val1 = unit1.value === null ? _normalize(unit1, 1) : unit1.value
+      const val2 = unit2.value === null ? _normalize(unit2, 1) : unit2.value
       result.value = options.mul(val1, val2)
     } else {
       result.value = null
@@ -281,8 +286,8 @@ let _config = function _config(options) {
 
     // If at least one operand has a value, the result should have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? unit1._normalize(1) : unit1.value
-      const val2 = unit2.value === null ? unit2._normalize(1) : unit2.value
+      const val1 = unit1.value === null ? _normalize(unit1, 1) : unit1.value
+      const val2 = unit2.value === null ? _normalize(unit2, 1) : unit2.value
       result.value = options.div(val1, val2)
     } else {
       result.value = null
@@ -323,29 +328,29 @@ let _config = function _config(options) {
    * @return {number | *} normalized value
    * @private
    */
-  Unit.prototype._normalize = function (value) {
+  function _normalize(unit, value) {
     let unitValue, unitOffset, unitPower, unitPrefixValue
 
-    if (value === null || value === undefined || this.units.length === 0) {
+    if (value === null || value === undefined || unit.units.length === 0) {
       return value
-    } else if (this._isCompound()) {
-      // This is a derived unit, so do not apply offsets.
+    } else if (unit._isCompound()) {
+      // unit is a compound unit, so do not apply offsets.
       // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
       let res = value
 
-      for (let i = 0; i < this.units.length; i++) {
-        unitValue = options.conv(this.units[i].unit.value)
-        unitPrefixValue = options.conv(this.units[i].prefix.value)
-        unitPower = options.conv(this.units[i].power)
+      for (let i = 0; i < unit.units.length; i++) {
+        unitValue = options.conv(unit.units[i].unit.value)
+        unitPrefixValue = options.conv(unit.units[i].prefix.value)
+        unitPower = options.conv(unit.units[i].power)
         res = options.mul(res, options.pow(options.mul(unitValue, unitPrefixValue), unitPower))
       }
 
       return res
     } else {
-      // This is a single unit of power 1, like kg or degC
-      unitValue = options.conv(this.units[0].unit.value)
-      unitOffset = options.conv(this.units[0].unit.offset)
-      unitPrefixValue = options.conv(this.units[0].prefix.value)
+      // unit is a single unit of power 1, like kg or degC
+      unitValue = options.conv(unit.units[0].unit.value)
+      unitOffset = options.conv(unit.units[0].unit.offset)
+      unitPrefixValue = options.conv(unit.units[0].prefix.value)
 
       return options.mul(options.add(value, unitOffset), options.mul(unitValue, unitPrefixValue))
     }
@@ -353,37 +358,36 @@ let _config = function _config(options) {
 
   /**
    * Denormalize a value, based on its currently set unit(s)
-   * @memberof Unit
    * @param {number} value
    * @param {number} [prefixValue]    Optional prefix value to be used (ignored if this is a derived unit)
    * @return {number} denormalized value
    * @private
    */
-  Unit.prototype._denormalize = function (value, prefixValue) {
+  function _denormalize(unit, value, prefixValue) {
     let unitValue, unitOffset, unitPower, unitPrefixValue
 
-    if (value === null || value === undefined || this.units.length === 0) {
+    if (value === null || value === undefined || unit.units.length === 0) {
       return value
-    } else if (this._isCompound()) {
-      // This is a derived unit, so do not apply offsets.
+    } else if (unit._isCompound()) {
+      // unit is a compound unit, so do not apply offsets.
       // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
       // Also, prefixValue is ignored--but we will still use the prefix value stored in each unit, since kg is usually preferable to g unless the user decides otherwise.
       let res = value
 
-      for (let i = 0; i < this.units.length; i++) {
-        unitValue = options.conv(this.units[i].unit.value)
-        unitPrefixValue = options.conv(this.units[i].prefix.value)
-        unitPower = options.conv(this.units[i].power)
+      for (let i = 0; i < unit.units.length; i++) {
+        unitValue = options.conv(unit.units[i].unit.value)
+        unitPrefixValue = options.conv(unit.units[i].prefix.value)
+        unitPower = options.conv(unit.units[i].power)
         res = options.div(res, options.pow(options.mul(unitValue, unitPrefixValue), unitPower))
       }
 
       return res
     } else {
-      // This is a single unit of power 1, like kg or degC
+      // unit is a single unit of power 1, like kg or degC
 
-      unitValue = options.conv(this.units[0].unit.value)
-      unitPrefixValue = options.conv(this.units[0].prefix.value)
-      unitOffset = options.conv(this.units[0].unit.offset)
+      unitValue = options.conv(unit.units[0].unit.value)
+      unitPrefixValue = options.conv(unit.units[0].prefix.value)
+      unitOffset = options.conv(unit.units[0].unit.offset)
 
       if (prefixValue === undefined || prefixValue === null) {
         return options.sub(options.div(options.div(value, unitValue), unitPrefixValue), unitOffset)
@@ -449,7 +453,7 @@ let _config = function _config(options) {
    * @return {boolean} true if both units are equal
    */
   Unit.prototype.equals = function (other) {
-    return (this._equalDimension(other) && options.eq(this.value, other.value))
+    return this._equalDimension(other) && options.eq(_normalize(this, this.value), _normalize(other, other.value))
   }
 
   let unitStore = createUnitStore(options)
