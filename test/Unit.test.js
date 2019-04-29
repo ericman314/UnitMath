@@ -189,6 +189,12 @@ describe('unitmath', () => {
       assert.strictEqual(unit(100, 'N').equals(unit(100, 'kg m / s')), false)
       assert.strictEqual(unit(100, 'Hz').equals(unit(100, 's ^ -1')), true)
     })
+
+    it('should convert parameter to a unit', () => {
+      assert(unit(100, 'cm').equals('1 m'))
+      assert(unit('3 kg / kg').equals(3))
+    })
+
   })
 
   describe('clone', function () {
@@ -779,13 +785,15 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
     })
 
-    it('should convert string to unit', () => {
+    it('should convert parameter to unit', () => {
       assert.deepStrictEqual(unit('1 hour').add('30 minute'), unit(1.5, 'hour'))
+      assert.deepStrictEqual(unit(100, 'cm / m').add(10), unit(1100, 'cm / m'))
     })
 
     it('should return a frozen unit', () => {
       assert(Object.isFrozen(unit(300, 'm').add(unit(3, 'km'))))
     })
+
   })
 
   describe('sub', function() {
@@ -794,8 +802,9 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit('2m').sub(unit('3ft')), unit('1.0856 m'))
     })
 
-    it('should convert string to unit', () => {
+    it('should convert parameter to unit', () => {
       assert.deepStrictEqual(unit('1 hour').sub('30 minute'), unit(0.5, 'hour'))
+      assert.deepStrictEqual(unit(100, 'm / cm').sub(10), unit('99.9 m / cm'))
     })
 
     it('should return a frozen unit', () => {
@@ -813,13 +822,16 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit('2 m/s').mul(unit('0.5 s/m')), unit('1 m s^-1 s m^-1'))
     })
 
-    it('should convert string to unit', () => {
+    it('should convert parameter to unit', () => {
       assert.deepStrictEqual(unit('1 hour').mul('30 minute'), unit(30, 'hour minute'))
+      assert.deepStrictEqual(unit('1 hour').mul(3), unit('3 hour'))
+
     })
 
     it('should return a frozen unit', () => {
       assert(Object.isFrozen(unit('2 kg').mul(unit('3 m'))))
     })
+
   })
 
   describe('div', () => {
@@ -832,8 +844,9 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit('2 m/s').div(unit('0.5 s/m')), unit('4 m s^-1 s^-1 m'))
     })
 
-    it('should convert string to unit', () => {
+    it('should convert parameter to unit', () => {
       assert.deepStrictEqual(unit('1 hour').div('0.5 hour'), unit(2, 'hour hour^-1'))
+      assert.deepStrictEqual(unit('1 hour').div(2), unit(0.5, 'hour'))
     })
 
     it('should return a frozen unit', () => {
@@ -841,12 +854,11 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('pow', () => {
+  describe('pow', () => {
     it('should calculate the power of a unit', () => {
-
-      assert.deepStrictEqual(unit('4 N').pow(2), unit('16 N^2'))
-      assert.deepStrictEqual(unit('0.25 m/s').pow(-0.5), unit('2 m^-0.5 s^0.5'))
-      assert.deepStrictEqual(unit('123 hogshead').pow(0), unit('1 hogshead'))
+      assert(unit('4 N').pow(2).equals(unit('16 N^2')))
+      assert(unit('0.25 m/s').pow(-0.5).equals(unit('2 m^-0.5 s^0.5')))
+      assert(unit('123 hogshead').pow(0).equals(unit('1')))
     })
   })
 

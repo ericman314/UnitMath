@@ -111,7 +111,7 @@ let _config = function _config(options) {
    * @returns {Unit} The result of adding this and the other unit.
    */
   Unit.prototype.add = function(other) {
-    other = _assertParamIsUnit(other)
+    other = _convertParamToUnit(other)
     let unit = _add(this, other)
     Object.freeze(unit)
     return unit
@@ -123,7 +123,7 @@ let _config = function _config(options) {
    * @returns {Unit} The result of subtract this and the other unit.
    */
   Unit.prototype.sub = function(other) {
-    other = _assertParamIsUnit(other)
+    other = _convertParamToUnit(other)
     let unit = _sub(this, other)
     Object.freeze(unit)
     return unit
@@ -135,7 +135,7 @@ let _config = function _config(options) {
    * @returns {Unit} The result of multiplying this and the other unit.
    */
   Unit.prototype.mul = function(other) {
-    other = _assertParamIsUnit(other)
+    other = _convertParamToUnit(other)
     let unit = _mul(this, other)
     Object.freeze(unit)
     return unit
@@ -147,7 +147,7 @@ let _config = function _config(options) {
    * @returns {Unit} The result of dividing this by the other unit.
    */
   Unit.prototype.div = function(other) {
-    other = _assertParamIsUnit(other)
+    other = _convertParamToUnit(other)
     let unit = _div(this, other)
     Object.freeze(unit)
     return unit
@@ -174,7 +174,10 @@ let _config = function _config(options) {
    * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
    */
   Unit.prototype.to = function (valuelessUnit) {
-    valuelessUnit = _assertParamIsUnit(valuelessUnit)
+    if(!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
+      throw new TypeError('Parameter must be a Unit or a string.')
+    }
+    valuelessUnit = _convertParamToUnit(valuelessUnit)
     let unit = _to(this, valuelessUnit)
     Object.freeze(unit)
     return unit
@@ -195,19 +198,17 @@ let _config = function _config(options) {
 
   // These private functions do not freeze the units before returning, so that we can do mutations on the units before returning the final, frozen unit to the user.
 
+  // TODO: Possible source of unhelpful error message and user confusion, if user supplies a type that it not a unit, not a string, and not a number, to a public API method that uses this function to convert input to a unit. Since there is no way to know whether a user might be using a custom type, or just sent the wrong type.
   /**
-   * Converts the supplied string to a frozen unit, or, if a unit was supplied, returns it unchanged.
-   * @param {Unit|string} unitOrString 
+   * Converts the supplied parameter to a frozen unit, or, if a unit was supplied, returns it unchanged.
+   * @param {any} param 
    * @returns {Unit} The frozen unit that was converted from a string, or the original unit.
    */
-  function _assertParamIsUnit(unitOrString) {
-    if(typeof unitOrString === 'string') {
-      unitOrString = unitmath(unitOrString)
+  function _convertParamToUnit(param) {
+    if(param instanceof Unit) {
+      return param
     }
-    else if(unitOrString.type !== 'Unit') {
-      throw new TypeError('Parameter must be a Unit or a string.')
-    }
-    return unitOrString
+    return unitmath(param)
   }
 
   /**
@@ -517,6 +518,7 @@ let _config = function _config(options) {
    * @return {boolean} true if both units are equal
    */
   Unit.prototype.equals = function (other) {
+    other = _convertParamToUnit(other)
     return this._equalDimension(other) && options.eq(_normalize(this, this.value), _normalize(other, other.value))
   }
 
