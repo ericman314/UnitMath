@@ -140,22 +140,32 @@ unit.config(options)
 
 #### Extending UnitMath
 
-You can easily extend UnitMath to work with custom data types by setting the `custom...` options. These replace the normal `+`, `-`, `*`, `/`, and other arithmetic operators used by UnitMath with functions you specify. For example, if you wrote an arbitrary-precision number library, and would like to use arbitrary-precision numbers with UnitMath:
+You can easily extend UnitMath to work with custom types by setting the `custom...` options. These replace the normal `+`, `-`, `*`, `/`, and other arithmetic operators used by UnitMath with functions you specify. For example, if you wrote an arbitrary-precision number library, and would like to use arbitrary-precision numbers with UnitMath:
 
 ```js
 const apNumber = require('my-arbitrary-precision-number')
 const unit = require('unitmath').config({
   customAdd: apNumber.add,
+  customSub: apNumber.sub,
   customMul: apNumber.mul,
+  customDiv: apNumber.div,
+  customPow: apNumber.pow,
+  customEq: apNumber.eq,
+  customClone: apNumber,
+  customConv: apNumber
   ...
 })
 
 let apUnit = unit(apNumber(2.74518864784926316174649567946), 'm')
 ```
 
-You must at least extend the `customAdd`, `customMul`, ... functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. 
+For best results, you should extend all of the `custom...` functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. You still might be able to use some of UnitMath's methods without extending them all, though.
 
-When using custom types, the two-argument `unit(value, unitString)` must be used. To see why this is, consider the string `"1 / 2 kg"`, which the user of a fraction library may wish to parse. UnitMath's parser wouldn't know what to do with `1 / 2`, and the fraction library's parser might choke when it encountered `kg`. The proper way to create this unit would be `unit(fraction(1, 2), 'kg')`.
+When using custom types, you must use the two-argument `unit(value, unitString)` to construct units. This is because UnitMath's string parser only works with native `number` types. To see why this must be, consider the string `"1 / 2 kg"`, which the user of a fraction library may wish to parse. UnitMath's parser wouldn't know what to do with `1 / 2`, and the fraction library's parser might choke when it encounters `kg`. The proper way to create this unit would be `unit(fraction(1, 2), 'kg')`.
+
+## API Reference
+
+
 
 ## Contributing
 
