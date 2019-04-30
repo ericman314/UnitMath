@@ -33,7 +33,7 @@ describe('unitmath', () => {
         assert.strictEqual(optionsToCheckEquality[key], actualOptions[key])
       }
 
-      let optionsToCheckExistence = [ 'add', 'sub', 'mul', 'div', 'pow', 'eq', 'conv', 'clone' ]
+      let optionsToCheckExistence = [ 'customAdd', 'customSub', 'customMul', 'customDiv', 'customPow', 'customEq', 'customConv', 'customClone' ]
       optionsToCheckExistence.forEach(key => { assert(actualOptions.hasOwnProperty(key), `${key} does not exist`) })
     })
   })
@@ -348,6 +348,12 @@ describe('unitmath', () => {
     it('should throw an error when converting to an unsupported type of argument', function () {
       const u1 = unit(5000, 'cm')
       assert.throws(function () { u1.to(new Date()) }, /Parameter must be a Unit or a string./)
+    })
+  })
+
+  describe('getUnits', () => {
+    it('should return the units only of a unit', () => {
+      assert.deepStrictEqual(unit('42 kg / m s^2').getUnits(), unit('kg / m s^2'))
     })
   })
 
@@ -794,6 +800,11 @@ describe('unitmath', () => {
       assert(Object.isFrozen(unit(300, 'm').add(unit(3, 'km'))))
     })
 
+    it('the alternate api syntax should also work', () => {
+      assert.deepStrictEqual(unit.add(unit(300, 'm'), unit(3, 'km')), unit(3300, 'm'))
+      assert.deepStrictEqual(unit.add('300 m', '3 km'), unit(3300, 'm'))
+    })
+
   })
 
   describe('sub', function() {
@@ -810,6 +821,12 @@ describe('unitmath', () => {
     it('should return a frozen unit', () => {
       assert(Object.isFrozen(unit(300, 'm').sub(unit(3, 'km'))))
     })
+
+    it('the alternate api syntax should also work', () => {
+      assert.deepStrictEqual(unit.sub(unit(300, 'm'), unit(3, 'km')), unit(-2700, 'm'))
+      assert.deepStrictEqual(unit.sub('300 m', '3 km'), unit(-2700, 'm'))
+    })
+
   })
 
   describe('mul', () => {
@@ -832,6 +849,12 @@ describe('unitmath', () => {
       assert(Object.isFrozen(unit('2 kg').mul(unit('3 m'))))
     })
 
+    it('the alternate api syntax should also work', () => {
+      assert.deepStrictEqual(unit.mul(unit('2 kg'), unit('3 m')), unit('6 kg m'))
+      assert.deepStrictEqual(unit.mul('2 kg', '3 m'), unit('6 kg m'))
+      assert.deepStrictEqual(unit.mul('2 kg', 3), unit('6 kg'))
+      assert.deepStrictEqual(unit.mul(3, '2 kg'), unit('6 kg'))
+    })
   })
 
   describe('div', () => {
@@ -851,6 +874,13 @@ describe('unitmath', () => {
 
     it('should return a frozen unit', () => {
       assert(Object.isFrozen(unit('2 kg').div(unit('3 m'))))
+    })
+
+    it('the alternate api syntax should also work', () => {
+      assert.deepStrictEqual(unit.div(unit('6 kg'), unit('3 m')), unit('2 kg m^-1'))
+      assert.deepStrictEqual(unit.div('6 kg', '3 m'), unit('2 kg m^-1'))
+      assert.deepStrictEqual(unit.div('6 kg', 3), unit('2 kg'))
+      assert.deepStrictEqual(unit.div(3, '6 kg'), unit('0.5 kg^-1'))
     })
   })
 
@@ -1110,28 +1140,33 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('toSI', function () {
+  describe('toSI', function () {
     it('should return a clone of the unit', function () {
-      const u1 = Unit.parse('3 ft')
+      const u1 = unit('3 ft')
       const u2 = u1.toSI()
       assert.strictEqual(u1 === u2, false)
     })
 
     it('should return the unit in SI units', function () {
-      assert.strictEqual(Unit.parse('3 ft').toSI().format(10), '0.9144 m')
-      assert.strictEqual(Unit.parse('0.111 ft^2').toSI().format(10), '0.01031223744 m^2')
+      assert.deepStrictEqual(unit('4 ft').toSI(), unit('1.2192 m'))
+      assert.deepStrictEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2'))
     })
 
     it('should return SI units for valueless units', function () {
-      assert.strictEqual(Unit.parse('ft/minute').toSI().toString(), 'm / s')
+      assert.deepStrictEqual(unit('ft/minute').toSI(), unit('m / s'))
     })
 
-    it('should return SI units for custom units defined from other units', function () {
+    it('alterate api syntax should work too', () => {
+      assert.deepStrictEqual(unit.toSI(unit('4 ft')), unit('1.2192 m'))
+      assert.deepStrictEqual(unit.toSI('4 ft'), unit('1.2192 m'))
+    })
+
+    it.skip('should return SI units for custom units defined from other units', function () {
       Unit.createUnit({ foo: '3 kW' }, { override: true })
       assert.strictEqual(Unit.parse('42 foo').toSI().toString(), '1.26e+5 (kg m^2) / s^3')
     })
 
-    it('should throw if custom unit not defined from existing units', function () {
+    it.skip('should throw if custom unit not defined from existing units', function () {
       Unit.createUnit({ baz: '' }, { override: true })
       assert.throws(function () { Unit.parse('10 baz').toSI() }, /Cannot express custom unit/)
     })
