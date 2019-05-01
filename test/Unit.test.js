@@ -357,7 +357,7 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('toString', function () {
+  describe('toString', function () {
     it('should convert to string properly', function () {
       assert.strictEqual(unit(5000, 'cm').toString(), '50 m')
       assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
@@ -549,7 +549,7 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('format', function () {
+  describe('format', function () {
     it('should format units with given precision', function () {
       assert.strictEqual(unit(2 / 3, 'm').format(3), '0.667 m')
       assert.strictEqual(unit(2 / 3, 'm').format(4), '0.6667 m')

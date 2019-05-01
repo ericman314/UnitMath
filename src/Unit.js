@@ -599,6 +599,92 @@ let _config = function _config(options) {
     return this._equalDimension(other) && options.customEq(_normalize(this, this.value), _normalize(other, other.value))
   }
 
+  Unit.prototype.toString = function() {
+    return this.format()
+  }
+
+ /**
+   * Get a string representation of the Unit, with optional formatting options.
+   * @memberof Unit
+   * @param {Object} [options]  Formatting options.
+   * @return {string}
+   */
+  Unit.prototype.format = function (options) {
+    
+    let simp = this.clone()
+    
+    // TODO: Apply automatic simplification steps if specified in the config options
+
+    let str = (simp.value !== null) ? simp.value.toString() : ''
+    const unitStr = _formatUnits(simp)
+    if (unitStr.length > 0 && str.length > 0) {
+      str += ' '
+    }
+    str += unitStr
+
+    return str
+  }
+
+  /**
+   * Get a string representation of the units of this Unit, without the value.
+   * @return {string}
+   */
+  function _formatUnits(unit) {
+    let strNum = ''
+    let strDen = ''
+    let nNum = 0
+    let nDen = 0
+
+    for (let i = 0; i < unit.units.length; i++) {
+      if (unit.units[i].power > 0) {
+        nNum++
+        strNum += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+        if (Math.abs(unit.units[i].power - 1.0) > 1e-15) {
+          strNum += '^' + unit.units[i].power
+        }
+      } else if (units[i].power < 0) {
+        nDen++
+      }
+    }
+
+    if (nDen > 0) {
+      for (let i = 0; i < unit.units.length; i++) {
+        if (unit.units[i].power < 0) {
+          if (nNum > 0) {
+            strDen += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+            if (Math.abs(unit.units[i].power + 1.0) > 1e-15) {
+              strDen += '^' + (-unit.units[i].power)
+            }
+          } else {
+            strDen += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+            strDen += '^' + (unit.units[i].power)
+          }
+        }
+      }
+    }
+
+    // Remove leading " "
+    strNum = strNum.substr(1)
+    strDen = strDen.substr(1)
+
+    // Add parans for better copy/paste back into evaluate, for example, or for better pretty print formatting
+    if (nNum > 1 && nDen > 0) {
+      strNum = '(' + strNum + ')'
+    }
+    if (nDen > 1 && nNum > 0) {
+      strDen = '(' + strDen + ')'
+    }
+
+    let str = strNum
+    if (nNum > 0 && nDen > 0) {
+      str += ' / '
+    }
+    str += strDen
+
+    return str
+  }
+
+
   let unitStore = createUnitStore(options)
 
   // Create a parser configured for these options

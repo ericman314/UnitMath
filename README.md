@@ -152,16 +152,17 @@ const unit = require('unitmath').config({
   customPow: apNumber.pow,
   customEq: apNumber.eq,
   customClone: apNumber,
-  customConv: apNumber
-  ...
+  customConv: apNumber,
+  customFormat: apNumber.toString
 })
 
 let apUnit = unit(apNumber(2.74518864784926316174649567946), 'm')
 ```
 
-For best results, you should extend all of the `custom...` functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. You still might be able to use some of UnitMath's methods without extending them all, though.
+For best results, you should extend all of the `custom...` functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. You still might be able to use some of UnitMath's methods, though.
 
-When using custom types, you must use the two-argument `unit(value, unitString)` to construct units. This is because UnitMath's string parser only works with native `number` types. To see why this must be, consider the string `"1 / 2 kg"`, which the user of a fraction library may wish to parse. UnitMath's parser wouldn't know what to do with `1 / 2`, and the fraction library's parser might choke when it encounters `kg`. The proper way to create this unit would be `unit(fraction(1, 2), 'kg')`.
+
+When using custom types, UnitMath cannot implicitly convert strings to units. Therefore, you must use the two-argument `unit(value, unitString)` to construct units. This is because UnitMath's string parser only works with native `number` types. To see why this must be, consider the string `"1 / 2 kg"`, which the user of a fraction library may wish to parse. UnitMath's parser wouldn't know what to do with `1 / 2`, and the fraction library's parser might choke when it encounters `kg`. The proper way to create this unit would be `unit(fraction(1, 2), 'kg')`.
 
 ## API Reference
 
