@@ -131,6 +131,14 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].unit.name, 's')
     })
 
+    it.skip('should combine duplicate units', () => {
+      assert.deepStrictEqual(unit('3 kg kg'), unit('3 kg^2'))
+      assert.deepStrictEqual(unit('3 kg/kg'), unit('3'))
+      assert.deepStrictEqual(unit('3 (kg m) / (s s)'), unit('3 kg m / s^2'))
+      assert.deepStrictEqual(unit('3 m cm'), unit('0.03 m^2'))
+      assert.deepStrictEqual(unit('3 cm m / s minute'), unit('5 cm^2 / s^2'))
+    })
+
     it.skip('should ignore properties on Object.prototype', function () {
       Object.prototype.foo = Unit.UNITS['meter'] // eslint-disable-line no-extend-native
 
@@ -357,7 +365,7 @@ describe('unitmath', () => {
     })
   })
 
-  describe('toString', function () {
+  describe.skip('toString', function () {
     it('should convert to string properly', function () {
       assert.strictEqual(unit(5000, 'cm').toString(), '50 m')
       assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
@@ -549,7 +557,7 @@ describe('unitmath', () => {
     })
   })
 
-  describe('format', function () {
+  describe.skip('format', function () {
     it('should format units with given precision', function () {
       assert.strictEqual(unit(2 / 3, 'm').format(3), '0.667 m')
       assert.strictEqual(unit(2 / 3, 'm').format(4), '0.6667 m')
@@ -775,13 +783,13 @@ describe('unitmath', () => {
     })
   })
 
-  describe('_isCompound', function () {
+  describe('isCompound', function () {
     it('should return the correct value', function () {
-      assert.strictEqual(unit('34 kg')._isCompound(), false)
-      assert.strictEqual(unit('34 kg/s')._isCompound(), true)
-      assert.strictEqual(unit('34 kg^2')._isCompound(), true)
-      assert.strictEqual(unit('34 N')._isCompound(), false)
-      assert.strictEqual(unit('34 kg m / s^2')._isCompound(), true)
+      assert.strictEqual(unit('34 kg').isCompound(), false)
+      assert.strictEqual(unit('34 kg/s').isCompound(), true)
+      assert.strictEqual(unit('34 kg^2').isCompound(), true)
+      assert.strictEqual(unit('34 N').isCompound(), false)
+      assert.strictEqual(unit('34 kg m / s^2').isCompound(), true)
     })
   })
 

@@ -53,30 +53,30 @@ let _config = function _config(options) {
    * @returns {Unit} The Unit given by the value and unit string.
    */
   function Unit(value, unitString) {
-  
+
     if (!(this instanceof Unit)) {
       throw new Error('_unit constructor must be called with the new operator')
     }
     // console.log(`Inside the constructor: _unit(${value}, ${unitString})`)
-    
+
     // Allowed signatures:
     // Unit(string)
     // Unit(*)
     // Unit(*, string)
 
     let parseResult
-    if(typeof value === 'undefined' && typeof unitString === 'undefined') {
+    if (typeof value === 'undefined' && typeof unitString === 'undefined') {
       parseResult = parser('')
       parseResult.value = null
     }
-    else if(typeof value === 'string' && typeof unitString === 'undefined') {
+    else if (typeof value === 'string' && typeof unitString === 'undefined') {
       parseResult = parser(value)
     }
-    else if(typeof unitString === 'string') {
+    else if (typeof unitString === 'string') {
       parseResult = parser(unitString)
       parseResult.value = value
     }
-    else if(typeof unitString === 'undefined') {
+    else if (typeof unitString === 'undefined') {
       parseResult = parser('')
       parseResult.value = value
     }
@@ -89,11 +89,11 @@ let _config = function _config(options) {
     this.dimensions = parseResult.dimensions
     this.units = parseResult.units
     this.value = (parseResult.value === undefined || parseResult.value === null) ? null : parseResult.value
-    
+
   }
 
   // These are public methods available to each instance of a Unit. They each should return a frozen Unit.
-  
+
   /**
    * create a copy of this unit
    * @memberof Unit
@@ -110,7 +110,7 @@ let _config = function _config(options) {
    * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
    * @returns {Unit} The result of adding this and the other unit.
    */
-  Unit.prototype.add = function(other) {
+  Unit.prototype.add = function (other) {
     other = _convertParamToUnit(other)
     let unit = _add(this, other)
     Object.freeze(unit)
@@ -122,7 +122,7 @@ let _config = function _config(options) {
    * @param {Unit|string} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
    * @returns {Unit} The result of subtract this and the other unit.
    */
-  Unit.prototype.sub = function(other) {
+  Unit.prototype.sub = function (other) {
     other = _convertParamToUnit(other)
     let unit = _sub(this, other)
     Object.freeze(unit)
@@ -134,7 +134,7 @@ let _config = function _config(options) {
    * @param {Unit|string} other The unit to multiply to this one.
    * @returns {Unit} The result of multiplying this and the other unit.
    */
-  Unit.prototype.mul = function(other) {
+  Unit.prototype.mul = function (other) {
     other = _convertParamToUnit(other)
     let unit = _mul(this, other)
     Object.freeze(unit)
@@ -146,7 +146,7 @@ let _config = function _config(options) {
    * @param {Unit|string} other The unit to divide this unit by.
    * @returns {Unit} The result of dividing this by the other unit.
    */
-  Unit.prototype.div = function(other) {
+  Unit.prototype.div = function (other) {
     other = _convertParamToUnit(other)
     let unit = _div(this, other)
     Object.freeze(unit)
@@ -172,7 +172,7 @@ let _config = function _config(options) {
    * @param {Unit|string|number} a The unit.
    * @returns {Unit} The square root of the unit a.
    */
-  Unit.prototype.sqrt = function() {
+  Unit.prototype.sqrt = function () {
     let unit = _sqrt(this)
     Object.freeze(unit)
     return unit
@@ -185,7 +185,7 @@ let _config = function _config(options) {
    * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
    */
   Unit.prototype.to = function (valuelessUnit) {
-    if(!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
+    if (!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
       throw new TypeError('Parameter must be a Unit or a string.')
     }
     valuelessUnit = _convertParamToUnit(valuelessUnit)
@@ -193,7 +193,7 @@ let _config = function _config(options) {
     Object.freeze(unit)
     return unit
   }
-  
+
   /**
    * Convert the unit to a specific unit.
    * @memberof Unit
@@ -201,7 +201,7 @@ let _config = function _config(options) {
    * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
    */
   Unit.prototype.to = function (valuelessUnit) {
-    if(!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
+    if (!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
       throw new TypeError('Parameter must be a Unit or a string.')
     }
     valuelessUnit = _convertParamToUnit(valuelessUnit)
@@ -226,13 +226,13 @@ let _config = function _config(options) {
    * @memberof Unit
    * @returns {Unit} A new unit formed by removing the value from this unit.
    */
-  Unit.prototype.getUnits = function() {
+  Unit.prototype.getUnits = function () {
     let result = _clone(this)
     result.value = null
     Object.freeze(result)
     return result
   }
-  
+
 
   // These private functions do not freeze the units before returning, so that we can do mutations on the units before returning the final, frozen unit to the user.
 
@@ -243,7 +243,7 @@ let _config = function _config(options) {
    * @returns {Unit} The frozen unit that was converted from the input parameter, or the original unit.
    */
   function _convertParamToUnit(param) {
-    if(param instanceof Unit) {
+    if (param instanceof Unit) {
       return param
     }
     return unitmath(param)
@@ -251,24 +251,33 @@ let _config = function _config(options) {
 
   /**
    * Private function _clone
-   * @param {Unit} unit1 
+   * @param {Unit} unit 
    */
-  function _clone(unit1) {
+  function _clone(unit) {
     const result = new Unit()
 
-    result.value = unit1.value === null ? null : options.customClone(unit1.value)
-    result.dimensions = unit1.dimensions.slice(0)
+    result.value = unit.value === null ? null : options.customClone(unit.value)
+    result.dimensions = unit.dimensions.slice(0)
     result.units = []
-    for (let i = 0; i < unit1.units.length; i++) {
-      result.units[i] = { }
-      for (const p in unit1.units[i]) {
-        if (unit1.units[i].hasOwnProperty(p)) {
-          result.units[i][p] = unit1.units[i][p]
+    for (let i = 0; i < unit.units.length; i++) {
+      result.units[i] = {}
+      for (const p in unit.units[i]) {
+        if (unit.units[i].hasOwnProperty(p)) {
+          result.units[i][p] = unit.units[i][p]
         }
       }
     }
 
     return result
+  }
+
+  /**
+   * Private function _combineDuplicateUnits returns a new unit where any duplicate units are combined together.
+   * @param {Unit} unit 
+   * @returns {Unit} A new unit where the units are combined together.
+   */
+  function _combineDuplicateUnits(unit) {
+    const result = _clone(unit)
   }
 
   /**
@@ -285,7 +294,7 @@ let _config = function _config(options) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = _denormalize(unit1, options.customAdd(_normalize(unit1, unit1.value), _normalize(unit2, unit2.value)))
+    result.value = _denormalize(unit1.units, options.customAdd(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
     return result
   }
 
@@ -303,7 +312,7 @@ let _config = function _config(options) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = _denormalize(unit1, options.customSub(_normalize(unit1, unit1.value), _normalize(unit2, unit2.value)))
+    result.value = _denormalize(unit1.units, options.customSub(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
     return result
   }
 
@@ -334,8 +343,8 @@ let _config = function _config(options) {
 
     // If at least one operand has a value, then the result should also have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? _normalize(unit1, 1) : unit1.value
-      const val2 = unit2.value === null ? _normalize(unit2, 1) : unit2.value
+      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : unit1.value
+      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : unit2.value
       result.value = options.customMul(val1, val2)
     } else {
       result.value = null
@@ -370,8 +379,8 @@ let _config = function _config(options) {
 
     // If at least one operand has a value, the result should have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? _normalize(unit1, 1) : unit1.value
-      const val2 = unit2.value === null ? _normalize(unit2, 1) : unit2.value
+      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : unit1.value
+      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : unit2.value
       result.value = options.customDiv(val1, val2)
     } else {
       result.value = null
@@ -411,61 +420,63 @@ let _config = function _config(options) {
 
 
   /**
-   * Normalize a value, based on its currently set unit(s)
+   * Normalize a value, based on an array of unit pieces
+   * @param {unit[]} unitPieces
    * @param {number | *} value
    * @return {number | *} normalized value
    * @private
    */
-  function _normalize(unit, value) {
+  function _normalize(unitPieces, value) {
     let unitValue, unitOffset, unitPower, unitPrefixValue
 
-    if (value === null || value === undefined || unit.units.length === 0) {
+    if (value === null || value === undefined || unitPieces.length === 0) {
       return value
-    } else if (unit._isCompound()) {
-      // unit is a compound unit, so do not apply offsets.
+    } else if (_isCompound(unitPieces)) {
+      // units is a compound unit, so do not apply offsets.
       // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
       let result = value
 
-      for (let i = 0; i < unit.units.length; i++) {
-        unitValue = options.customConv(unit.units[i].unit.value)
-        unitPrefixValue = options.customConv(unit.units[i].prefix.value)
-        unitPower = options.customConv(unit.units[i].power)
+      for (let i = 0; i < unitPieces.length; i++) {
+        unitValue = options.customConv(unitPieces[i].unit.value)
+        unitPrefixValue = options.customConv(unitPieces[i].prefix.value)
+        unitPower = options.customConv(unitPieces[i].power)
         result = options.customMul(result, options.customPow(options.customMul(unitValue, unitPrefixValue), unitPower))
       }
 
       return result
     } else {
-      // unit is a single unit of power 1, like kg or degC
-      unitValue = options.customConv(unit.units[0].unit.value)
-      unitOffset = options.customConv(unit.units[0].unit.offset)
-      unitPrefixValue = options.customConv(unit.units[0].prefix.value)
+      // units is a single unit of power 1, like kg or degC
+      unitValue = options.customConv(unitPieces[0].unit.value)
+      unitOffset = options.customConv(unitPieces[0].unit.offset)
+      unitPrefixValue = options.customConv(unitPieces[0].prefix.value)
 
       return options.customMul(options.customAdd(value, unitOffset), options.customMul(unitValue, unitPrefixValue))
     }
   }
 
   /**
-   * Denormalize a value, based on its currently set unit(s)
+   * Denormalize a value, based on an array of atomic units
+   * @param {unit[]} unitPieces Array of atomic units (as in, Unit.units)
    * @param {number} value
    * @param {number} [prefixValue]    Optional prefix value to be used (ignored if this is a derived unit)
    * @return {number} denormalized value
    * @private
    */
-  function _denormalize(unit, value, prefixValue) {
+  function _denormalize(unitPieces, value, prefixValue) {
     let unitValue, unitOffset, unitPower, unitPrefixValue
 
-    if (value === null || value === undefined || unit.units.length === 0) {
+    if (value === null || value === undefined || unitPieces.length === 0) {
       return value
-    } else if (unit._isCompound()) {
+    } else if (_isCompound(unitPieces)) {
       // unit is a compound unit, so do not apply offsets.
       // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
       // Also, prefixValue is ignored--but we will still use the prefix value stored in each unit, since kg is usually preferable to g unless the user decides otherwise.
       let result = value
 
-      for (let i = 0; i < unit.units.length; i++) {
-        unitValue = options.customConv(unit.units[i].unit.value)
-        unitPrefixValue = options.customConv(unit.units[i].prefix.value)
-        unitPower = options.customConv(unit.units[i].power)
+      for (let i = 0; i < unitPieces.length; i++) {
+        unitValue = options.customConv(unitPieces[i].unit.value)
+        unitPrefixValue = options.customConv(unitPieces[i].prefix.value)
+        unitPower = options.customConv(unitPieces[i].power)
         result = options.customDiv(result, options.customPow(options.customMul(unitValue, unitPrefixValue), unitPower))
       }
 
@@ -473,9 +484,9 @@ let _config = function _config(options) {
     } else {
       // unit is a single unit of power 1, like kg or degC
 
-      unitValue = options.customConv(unit.units[0].unit.value)
-      unitPrefixValue = options.customConv(unit.units[0].prefix.value)
-      unitOffset = options.customConv(unit.units[0].unit.offset)
+      unitValue = options.customConv(unitPieces[0].unit.value)
+      unitPrefixValue = options.customConv(unitPieces[0].prefix.value)
+      unitOffset = options.customConv(unitPieces[0].unit.offset)
 
       if (prefixValue === undefined || prefixValue === null) {
         return options.customSub(options.customDiv(options.customDiv(value, unitValue), unitPrefixValue), unitOffset)
@@ -492,7 +503,7 @@ let _config = function _config(options) {
    */
   function _to(unit, valuelessUnit) {
     let result
-    const value = unit.value === null ? _normalize(unit, 1) : unit.value
+    const value = unit.value === null ? _normalize(unit.units, 1) : unit.value
 
     if (!unit._equalDimension(valuelessUnit)) {
       throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
@@ -501,7 +512,7 @@ let _config = function _config(options) {
       throw new Error(`Cannot convert ${unit.toString()}: target unit must be valueless`)
     }
     result = _clone(valuelessUnit)
-    result.value = options.customClone(_denormalize(result, _normalize(unit, value)))
+    result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, value)))
     return result
   }
 
@@ -534,22 +545,31 @@ let _config = function _config(options) {
 
     // Replace this unit list with the proposed list
     result.units = proposedUnitList
-    if(unit.value !== null)
-      result.value = options.customClone(_denormalize(result, _normalize(unit, unit.value)))
+    if (unit.value !== null)
+      result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, unit.value)))
 
     return result
   }
 
   /**
-   * Return whether the unit is compound (contains multiple units, such as m/s, or cm^2, but not N)
+   * Returns whether the unit is compound (like m/s, cm^2) or not (kg, N, hogshead)
    * @memberof Unit
+   * @returns True if the unit is compound
+   */
+  Unit.prototype.isCompound = function() {
+    return _isCompound(this.units)
+  }
+
+  /**
+   * Return whether the given array of unit pieces is compound (contains multiple units, such as m/s, or cm^2, but not N)
+   * @param {unit[]} units Array of unit pieces
    * @return {boolean} True if the unit is compound
    */
-  Unit.prototype._isCompound = function () {
-    if (this.units.length === 0) {
+  function _isCompound(units) {
+    if (units.length === 0) {
       return false
     }
-    return this.units.length > 1 || Math.abs(this.units[0].power - 1.0) > 1e-15
+    return units.length > 1 || Math.abs(units[0].power - 1.0) > 1e-15
   }
 
   /**
@@ -578,7 +598,7 @@ let _config = function _config(options) {
    * @param {Unit} other
    * @return {boolean} true if equal dimensions
    */
-  Unit.prototype._equalDimension = function(other) {
+  Unit.prototype._equalDimension = function (other) {
     // All dimensions must be the same
     for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
       if (Math.abs(this.dimensions[i] - other.dimensions[i]) > 1e-12) {
@@ -596,23 +616,23 @@ let _config = function _config(options) {
    */
   Unit.prototype.equals = function (other) {
     other = _convertParamToUnit(other)
-    return this._equalDimension(other) && options.customEq(_normalize(this, this.value), _normalize(other, other.value))
+    return this._equalDimension(other) && options.customEq(_normalize(this.units, this.value), _normalize(other.units, other.value))
   }
 
-  Unit.prototype.toString = function() {
+  Unit.prototype.toString = function () {
     return this.format()
   }
 
- /**
-   * Get a string representation of the Unit, with optional formatting options.
-   * @memberof Unit
-   * @param {Object} [options]  Formatting options.
-   * @return {string}
-   */
+  /**
+    * Get a string representation of the Unit, with optional formatting options.
+    * @memberof Unit
+    * @param {Object} [options]  Formatting options.
+    * @return {string}
+    */
   Unit.prototype.format = function (options) {
-    
+
     let simp = this.clone()
-    
+
     // TODO: Apply automatic simplification steps if specified in the config options
 
     let str = (simp.value !== null) ? simp.value.toString() : ''
@@ -642,7 +662,7 @@ let _config = function _config(options) {
         if (Math.abs(unit.units[i].power - 1.0) > 1e-15) {
           strNum += '^' + unit.units[i].power
         }
-      } else if (units[i].power < 0) {
+      } else if (unit.units[i].power < 0) {
         nDen++
       }
     }
@@ -696,7 +716,7 @@ let _config = function _config(options) {
    * @returns {Function} A new instance of the unit factory function with the specified options.
    */
   unitmath.config = function config(newOptions) {
-    if (typeof(newOptions) === 'undefined') {
+    if (typeof (newOptions) === 'undefined') {
       return options
     }
 
@@ -755,30 +775,30 @@ let _config = function _config(options) {
     return _convertParamToUnit(a).pow(b)
   }
 
-   /**
-   * Takes the square root of a unit.
-   * @param {Unit|string|number} a The unit.
-   * @returns {Unit} The square root of the unit a.
-   */
+  /**
+  * Takes the square root of a unit.
+  * @param {Unit|string|number} a The unit.
+  * @returns {Unit} The square root of the unit a.
+  */
   unitmath.sqrt = function sqrt(a) {
     return _convertParamToUnit(a).sqrt()
   }
 
-   /**
-   * Convert a unit.
-   * @param {Unit|string|number} unit The unit to convert.
-   * @param {Unit|string} valuelessUnit The valueless unit to convert the first unit to.
-   * @returns {Unit} The result of converting the unit.
-   */
+  /**
+  * Convert a unit.
+  * @param {Unit|string|number} unit The unit to convert.
+  * @param {Unit|string} valuelessUnit The valueless unit to convert the first unit to.
+  * @returns {Unit} The result of converting the unit.
+  */
   unitmath.to = function to(unit, valuelessUnit) {
     return _convertParamToUnit(unit).to(valuelessUnit)
   }
 
-   /**
-   * Convert a unit to SI.
-   * @param {Unit|string|number} unit The unit to convert.
-   * @returns {Unit} The result of converting the unit to SI.
-   */
+  /**
+  * Convert a unit to SI.
+  * @param {Unit|string|number} unit The unit to convert.
+  * @returns {Unit} The result of converting the unit to SI.
+  */
   unitmath.toSI = function toSI(unit) {
     return _convertParamToUnit(unit).toSI()
   }
@@ -804,15 +824,17 @@ let customPow = (a, b) => Math.pow(a, b)
 let customEq = (a, b) => a === b
 let customConv = a => a
 let customClone = (a) => {
-  if(typeof(a) !== 'number') {
-    throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof(a)})`)
+  if (typeof (a) !== 'number') {
+    throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof (a)})`)
   }
   return a
 }
 
-let defaultOptions = { levelOfAwesomeness: 11, 
-                      customAdd, customSub, customMul, customDiv, customPow, customEq, customConv, customClone }
+let defaultOptions = {
+  levelOfAwesomeness: 11,
+  customAdd, customSub, customMul, customDiv, customPow, customEq, customConv, customClone
+}
 
-let firstUnit = _config(defaultOptions, {}) 
+let firstUnit = _config(defaultOptions, {})
 
 export default firstUnit
