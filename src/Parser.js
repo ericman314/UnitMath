@@ -197,34 +197,21 @@ export default function createParser(options, unitStore) {
       skipWhitespace() // Whitespace is not required here
 
       // handle multiplication or division right after the value, like '1/s'
-      if (parseCharacter('*')) {
-        powerMultiplierCurrent = 1
-        expectingUnit = true
-      } else if (parseCharacter('/')) {
+      if(parseCharacter('*')) {
+        // Ignore
+      }
+      else if (parseCharacter('/')) {
         powerMultiplierCurrent = -1
         expectingUnit = true
       }
     }
 
-
-
-    // Stack to keep track of powerMultipliers applied to each parentheses group
-    const powerMultiplierStack = []
-
-    // Running product of all elements in powerMultiplierStack
-    let powerMultiplierStackProduct = 1
-
     while (true) {
       skipWhitespace()
 
-      // Check for and consume opening parentheses, pushing powerMultiplierCurrent to the stack
-      // A '(' will always appear directly before a unit.
-      while (c === '(') {
-        powerMultiplierStack.push(powerMultiplierCurrent)
-        powerMultiplierStackProduct *= powerMultiplierCurrent
-        powerMultiplierCurrent = 1
-        next()
-        skipWhitespace()
+      // Parentheses are not allowed
+      if (c === '(' || c === ')') {
+        throw new SyntaxError(`Unexpected "${c}" in "${text}" at index ${index}`)
       }
 
       // Is there something here?
@@ -247,7 +234,7 @@ export default function createParser(options, unitStore) {
         throw new SyntaxError('Unit "' + uStr + '" not found.')
       }
 
-      let power = powerMultiplierCurrent * powerMultiplierStackProduct
+      let power = powerMultiplierCurrent
       // Is there a "^ number"?
       skipWhitespace()
       if (parseCharacter('^')) {
@@ -270,33 +257,21 @@ export default function createParser(options, unitStore) {
         unit.dimensions[i] += (res.unit.dimensions[i] || 0) * power
       }
 
-      // Check for and consume closing parentheses, popping from the stack.
-      // A ')' will always follow a unit.
       skipWhitespace()
-      while (c === ')') {
-        if (powerMultiplierStack.length === 0) {
-          throw new SyntaxError('Unmatched ")" in "' + text + '" at index ' + index.toString())
-        }
-        powerMultiplierStackProduct /= powerMultiplierStack.pop()
-        next()
-        skipWhitespace()
-      }
-
-      // "*" and "/" should mean we are expecting something to come next.
-      // Is there a forward slash? If so, negate powerMultiplierCurrent. The next unit or paren group is in the denominator.
+      
+      // "/" means we are expecting something to come next.
+      // Is there a forward slash? If so, set powerMultiplierCurrent to -1. All remaining units will be in the denominator.
       expectingUnit = false
-
-      if (parseCharacter('*')) {
-        // explicit multiplication
-        powerMultiplierCurrent = 1
-        expectingUnit = true
-      } else if (parseCharacter('/')) {
-        // division
+      
+      if(parseCharacter('*')) {
+        // Ignore
+      }
+      else if (parseCharacter('/')) {
+        if (powerMultiplierCurrent === -1) {
+          throw new SyntaxError(`Unexpected additional "/" in "${text}" at index ${index}`)
+        }
         powerMultiplierCurrent = -1
         expectingUnit = true
-      } else {
-        // implicit multiplication
-        powerMultiplierCurrent = 1
       }
 
       // Replace the unit into the auto unit system
@@ -318,11 +293,6 @@ export default function createParser(options, unitStore) {
     // Is there a trailing slash?
     if (expectingUnit) {
       throw new SyntaxError('Trailing characters: "' + str + '"')
-    }
-
-    // Is the parentheses stack empty?
-    if (powerMultiplierStack.length !== 0) {
-      throw new SyntaxError('Unmatched "(" in "' + text + '"')
     }
 
     return unit

@@ -134,7 +134,7 @@ describe('unitmath', () => {
     it('should combine duplicate units', () => {
       assert.deepStrictEqual(unit('3 kg kg'), unit('3 kg^2'))
       assert.deepStrictEqual(unit('3 kg/kg'), unit('3'))
-      assert.deepStrictEqual(unit('3 (kg m) / (s s)'), unit('3 kg m / s^2'))
+      assert.deepStrictEqual(unit('3 kg m / s s'), unit('3 kg m / s^2'))
       assert.deepStrictEqual(unit('3 m cm'), unit('0.03 m^2'))
       approx.deepEqual(unit('3 cm m / s minute'), unit('300 cm^2 / s minute'))
     })
@@ -375,7 +375,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString(), '5 (kg m) / s^2')
       assert.strictEqual(unit(5, 's^-2').toString(), '5 s^-2')
       assert.strictEqual(unit(5, 'm / s ^ 2').toString(), '5 m / s^2')
-      assert.strictEqual(unit(null, 'kg m^2 / s^2 / mol').toString(), '(kg m^2) / (s^2 mol)')
+      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').toString(), '(kg m^2) / (s^2 mol)')
       assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
       assert.strictEqual(unit('3.14 rad').toString(), '3.14 rad')
       assert.strictEqual(unit('J / mol K').toString(), 'J / (mol K)')
@@ -681,7 +681,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[1].power, -2)
       assert.strictEqual(unit1.units[0].prefix.name, 'c')
 
-      unit1 = unit('8.314 kg m^2 / s^2 / K / mol')
+      unit1 = unit('8.314 kg m^2 / s^2 K mol')
       approx.equal(unit1.value, 8.314)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'm')
@@ -729,39 +729,9 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[0].power, 1)
     })
 
-    it('should parse expressions with nested parentheses correctly', function () {
-      let unit1 = unit('8.314 kg (m^2 / (s^2 / (K^-1 / mol)))')
-      approx.equal(unit1.value, 8.314)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'm')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
-      assert.strictEqual(unit1.units[3].unit.name, 'K')
-      assert.strictEqual(unit1.units[4].unit.name, 'mol')
-      assert.strictEqual(unit1.units[0].power, 1)
-      assert.strictEqual(unit1.units[1].power, 2)
-      assert.strictEqual(unit1.units[2].power, -2)
-      assert.strictEqual(unit1.units[3].power, -1)
-      assert.strictEqual(unit1.units[4].power, -1)
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
-
-      unit1 = unit('1 (m / ( s / ( kg mol ) / ( lbm / h ) K ) )')
-      assert.strictEqual(unit1.units[0].unit.name, 'm')
-      assert.strictEqual(unit1.units[1].unit.name, 's')
-      assert.strictEqual(unit1.units[2].unit.name, 'g')
-      assert.strictEqual(unit1.units[3].unit.name, 'mol')
-      assert.strictEqual(unit1.units[4].unit.name, 'lbm')
-      assert.strictEqual(unit1.units[5].unit.name, 'h')
-      assert.strictEqual(unit1.units[6].unit.name, 'K')
-      assert.strictEqual(unit1.units[0].power, 1)
-      assert.strictEqual(unit1.units[1].power, -1)
-      assert.strictEqual(unit1.units[2].power, 1)
-      assert.strictEqual(unit1.units[3].power, 1)
-      assert.strictEqual(unit1.units[4].power, 1)
-      assert.strictEqual(unit1.units[5].power, -1)
-      assert.strictEqual(unit1.units[6].power, -1)
-
-      const unit2 = unit('1(m/(s/(kg mol)/(lbm/h)K))')
-      assert.deepStrictEqual(unit1, unit2)
+    it('should throw error when parsing expressions with invalid characters', function () {
+      assert.throws(() => { unit('8.314 J / (mol * K)') }, /Unexpected "\("/)
+      assert.throws(() => { unit('8.314 J / mol / K') }, /Unexpected additional "\/"/)
     })
 
     it('should parse units with correct precedence', function () {
@@ -773,7 +743,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].unit.name, 's')
       assert.strictEqual(unit1.units[0].power, 3)
       assert.strictEqual(unit1.units[1].power, -1)
-      assert.strictEqual(unit1.units[2].power, 2)
+      assert.strictEqual(unit1.units[2].power, -2)
       assert.strictEqual(unit1.units[0].prefix.name, '')
     })
 

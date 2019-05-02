@@ -36,6 +36,24 @@ let h = unit(19.6, 'm')
 
 Units can be simple (`4 kg`) or compound (`8.314 J/mol K`). They may also be valueless (`hour`).
 
+#### Parsing Units
+
+When units are parsed from strings, they must be in the following format:
+
+``` 
+unit:
+[value] [numerator] [/ denominator]
+
+
+numerator, denominator:
+[prefix]unit [^ power]
+
+value, power:
+Any valid floating point number
+```
+
+Parentheses are not allowed. Any units appearing before a `/` are in the numerator of the resulting unit, and any units appearing after the `/` are in the denominator. Any `*`'s will be ignored.
+
 ### Performing operations on units
 
 #### Arithmetic
