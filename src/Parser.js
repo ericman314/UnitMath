@@ -6,10 +6,6 @@ export default function createParser(options, unitStore) {
   // private variables and functions for the Unit parser
   let text, index, c
 
-
-  
-
-
   function skipWhitespace () {
     while (c === ' ' || c === '\t') {
       next()

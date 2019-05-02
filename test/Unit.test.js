@@ -131,12 +131,12 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].unit.name, 's')
     })
 
-    it.skip('should combine duplicate units', () => {
+    it('should combine duplicate units', () => {
       assert.deepStrictEqual(unit('3 kg kg'), unit('3 kg^2'))
       assert.deepStrictEqual(unit('3 kg/kg'), unit('3'))
       assert.deepStrictEqual(unit('3 (kg m) / (s s)'), unit('3 kg m / s^2'))
       assert.deepStrictEqual(unit('3 m cm'), unit('0.03 m^2'))
-      assert.deepStrictEqual(unit('3 cm m / s minute'), unit('5 cm^2 / s^2'))
+      approx.deepEqual(unit('3 cm m / s minute'), unit('300 cm^2 / s minute'))
     })
 
     it.skip('should ignore properties on Object.prototype', function () {
@@ -365,8 +365,25 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('toString', function () {
-    it('should convert to string properly', function () {
+  describe('toString', function () {
+
+    it('should convert to string when no extra simplification is requested', () => {
+      assert.strictEqual(unit(5000, 'cm').toString(), '5000 cm')
+      assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
+      assert.strictEqual(unit(2 / 3, 'm').toString(), '0.6666666666666666 m')
+      assert.strictEqual(unit(5, 'N').toString(), '5 N')
+      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString(), '5 (kg m) / s^2')
+      assert.strictEqual(unit(5, 's^-2').toString(), '5 s^-2')
+      assert.strictEqual(unit(5, 'm / s ^ 2').toString(), '5 m / s^2')
+      assert.strictEqual(unit(null, 'kg m^2 / s^2 / mol').toString(), '(kg m^2) / (s^2 mol)')
+      assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
+      assert.strictEqual(unit('3.14 rad').toString(), '3.14 rad')
+      assert.strictEqual(unit('J / mol K').toString(), 'J / (mol K)')
+      assert.strictEqual(unit(2).toString(), '2')
+      assert.strictEqual(unit().toString(), '')
+    })
+
+    it.skip('should convert to string properly', function () {
       assert.strictEqual(unit(5000, 'cm').toString(), '50 m')
       assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
       assert.strictEqual(unit(2 / 3, 'm').toString(), '0.6666666666666666 m')
@@ -378,7 +395,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
     })
 
-    it('should render with the best prefix', function () {
+    it.skip('should render with the best prefix', function () {
       assert.strictEqual(unit(0.000001, 'm').format(8), '1 um')
       assert.strictEqual(unit(0.00001, 'm').format(8), '10 um')
       assert.strictEqual(unit(0.0001, 'm').format(8), '100 um')
@@ -394,7 +411,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit(2000, 'ohm').toString(), '2 kohm')
     })
 
-    it('should keep the original prefix when in range', function () {
+    it.skip('should keep the original prefix when in range', function () {
       assert.strictEqual(unit(0.0999, 'm').toString(), '99.9 mm')
       assert.strictEqual(unit(0.1, 'm').toString(), '0.1 m')
       assert.strictEqual(unit(0.5, 'm').toString(), '0.5 m')
@@ -409,7 +426,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit(1001, 'm').toString(), '1.001 km')
     })
 
-    it('should render best prefix for a single unit raised to integral power', function () {
+    it.skip('should render best prefix for a single unit raised to integral power', function () {
       assert.strictEqual(unit(3.2e7, 'm^2').toString(), '32 km^2')
       assert.strictEqual(unit(3.2e-7, 'm^2').toString(), '0.32 mm^2')
       assert.strictEqual(unit(15000, 'm^-1').toString(), '15 mm^-1')
@@ -418,7 +435,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit(2, 'kg^0').toString(), '2')
     })
 
-    it('should not render best prefix if "fixPrefix" is set', function () {
+    it.skip('should not render best prefix if "fixPrefix" is set', function () {
       const u = unit(5e-3, 'm')
       u.fixPrefix = true
       assert.strictEqual(u.toString(), '0.005 m')
@@ -678,6 +695,20 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[4].power, -1)
       assert.strictEqual(unit1.units[0].prefix.name, 'k')
 
+      unit1 = unit('8.314 kg m^2 / s^2 K mol')
+      approx.equal(unit1.value, 8.314)
+      assert.strictEqual(unit1.units[0].unit.name, 'g')
+      assert.strictEqual(unit1.units[1].unit.name, 'm')
+      assert.strictEqual(unit1.units[2].unit.name, 's')
+      assert.strictEqual(unit1.units[3].unit.name, 'K')
+      assert.strictEqual(unit1.units[4].unit.name, 'mol')
+      assert.strictEqual(unit1.units[0].power, 1)
+      assert.strictEqual(unit1.units[1].power, 2)
+      assert.strictEqual(unit1.units[2].power, -2)
+      assert.strictEqual(unit1.units[3].power, -1)
+      assert.strictEqual(unit1.units[4].power, -1)
+      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+
       unit1 = unit('5exabytes')
       approx.equal(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'bytes')
@@ -840,11 +871,11 @@ describe('unitmath', () => {
   describe('mul', () => {
     it('should multiply unit\'s values and combine their units', () => {
       assert.deepStrictEqual(unit('2 kg').mul(unit('3 m')), unit('6 kg m'))
-      assert.deepStrictEqual(unit('2 m').mul(unit('4 m')), unit('8 m m'))
-      assert.deepStrictEqual(unit('2 ft').mul(unit('4 ft')), unit('8 ft ft'))
-      assert.deepStrictEqual(unit('65 mi/h').mul(unit('2 h')), unit('130 mi h^-1 h'))
+      assert.deepStrictEqual(unit('2 m').mul(unit('4 m')), unit('8 m^2'))
+      assert.deepStrictEqual(unit('2 ft').mul(unit('4 ft')), unit('8 ft^2'))
+      assert.deepStrictEqual(unit('65 mi/h').mul(unit('2 h')), unit('130 mi'))
       assert.deepStrictEqual(unit('2 L').mul(unit('1 s^-1')), unit('2 L / s'))
-      assert.deepStrictEqual(unit('2 m/s').mul(unit('0.5 s/m')), unit('1 m s^-1 s m^-1'))
+      assert.deepStrictEqual(unit('2 m/s').mul(unit('0.5 s/m')), unit('1'))
     })
 
     it('should convert parameter to unit', () => {
@@ -868,15 +899,17 @@ describe('unitmath', () => {
   describe('div', () => {
     it('should divide unit\'s values and combine their units', () => {
       assert.deepStrictEqual(unit('6 kg').div(unit('3 m')), unit('2 kg m^-1'))
-      assert.deepStrictEqual(unit('2 m').div(unit('4 m')), unit('0.5 m m^-1'))
-      assert.deepStrictEqual(unit('4 ft').div(unit('2 ft')), unit('2 ft ft^-1'))
-      assert.deepStrictEqual(unit('65 mi/h').div(unit('2 h')), unit('32.5 mi h^-1 h^-1'))
+      assert.deepStrictEqual(unit('2 m').div(unit('4 m')), unit('0.5'))
+      assert.deepStrictEqual(unit('4 ft').div(unit('2 ft')), unit('2'))
+      assert.deepStrictEqual(unit('65 mi/h').div(unit('2 h')), unit('32.5 mi h^-2'))
       assert.deepStrictEqual(unit('2 L').div(unit('1 s^-1')), unit('2 L s'))
-      assert.deepStrictEqual(unit('2 m/s').div(unit('0.5 s/m')), unit('4 m s^-1 s^-1 m'))
+      assert.deepStrictEqual(unit('2 m/s').div(unit('0.5 s/m')), unit('4 m^2 s^-2'))
+      assert.deepStrictEqual(unit('2 kg').div(unit('500 g')), unit(4))
+      assert.deepStrictEqual(unit('2000 g').div(unit('0.5 kg')), unit(4))
     })
 
     it('should convert parameter to unit', () => {
-      assert.deepStrictEqual(unit('1 hour').div('0.5 hour'), unit(2, 'hour hour^-1'))
+      assert.deepStrictEqual(unit('1 hour').div('0.5 hour'), unit(2))
       assert.deepStrictEqual(unit('1 hour').div(2), unit(0.5, 'hour'))
     })
 

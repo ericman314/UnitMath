@@ -84,11 +84,12 @@ let _config = function _config(options) {
       throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
     }
 
-    // console.log(parseResult)
     this.type = 'Unit'
     this.dimensions = parseResult.dimensions
-    this.units = parseResult.units
-    this.value = (parseResult.value === undefined || parseResult.value === null) ? null : parseResult.value
+    this.units = _combineDuplicateUnits(parseResult.units)
+
+    // TODO: All the denormalizing/normalizing creates round-off error. See if we can reduce the number of floating point operations somehow.
+    this.value = (parseResult.value === undefined || parseResult.value === null) ? null : _denormalize(this.units, _normalize(parseResult.units, parseResult.value))
 
   }
 
@@ -272,12 +273,50 @@ let _config = function _config(options) {
   }
 
   /**
-   * Private function _combineDuplicateUnits returns a new unit where any duplicate units are combined together.
-   * @param {Unit} unit 
-   * @returns {Unit} A new unit where the units are combined together.
+   * Private function _combineDuplicateUnits returns a new array of unit pieces where the duplicate units have been combined together. Units with zero power are also removed.
+   * @param {unit[]} units Array of unit pieces 
+   * @returns {unit[]} A new array of unit pieces where the duplicates have been combined together and units with zero power have been removed.
    */
-  function _combineDuplicateUnits(unit) {
-    const result = _clone(unit)
+  function _combineDuplicateUnits(units) {
+    // Two-level deep copy of units
+    let result = units.map(u => Object.assign({}, u))
+    
+    if(result.length >= 2) {
+      if(units[0] === result[0])
+        throw new Error('Debug assertion failed, result is not a clone of units')
+      if(units[0].units !== result[0].units) 
+        throw new Error('Debug assertion failed, units\' units were cloned')
+
+
+      // Combine duplicate units
+      let foundUnits = {}
+      for(let i=0; i<result.length; i++) {
+        if(foundUnits.hasOwnProperty(result[i].unit.name)) {
+          // Combine this unit with the other
+          let firstUnit = foundUnits[result[i].unit.name]
+          // console.log(`Found duplicate unit: ${result[i].unit.name}`)
+          // console.log(firstUnit.power)
+          // console.log(result[i].power)
+          firstUnit.power += result[i].power
+          result.splice(i, 1)
+          i--
+        }
+        else {
+          foundUnits[result[i].unit.name] = result[i]
+        }
+      }
+
+      // Remove units that have zero power
+      for(let i=0; i<result.length; i++) {
+        if(Math.abs(result[i].power) < 1e-15) {
+          result.splice(i, 1)
+          i--
+        }
+      }
+      
+    }
+
+    return result
   }
 
   /**
@@ -341,11 +380,13 @@ let _config = function _config(options) {
       result.units.push(inverted)
     }
 
+    result.units = _combineDuplicateUnits(result.units)
+
     // If at least one operand has a value, then the result should also have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : unit1.value
-      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : unit2.value
-      result.value = options.customMul(val1, val2)
+      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : _normalize(unit1.units, unit1.value)
+      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : _normalize(unit2.units, unit2.value)
+      result.value = _denormalize(result.units, options.customMul(val1, val2))
     } else {
       result.value = null
     }
@@ -377,11 +418,13 @@ let _config = function _config(options) {
       result.units.push(inverted)
     }
 
+    result.units = _combineDuplicateUnits(result.units)
+
     // If at least one operand has a value, the result should have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : unit1.value
-      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : unit2.value
-      result.value = options.customDiv(val1, val2)
+      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : _normalize(unit1.units, unit1.value)
+      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : _normalize(unit2.units, unit2.value)
+      result.value = _denormalize(result.units, options.customDiv(val1, val2))
     } else {
       result.value = null
     }
