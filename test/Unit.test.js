@@ -7,7 +7,6 @@ import unit from '../src/Unit'
 // TODO: Implement implicit conversion of strings to units in add, sub, mul, etc.
 
 describe('unitmath', () => {
-
   describe('unitmath namespace', () => {
     it('should be a function', () => {
       assert.strictEqual(typeof unit, 'function')
@@ -29,7 +28,7 @@ describe('unitmath', () => {
     it('should have the correct default config options', () => {
       let optionsToCheckEquality = { levelOfAwesomeness: 11 }
       let actualOptions = unit.config()
-      for(let key in optionsToCheckEquality) {
+      for (let key in optionsToCheckEquality) {
         assert.strictEqual(optionsToCheckEquality[key], actualOptions[key])
       }
 
@@ -39,7 +38,6 @@ describe('unitmath', () => {
   })
 
   describe('config', () => {
-    
     it('should return current config when called with no arguments', () => {
       assert.strictEqual(typeof unit.config(), 'object')
     })
@@ -76,7 +74,6 @@ describe('unitmath', () => {
         assert.notStrictEqual(unit.config(), newUnit.config())
       })
     })
-
   })
 
   describe('unit instance', () => {
@@ -84,8 +81,8 @@ describe('unitmath', () => {
       let u1 = unit(1, 'm')
       let u2 = unit(2, 'kg')
       let fns = ['add', 'mul']
-      fns.forEach(fn => { 
-        assert.strictEqual(typeof u1[fn], 'function') 
+      fns.forEach(fn => {
+        assert.strictEqual(typeof u1[fn], 'function')
       })
       assert.strictEqual(u1.add, u2.add)
     })
@@ -96,7 +93,6 @@ describe('unitmath', () => {
   })
 
   describe('factory function', function () {
-
     it('should create unit correctly', function () {
       let unit1 = unit()
       assert.strictEqual(unit1.value, null)
@@ -151,7 +147,6 @@ describe('unitmath', () => {
       assert.throws(function () { console.log(unit(0, 'bla')) })
       assert.throws(function () { console.log(unit(0, 3)) })
     })
-
   })
 
   describe('exists', function () {
@@ -194,8 +189,8 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit(5, 'J / K')._getDimension(), ['ENTROPY', 'HEAT_CAPACITY'])
       assert.deepStrictEqual(unit(5, 'kg m / s^2')._getDimension(), ['FORCE'])
       assert.deepStrictEqual(unit(5, 's^-1')._getDimension(), ['FREQUENCY'])
-      assert.deepStrictEqual(unit(5, 'W/m^2')._getDimension(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE']) 
-      assert.deepStrictEqual(unit(5, 'N s')._getDimension(), ['IMPULSE', 'MOMENTUM']) 
+      assert.deepStrictEqual(unit(5, 'W/m^2')._getDimension(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE'])
+      assert.deepStrictEqual(unit(5, 'N s')._getDimension(), ['IMPULSE', 'MOMENTUM'])
       assert.deepStrictEqual(unit(5, 'henry')._getDimension(), ['INDUCTANCE'])
       assert.deepStrictEqual(unit(5, 'm/s^3')._getDimension(), ['JERK'])
       assert.deepStrictEqual(unit(5, 'm^2/s')._getDimension(), ['KINEMATIC_VISCOSITY'])
@@ -211,9 +206,7 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit(5, 'm^3')._getDimension(), ['VOLUME'])
       assert.deepStrictEqual(unit(5, 'tesla m^2')._getDimension(), ['MAGNETIC_FLUX'])
       assert.deepStrictEqual(unit(5, 'tesla')._getDimension(), ['MAGNETIC_FLUX_DENSITY'])
-      
-      
-      })
+    })
   })
 
   describe('hasDimension', function () {
@@ -248,7 +241,6 @@ describe('unitmath', () => {
       assert(unit(100, 'cm').equals('1 m'))
       assert(unit('3 kg / kg').equals(3))
     })
-
   })
 
   describe('clone', function () {
@@ -412,7 +404,6 @@ describe('unitmath', () => {
   })
 
   describe('toString', function () {
-
     it('should convert to string when no extra simplification is requested', () => {
       assert.strictEqual(unit(5000, 'cm').toString(), '5000 cm')
       assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
@@ -813,7 +804,6 @@ describe('unitmath', () => {
       assert.strictEqual(unit().value, null)
       assert.strictEqual(unit().units.length, 0)
     })
-
   })
 
   describe('prefixes', function () {
@@ -840,7 +830,7 @@ describe('unitmath', () => {
     })
   })
 
-  describe('add', function() {
+  describe('add', function () {
     it('should add two units', () => {
       assert.deepStrictEqual(unit(300, 'm').add(unit(3, 'km')), unit(3300, 'm'))
       assert.deepStrictEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
@@ -859,10 +849,9 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit.add(unit(300, 'm'), unit(3, 'km')), unit(3300, 'm'))
       assert.deepStrictEqual(unit.add('300 m', '3 km'), unit(3300, 'm'))
     })
-
   })
 
-  describe('sub', function() {
+  describe('sub', function () {
     it('should subtract two units', () => {
       assert.deepStrictEqual(unit(300, 'm').sub(unit(3, 'km')), unit(-2700, 'm'))
       assert.deepStrictEqual(unit('2m').sub(unit('3ft')), unit('1.0856 m'))
@@ -881,7 +870,6 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit.sub(unit(300, 'm'), unit(3, 'km')), unit(-2700, 'm'))
       assert.deepStrictEqual(unit.sub('300 m', '3 km'), unit(-2700, 'm'))
     })
-
   })
 
   describe('mul', () => {
@@ -897,7 +885,6 @@ describe('unitmath', () => {
     it('should convert parameter to unit', () => {
       assert.deepStrictEqual(unit('1 hour').mul('30 minute'), unit(30, 'hour minute'))
       assert.deepStrictEqual(unit('1 hour').mul(3), unit('3 hour'))
-
     })
 
     it('should return a frozen unit', () => {
@@ -1002,7 +989,6 @@ describe('unitmath', () => {
       approx.equal(unit4.value, 9.81)
       assert.strictEqual(unit4.units[0].unit.name, 'meters')
       assert.strictEqual(unit4.units[0].prefix.name, '')
-
     })
   })
 
@@ -1040,11 +1026,11 @@ describe('unitmath', () => {
         }
       })
     })
-    
+
     describe('UNIT_SYSTEMS', () => {
       it('should not have any dimensions that are not present in DIMENSIONS', () => {
-        for(let sys in unit._unitStore.UNIT_SYSTEMS) {
-          for(let dim in unit._unitStore.UNIT_SYSTEMS[sys]) {
+        for (let sys in unit._unitStore.UNIT_SYSTEMS) {
+          for (let dim in unit._unitStore.UNIT_SYSTEMS[sys]) {
             assert(unit._unitStore.DIMENSIONS.hasOwnProperty(dim), `${dim} not found in DIMESNIONS`)
           }
         }

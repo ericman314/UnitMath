@@ -1,8 +1,7 @@
 /**
  * Returns a new Parser.
  */
-export default function createParser(options, unitStore) {
-
+export default function createParser (options, unitStore) {
   // private variables and functions for the Unit parser
   let text, index, c
 
@@ -137,7 +136,6 @@ export default function createParser(options, unitStore) {
     }
   }
 
-
   /**
    * Parse a string and return the numeric value (or null) and an array of units with their powers.
    *
@@ -147,8 +145,7 @@ export default function createParser(options, unitStore) {
    * @param {string} str        A string like "5.2 inch", "4e2 cm/s^2"
    * @return {Object} { value, unitArray }
    */
-  function parse(str) {
-
+  function parse (str) {
     // console.log(`parse("${str}")`)
 
     text = str
@@ -164,7 +161,7 @@ export default function createParser(options, unitStore) {
     for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
       unit.dimensions[i] = 0
     }
-    
+
     unit.units = []
 
     let powerMultiplierCurrent = 1
@@ -190,17 +187,16 @@ export default function createParser(options, unitStore) {
     // Optional number at the start of the string
     const valueStr = parseNumber()
     // console.log(`valueStr = "${valueStr}"`)
-    
+
     if (valueStr) {
       unit.value = parseFloat(valueStr)
 
       skipWhitespace() // Whitespace is not required here
 
       // handle multiplication or division right after the value, like '1/s'
-      if(parseCharacter('*')) {
+      if (parseCharacter('*')) {
         // Ignore
-      }
-      else if (parseCharacter('/')) {
+      } else if (parseCharacter('/')) {
         powerMultiplierCurrent = -1
         expectingUnit = true
       }
@@ -258,15 +254,14 @@ export default function createParser(options, unitStore) {
       }
 
       skipWhitespace()
-      
+
       // "/" means we are expecting something to come next.
       // Is there a forward slash? If so, set powerMultiplierCurrent to -1. All remaining units will be in the denominator.
       expectingUnit = false
-      
-      if(parseCharacter('*')) {
+
+      if (parseCharacter('*')) {
         // Ignore
-      }
-      else if (parseCharacter('/')) {
+      } else if (parseCharacter('/')) {
         if (powerMultiplierCurrent === -1) {
           throw new SyntaxError(`Unexpected additional "/" in "${text}" at index ${index}`)
         }
@@ -296,7 +291,6 @@ export default function createParser(options, unitStore) {
     }
 
     return unit
-  
   }
 
   return parse
