@@ -8,7 +8,8 @@
   "scripts": {
     "build": "babel src -d lib",
     "prepublishOnly": "npm test",
-    "test": "mocha --require @babel/register --recursive test"
+    "test": "npm run lint && mocha --require @babel/register --recursive test",
+    "lint": "standard --env=mocha --env=worker"
   },
   "repository": {
     "type": "git",
@@ -32,7 +33,8 @@
     "@babel/cli": "^7.4.4",
     "@babel/preset-env": "^7.4.3",
     "@babel/register": "^7.4.0",
-    "mocha": "^6.1.4"
+    "mocha": "^6.1.4",
+    "standard": "12.0.1"
   },
   "dependencies": {
     "@babel/core": "^7.4.3"
