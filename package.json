@@ -8,7 +8,7 @@
   "scripts": {
     "build": "babel src -d lib",
     "prepublishOnly": "npm test",
-    "test": "npm run lint && test:src",
+    "test": "npm run lint && npm run test:src",
     "test:src": "mocha --require @babel/register --recursive test",
     "lint": "standard --env=mocha --env=worker"
   },
