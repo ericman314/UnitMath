@@ -1758,6 +1758,8 @@ export default function createUnitStore (options) {
   UNIT_SYSTEMS.auto = JSON.parse(JSON.stringify(UNIT_SYSTEMS.si))
 
   // Set the current unit system
+  // TODO: use this value or delete the next line.
+  // eslint-disable-next-line no-unused-vars
   let currentUnitSystem = UNIT_SYSTEMS.auto
 
   // Add dimensions to each built-in unit

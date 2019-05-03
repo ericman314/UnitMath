@@ -6,6 +6,10 @@ import unit from '../src/Unit'
 
 // TODO: Implement implicit conversion of strings to units in add, sub, mul, etc.
 
+// TODO: Remove once uses of `math`, and `Unit` are removed or these values
+//       are imported.
+/* global math, Unit */
+
 describe('unitmath', () => {
   describe('unitmath namespace', () => {
     it('should be a function', () => {
