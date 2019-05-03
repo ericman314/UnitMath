@@ -171,22 +171,6 @@ let _config = function _config (options) {
   }
 
   /**
-   * Convert the unit to a specific unit name.
-   * @memberof Unit
-   * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm"
-   * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
-   */
-  Unit.prototype.to = function (valuelessUnit) {
-    if (!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
-      throw new TypeError('Parameter must be a Unit or a string.')
-    }
-    valuelessUnit = _convertParamToUnit(valuelessUnit)
-    let unit = _to(this, valuelessUnit)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
    * Convert the unit to a specific unit.
    * @memberof Unit
    * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm"
