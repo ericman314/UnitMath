@@ -1,9 +1,8 @@
 /**
  * Creates a new unit store.
- * @param {Object} options 
+ * @param {Object} options
  */
-export default function createUnitStore(options) {
-
+export default function createUnitStore (options) {
   const PREFIXES = {
     NONE: {
       '': { name: '', value: 1, scientific: true }
@@ -209,7 +208,7 @@ export default function createUnitStore(options) {
     BIT: {
       dimensions: [0, 0, 0, 0, 0, 0, 0, 0, 1]
     },
-    
+
     // Derived
     UNITLESS: {
       dimensions: [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -315,7 +314,7 @@ export default function createUnitStore(options) {
     },
     KINEMATIC_VISCOSITY: {
       dimensions: [0, 2, -1, 0, 0, 0, 0, 0, 0]
-    },  
+    },
     LINEAR_DENSITY: {
       dimensions: [1, -1, 0, 0, 0, 0, 0, 0, 0]
     },
@@ -1122,7 +1121,7 @@ export default function createUnitStore(options) {
       name: 'cycle',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.NONE,
-      value: 2*Math.pi,
+      value: 2 * Math.pi,
       offset: 0
     },
     // arcsec = rad / (3600 * (360 / 2 * pi)) = rad / 0.0000048481368110953599358991410235795
@@ -1699,7 +1698,6 @@ export default function createUnitStore(options) {
 
   }
 
-
   /**
    * A unit system is a set of dimensionally independent base dimensions plus a set of derived dimensions, formed by multiplication and division of the base dimensions, that are by convention used with the unit system.
    * A user perhaps could issue a command to select a preferred unit system, or use the default (see below).
@@ -1717,7 +1715,7 @@ export default function createUnitStore(options) {
       AMOUNT_OF_SUBSTANCE: { unit: UNITS.mol, prefix: PREFIXES.SHORT[''] },
       ANGLE: { unit: UNITS.rad, prefix: PREFIXES.SHORT[''] },
       BIT: { unit: UNITS.bit, prefix: PREFIXES.SHORT[''] },
-      
+
       // Derived dimensions
       UNITLESS: { unit: UNIT_NONE, prefix: PREFIXES.NONE[''] },
       FORCE: { unit: UNITS.N, prefix: PREFIXES.SHORT[''] },
@@ -1760,12 +1758,14 @@ export default function createUnitStore(options) {
   UNIT_SYSTEMS.auto = JSON.parse(JSON.stringify(UNIT_SYSTEMS.si))
 
   // Set the current unit system
+  // TODO: use this value or delete the next line.
+  // eslint-disable-next-line no-unused-vars
   let currentUnitSystem = UNIT_SYSTEMS.auto
 
   // Add dimensions to each built-in unit
   for (let key in UNITS) {
     const unit = UNITS[key]
-    if(!unit.base) {
+    if (!unit.base) {
       throw new Error(`Cannot find dimension for unit ${unit.name}`)
     }
     unit.dimensions = unit.base.dimensions
@@ -1790,7 +1790,7 @@ export default function createUnitStore(options) {
    * Tests whether the given string exists as a known unit. The unit may have a prefix.
    * @param {string} singleUnitString The name of the unit, with optional prefix.
    */
-  function exists(singleUnitString) {
+  function exists (singleUnitString) {
     return findUnit(singleUnitString) !== null
   }
 
@@ -1843,5 +1843,4 @@ export default function createUnitStore(options) {
 
   // expose arrays with prefixes, dimensions, units, systems
   return { PREFIXES, BASE_DIMENSIONS, DIMENSIONS, UNIT_SYSTEMS, UNITS, exists, findUnit }
-
 }
