@@ -652,6 +652,20 @@ let _config = function _config(options) {
   }
 
   /**
+   * Returns a string array of all the dimensions that match this unit.
+   * @return {string[]} The matching dimensions, or an empty array if there are no matching dimensions.
+   */
+  Unit.prototype._getDimension = function () {
+    const result = []
+    for(let d in unitStore.DIMENSIONS) {
+      if(this._hasDimension(d)) {
+        result.push(d)
+      }
+    }
+    return result
+  }
+
+  /**
    * Check if this unit equals another unit
    * @memberof Unit
    * @param {Unit} other

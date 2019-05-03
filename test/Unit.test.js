@@ -139,8 +139,8 @@ describe('unitmath', () => {
       approx.deepEqual(unit('3 cm m / s minute'), unit('300 cm^2 / s minute'))
     })
 
-    it.skip('should ignore properties on Object.prototype', function () {
-      Object.prototype.foo = Unit.UNITS['meter'] // eslint-disable-line no-extend-native
+    it('should ignore properties on Object.prototype', function () {
+      Object.prototype.foo = unit._unitStore.UNITS['meter'] // eslint-disable-line no-extend-native
 
       assert.throws(function () { console.log(unit(1, 'foo')) }, /Unit "foo" not found/)
 
@@ -164,10 +164,56 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('getDimension', function () {
-    it('should return the first DIMENSION matching this unit', () => {
-      throw Error('Not implemented')
-    })
+  describe('getDimension', function () {
+    it('should return the DIMENSION matching this unit', () => {
+      assert.deepStrictEqual(unit(5)._getDimension(), ['UNITLESS'])
+      assert.deepStrictEqual(unit(5, 'm s')._getDimension(), ['ABSEMENT'])
+      assert.deepStrictEqual(unit(5, 'm/s^2')._getDimension(), ['ACCELERATION'])
+      assert.deepStrictEqual(unit(5, 'deg')._getDimension(), ['ANGLE'])
+      assert.deepStrictEqual(unit(5, 'rad/s^2')._getDimension(), ['ANGULAR_ACCELERATION'])
+      assert.deepStrictEqual(unit(5, '5 kg m^2 rad/s')._getDimension(), ['ANGULAR_MOMENTUM'])
+      assert.deepStrictEqual(unit(5, '5 rad/s')._getDimension(), ['ANGULAR_VELOCITY'])
+      assert.deepStrictEqual(unit(5, 'mol')._getDimension(), ['AMOUNT_OF_SUBSTANCE'])
+      assert.deepStrictEqual(unit(5, 'm^2')._getDimension(), ['AREA'])
+      assert.deepStrictEqual(unit(5, 'kg/m^2')._getDimension(), ['AREA_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'kb')._getDimension(), ['BIT'])
+      assert.deepStrictEqual(unit(5, 'Gb/s')._getDimension(), ['BIT_RATE'])
+      assert.deepStrictEqual(unit(5, 'C/V')._getDimension(), ['CAPACITANCE'])
+      assert.deepStrictEqual(unit(5, 'A/m^2')._getDimension(), ['CURRENT_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'A')._getDimension(), ['CURRENT'])
+      assert.deepStrictEqual(unit(5, 'Pa s')._getDimension(), ['DYNAMIC_VISCOSITY'])
+      assert.deepStrictEqual(unit(5, 'C')._getDimension(), ['ELECTRIC_CHARGE'])
+      assert.deepStrictEqual(unit(5, 'C/m^3')._getDimension(), ['ELECTRIC_CHARGE_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'V/m')._getDimension(), ['ELECTRIC_FIELD_STRENGTH'])
+      assert.deepStrictEqual(unit(5, 'siemens')._getDimension(), ['ELECTRICAL_CONDUCTANCE'])
+      assert.deepStrictEqual(unit(5, 'siemens/m')._getDimension(), ['ELECTRICAL_CONDUCTIVITY'])
+      assert.deepStrictEqual(unit(5, 'V')._getDimension(), ['ELECTRIC_POTENTIAL'])
+      assert.deepStrictEqual(unit(5, 'ohm')._getDimension(), ['RESISTANCE', 'IMPEDANCE'])
+      assert.deepStrictEqual(unit(5, 'ohm m')._getDimension(), ['ELECTRICAL_RESISTIVITY'])
+      assert.deepStrictEqual(unit(5, 'kg m^2 / s^2')._getDimension(), ['ENERGY', 'TORQUE'])
+      assert.deepStrictEqual(unit(5, 'J / K')._getDimension(), ['ENTROPY', 'HEAT_CAPACITY'])
+      assert.deepStrictEqual(unit(5, 'kg m / s^2')._getDimension(), ['FORCE'])
+      assert.deepStrictEqual(unit(5, 's^-1')._getDimension(), ['FREQUENCY'])
+      assert.deepStrictEqual(unit(5, 'W/m^2')._getDimension(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE']) 
+      assert.deepStrictEqual(unit(5, 'N s')._getDimension(), ['IMPULSE', 'MOMENTUM']) 
+      assert.deepStrictEqual(unit(5, 'henry')._getDimension(), ['INDUCTANCE'])
+      assert.deepStrictEqual(unit(5, 'm/s^3')._getDimension(), ['JERK'])
+      assert.deepStrictEqual(unit(5, 'm^2/s')._getDimension(), ['KINEMATIC_VISCOSITY'])
+      // TODO: Continue here
+      assert.deepStrictEqual(unit(5, 'cm')._getDimension(), ['LENGTH'])
+      assert.deepStrictEqual(unit(5, 'candela')._getDimension(), ['LUMINOUS_FLUX'])
+      assert.deepStrictEqual(unit(5, 'lbm')._getDimension(), ['MASS'])
+      assert.deepStrictEqual(unit(5, 'kg m^2 / s^3')._getDimension(), ['POWER'])
+      assert.deepStrictEqual(unit(5, 'kg / m s^2')._getDimension(), ['PRESSURE'])
+      assert.deepStrictEqual(unit(5, 'K')._getDimension(), ['TEMPERATURE'])
+      assert.deepStrictEqual(unit(5, 'day')._getDimension(), ['TIME'])
+      assert.deepStrictEqual(unit(5, 'm/s')._getDimension(), ['VELOCITY'])
+      assert.deepStrictEqual(unit(5, 'm^3')._getDimension(), ['VOLUME'])
+      assert.deepStrictEqual(unit(5, 'tesla m^2')._getDimension(), ['MAGNETIC_FLUX'])
+      assert.deepStrictEqual(unit(5, 'tesla')._getDimension(), ['MAGNETIC_FLUX_DENSITY'])
+      
+      
+      })
   })
 
   describe('hasDimension', function () {
@@ -770,17 +816,17 @@ describe('unitmath', () => {
 
   })
 
-  describe.skip('prefixes', function () {
+  describe('prefixes', function () {
     it('should accept both long and short prefixes for ohm', function () {
-      assert.strictEqual(Unit.parse('5 ohm').toString(), '5 ohm')
-      assert.strictEqual(Unit.parse('5 milliohm').toString(), '5 milliohm')
-      assert.strictEqual(Unit.parse('5 mohm').toString(), '5 mohm')
+      assert.strictEqual(unit('5 ohm').toString(), '5 ohm')
+      assert.strictEqual(unit('5 milliohm').toString(), '5 milliohm')
+      assert.strictEqual(unit('5 mohm').toString(), '5 mohm')
     })
 
     it('should accept both long and short prefixes for bar', function () {
-      assert.strictEqual(Unit.parse('5 bar').toString(), '5 bar')
-      assert.strictEqual(Unit.parse('5 millibar').toString(), '5 millibar')
-      assert.strictEqual(Unit.parse('5 mbar').toString(), '5 mbar')
+      assert.strictEqual(unit('5 bar').toString(), '5 bar')
+      assert.strictEqual(unit('5 millibar').toString(), '5 millibar')
+      assert.strictEqual(unit('5 mbar').toString(), '5 mbar')
     })
   })
 
@@ -974,23 +1020,35 @@ describe('unitmath', () => {
     })
   })
 
-  describe('UNITS', function () {
-    it('should be of the correct value and dimension', function () {
-      assert.strictEqual(unit(1, 's A').equals(unit(1, 'C')), true)
-      assert.strictEqual(unit(1, 'W/A').equals(unit(1, 'V')), true)
-      assert.strictEqual(unit(1, 'V/A').equals(unit(1, 'ohm')), true)
-      assert.strictEqual(unit(1, 'C/V').equals(unit(1, 'F')), true)
-      assert.strictEqual(unit(1, 'J/A').equals(unit(1, 'Wb')), true)
-      assert.strictEqual(unit(1, 'Wb/m^2').equals(unit(1, 'T')), true)
-      assert.strictEqual(unit(1, 'Wb/A').equals(unit(1, 'H')), true)
-      assert.strictEqual(unit(1, 'ohm^-1').equals(unit(1, 'S')), true)
-      assert.strictEqual(unit(1, 'eV').equals(unit(1.602176565e-19, 'J')), true)
-    })
+  describe('unitStore', function () {
+    describe('UNITS', () => {
+      it('built-in units should be of the correct value and dimension', function () {
+        assert.strictEqual(unit(1, 's A').equals(unit(1, 'C')), true)
+        assert.strictEqual(unit(1, 'W/A').equals(unit(1, 'V')), true)
+        assert.strictEqual(unit(1, 'V/A').equals(unit(1, 'ohm')), true)
+        assert.strictEqual(unit(1, 'C/V').equals(unit(1, 'F')), true)
+        assert.strictEqual(unit(1, 'J/A').equals(unit(1, 'Wb')), true)
+        assert.strictEqual(unit(1, 'Wb/m^2').equals(unit(1, 'T')), true)
+        assert.strictEqual(unit(1, 'Wb/A').equals(unit(1, 'H')), true)
+        assert.strictEqual(unit(1, 'ohm^-1').equals(unit(1, 'S')), true)
+        assert.strictEqual(unit(1, 'eV').equals(unit(1.602176565e-19, 'J')), true)
+      })
 
-    it("For each built-in unit, 'name' should match key", function () {
-      for (const key in unit._unitStore.UNITS) {
-        assert.strictEqual(key, unit._unitStore.UNITS[key].name)
-      }
+      it("For each built-in unit, 'name' should match key", function () {
+        for (const key in unit._unitStore.UNITS) {
+          assert.strictEqual(key, unit._unitStore.UNITS[key].name)
+        }
+      })
+    })
+    
+    describe('UNIT_SYSTEMS', () => {
+      it('should not have any dimensions that are not present in DIMENSIONS', () => {
+        for(let sys in unit._unitStore.UNIT_SYSTEMS) {
+          for(let dim in unit._unitStore.UNIT_SYSTEMS[sys]) {
+            assert(unit._unitStore.DIMENSIONS.hasOwnProperty(dim), `${dim} not found in DIMESNIONS`)
+          }
+        }
+      })
     })
   })
 
