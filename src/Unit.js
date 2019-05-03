@@ -50,163 +50,253 @@ let _config = function _config (options) {
    * @param {String} unitString The unit string, unless already included in the `value` parameter.
    * @returns {Unit} The Unit given by the value and unit string.
    */
-  function Unit (value, unitString) {
-    if (!(this instanceof Unit)) {
-      throw new Error('_unit constructor must be called with the new operator')
+  class Unit {
+    constructor (value, unitString) {
+      if (!(this instanceof Unit)) {
+        throw new Error('_unit constructor must be called with the new operator')
+      }
+      // console.log(`Inside the constructor: _unit(${value}, ${unitString})`)
+      // Allowed signatures:
+      // Unit(string)
+      // Unit(*)
+      // Unit(*, string)
+      let parseResult
+      if (typeof value === 'undefined' && typeof unitString === 'undefined') {
+        parseResult = parser('')
+        parseResult.value = null
+      } else if (typeof value === 'string' && typeof unitString === 'undefined') {
+        parseResult = parser(value)
+      } else if (typeof unitString === 'string') {
+        parseResult = parser(unitString)
+        parseResult.value = value
+      } else if (typeof unitString === 'undefined') {
+        parseResult = parser('')
+        parseResult.value = value
+      } else {
+        throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
+      }
+      this.type = 'Unit'
+      this.dimensions = parseResult.dimensions
+      this.units = _combineDuplicateUnits(parseResult.units)
+      // TODO: All the denormalizing/normalizing creates round-off error. See if we can reduce the number of floating point operations somehow.
+      this.value = (parseResult.value === undefined || parseResult.value === null) ? null : _denormalize(this.units, _normalize(parseResult.units, parseResult.value))
     }
-    // console.log(`Inside the constructor: _unit(${value}, ${unitString})`)
 
-    // Allowed signatures:
-    // Unit(string)
-    // Unit(*)
-    // Unit(*, string)
-
-    let parseResult
-    if (typeof value === 'undefined' && typeof unitString === 'undefined') {
-      parseResult = parser('')
-      parseResult.value = null
-    } else if (typeof value === 'string' && typeof unitString === 'undefined') {
-      parseResult = parser(value)
-    } else if (typeof unitString === 'string') {
-      parseResult = parser(unitString)
-      parseResult.value = value
-    } else if (typeof unitString === 'undefined') {
-      parseResult = parser('')
-      parseResult.value = value
-    } else {
-      throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
+    // These are public methods available to each instance of a Unit. They each should return a frozen Unit.
+    
+    /**
+     * create a copy of this unit
+     * @memberof Unit
+     * @return {Unit} Returns a cloned version of the unit
+     */
+    clone () {
+      let unit = _clone(this)
+      Object.freeze(unit)
+      return unit
     }
 
-    this.type = 'Unit'
-    this.dimensions = parseResult.dimensions
-    this.units = _combineDuplicateUnits(parseResult.units)
-
-    // TODO: All the denormalizing/normalizing creates round-off error. See if we can reduce the number of floating point operations somehow.
-    this.value = (parseResult.value === undefined || parseResult.value === null) ? null : _denormalize(this.units, _normalize(parseResult.units, parseResult.value))
-  }
-
-  // These are public methods available to each instance of a Unit. They each should return a frozen Unit.
-
-  /**
-   * create a copy of this unit
-   * @memberof Unit
-   * @return {Unit} Returns a cloned version of the unit
-   */
-  Unit.prototype.clone = function () {
-    let unit = _clone(this)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
-   * Adds two units. Both units' dimensions must be equal.
-   * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
-   * @returns {Unit} The result of adding this and the other unit.
-   */
-  Unit.prototype.add = function (other) {
-    other = _convertParamToUnit(other)
-    let unit = _add(this, other)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
-   * Subtracts two units. Both units' dimensions must be equal.
-   * @param {Unit|string} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
-   * @returns {Unit} The result of subtract this and the other unit.
-   */
-  Unit.prototype.sub = function (other) {
-    other = _convertParamToUnit(other)
-    let unit = _sub(this, other)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
-   * Multiplies two units.
-   * @param {Unit|string} other The unit to multiply to this one.
-   * @returns {Unit} The result of multiplying this and the other unit.
-   */
-  Unit.prototype.mul = function (other) {
-    other = _convertParamToUnit(other)
-    let unit = _mul(this, other)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
-   * Divides two units.
-   * @param {Unit|string} other The unit to divide this unit by.
-   * @returns {Unit} The result of dividing this by the other unit.
-   */
-  Unit.prototype.div = function (other) {
-    other = _convertParamToUnit(other)
-    let unit = _div(this, other)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
-   * Calculate the power of a unit
-   * @memberof Unit
-   * @param {number|custom} p
-   * @returns {Unit}      The result: this^p
-   */
-  Unit.prototype.pow = function (p) {
-    let unit = _pow(this, p)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
-   * Takes the square root of a unit.
-   * @memberof Unit
-   * @param {Unit|string|number} a The unit.
-   * @returns {Unit} The square root of the unit a.
-   */
-  Unit.prototype.sqrt = function () {
-    let unit = _sqrt(this)
-    Object.freeze(unit)
-    return unit
-  }
-
-  /**
-   * Convert the unit to a specific unit.
-   * @memberof Unit
-   * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm"
-   * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
-   */
-  Unit.prototype.to = function (valuelessUnit) {
-    if (!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
-      throw new TypeError('Parameter must be a Unit or a string.')
+    /**
+     * Adds two units. Both units' dimensions must be equal.
+     * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
+     * @returns {Unit} The result of adding this and the other unit.
+     */
+    add (other) {
+      other = _convertParamToUnit(other)
+      let unit = _add(this, other)
+      Object.freeze(unit)
+      return unit
     }
-    valuelessUnit = _convertParamToUnit(valuelessUnit)
-    let unit = _to(this, valuelessUnit)
-    Object.freeze(unit)
-    return unit
-  }
 
-  /**
-   * Convert the unit to SI units.
-   * @memberof Unit
-   * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
-   */
-  Unit.prototype.toSI = function () {
-    let unit = _toSI(this)
-    Object.freeze(unit)
-    return unit
-  }
+    /**
+     * Subtracts two units. Both units' dimensions must be equal.
+     * @param {Unit|string} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
+     * @returns {Unit} The result of subtract this and the other unit.
+     */
+    sub (other) {
+      other = _convertParamToUnit(other)
+      let unit = _sub(this, other)
+      Object.freeze(unit)
+      return unit
+    }
 
-  /**
-   * Returns this unit without a value.
-   * @memberof Unit
-   * @returns {Unit} A new unit formed by removing the value from this unit.
-   */
-  Unit.prototype.getUnits = function () {
-    let result = _clone(this)
-    result.value = null
-    Object.freeze(result)
-    return result
+    /**
+     * Multiplies two units.
+     * @param {Unit|string} other The unit to multiply to this one.
+     * @returns {Unit} The result of multiplying this and the other unit.
+     */
+    mul (other) {
+      other = _convertParamToUnit(other)
+      let unit = _mul(this, other)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
+     * Divides two units.
+     * @param {Unit|string} other The unit to divide this unit by.
+     * @returns {Unit} The result of dividing this by the other unit.
+     */
+    div (other) {
+      other = _convertParamToUnit(other)
+      let unit = _div(this, other)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
+     * Calculate the power of a unit
+     * @memberof Unit
+     * @param {number|custom} p
+     * @returns {Unit}      The result: this^p
+     */
+    pow (p) {
+      let unit = _pow(this, p)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
+     * Takes the square root of a unit.
+     * @memberof Unit
+     * @param {Unit|string|number} a The unit.
+     * @returns {Unit} The square root of the unit a.
+     */
+    sqrt () {
+      let unit = _sqrt(this)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
+     * Convert the unit to a specific unit.
+     * @memberof Unit
+     * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm"
+     * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+     */
+    to (valuelessUnit) {
+      if (!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
+        throw new TypeError('Parameter must be a Unit or a string.')
+      }
+      valuelessUnit = _convertParamToUnit(valuelessUnit)
+      let unit = _to(this, valuelessUnit)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
+     * Convert the unit to SI units.
+     * @memberof Unit
+     * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+     */
+    toSI () {
+      let unit = _toSI(this)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
+     * Returns this unit without a value.
+     * @memberof Unit
+     * @returns {Unit} A new unit formed by removing the value from this unit.
+     */
+    getUnits () {
+      let result = _clone(this)
+      result.value = null
+      Object.freeze(result)
+      return result
+    }
+
+    /**
+     * Returns whether the unit is compound (like m/s, cm^2) or not (kg, N, hogshead)
+     * @memberof Unit
+     * @returns True if the unit is compound
+     */
+    isCompound () {
+      return _isCompound(this.units)
+    }
+
+    /**
+     * check if this unit has given base unit
+     * @memberof Unit
+     * @param {DIMENSION | string | undefined} dim
+     */
+    _hasDimension (dimension) {
+      if (typeof (dimension) === 'string') {
+        dimension = unitStore.DIMENSIONS[dimension]
+      }
+      if (!dimension) {
+        return false
+      }
+      // All dimensions must be the same
+      for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
+        if (Math.abs((this.dimensions[i] || 0) - (dimension.dimensions[i] || 0)) > 1e-12) {
+          return false
+        }
+      }
+      return true
+    }
+
+    /**
+     * Check if this unit has a dimension equal to another unit
+     * @param {Unit} other
+     * @return {boolean} true if equal dimensions
+     */
+    _equalDimension (other) {
+      // All dimensions must be the same
+      for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
+        if (Math.abs(this.dimensions[i] - other.dimensions[i]) > 1e-12) {
+          return false
+        }
+      }
+      return true
+    }
+
+    /**
+     * Returns a string array of all the dimensions that match this unit.
+     * @return {string[]} The matching dimensions, or an empty array if there are no matching dimensions.
+     */
+    _getDimension () {
+      const result = []
+      for (let d in unitStore.DIMENSIONS) {
+        if (this._hasDimension(d)) {
+          result.push(d)
+        }
+      }
+      return result
+    }
+
+    /**
+     * Check if this unit equals another unit
+     * @memberof Unit
+     * @param {Unit} other
+     * @return {boolean} true if both units are equal
+     */
+    equals (other) {
+      other = _convertParamToUnit(other)
+      return this._equalDimension(other) && options.customEq(_normalize(this.units, this.value), _normalize(other.units, other.value))
+    }
+
+    toString () {
+      return this.format()
+    }
+
+    /**
+     * Get a string representation of the Unit, with optional formatting options.
+     * @memberof Unit
+     * @param {Object} [options]  Formatting options.
+     * @return {string}
+     */
+    format (options) {
+      let simp = this.clone()
+      // TODO: Apply automatic simplification steps if specified in the config options
+      let str = (simp.value !== null) ? simp.value.toString() : ''
+      const unitStr = _formatUnits(simp)
+      if (unitStr.length > 0 && str.length > 0) {
+        str += ' '
+      }
+      str += unitStr
+      return str
+    }
   }
 
   // These private functions do not freeze the units before returning, so that we can do mutations on the units before returning the final, frozen unit to the user.
@@ -560,15 +650,6 @@ let _config = function _config (options) {
   }
 
   /**
-   * Returns whether the unit is compound (like m/s, cm^2) or not (kg, N, hogshead)
-   * @memberof Unit
-   * @returns True if the unit is compound
-   */
-  Unit.prototype.isCompound = function () {
-    return _isCompound(this.units)
-  }
-
-  /**
    * Return whether the given array of unit pieces is compound (contains multiple units, such as m/s, or cm^2, but not N)
    * @param {unit[]} units Array of unit pieces
    * @return {boolean} True if the unit is compound
@@ -578,92 +659,6 @@ let _config = function _config (options) {
       return false
     }
     return units.length > 1 || Math.abs(units[0].power - 1.0) > 1e-15
-  }
-
-  /**
-   * check if this unit has given base unit
-   * @memberof Unit
-   * @param {DIMENSION | string | undefined} dim
-   */
-  Unit.prototype._hasDimension = function (dimension) {
-    if (typeof (dimension) === 'string') {
-      dimension = unitStore.DIMENSIONS[dimension]
-    }
-
-    if (!dimension) { return false }
-
-    // All dimensions must be the same
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      if (Math.abs((this.dimensions[i] || 0) - (dimension.dimensions[i] || 0)) > 1e-12) {
-        return false
-      }
-    }
-    return true
-  }
-
-  /**
-   * Check if this unit has a dimension equal to another unit
-   * @param {Unit} other
-   * @return {boolean} true if equal dimensions
-   */
-  Unit.prototype._equalDimension = function (other) {
-    // All dimensions must be the same
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      if (Math.abs(this.dimensions[i] - other.dimensions[i]) > 1e-12) {
-        return false
-      }
-    }
-    return true
-  }
-
-  /**
-   * Returns a string array of all the dimensions that match this unit.
-   * @return {string[]} The matching dimensions, or an empty array if there are no matching dimensions.
-   */
-  Unit.prototype._getDimension = function () {
-    const result = []
-    for (let d in unitStore.DIMENSIONS) {
-      if (this._hasDimension(d)) {
-        result.push(d)
-      }
-    }
-    return result
-  }
-
-  /**
-   * Check if this unit equals another unit
-   * @memberof Unit
-   * @param {Unit} other
-   * @return {boolean} true if both units are equal
-   */
-  Unit.prototype.equals = function (other) {
-    other = _convertParamToUnit(other)
-    return this._equalDimension(other) && options.customEq(_normalize(this.units, this.value), _normalize(other.units, other.value))
-  }
-
-  Unit.prototype.toString = function () {
-    return this.format()
-  }
-
-  /**
-    * Get a string representation of the Unit, with optional formatting options.
-    * @memberof Unit
-    * @param {Object} [options]  Formatting options.
-    * @return {string}
-    */
-  Unit.prototype.format = function (options) {
-    let simp = this.clone()
-
-    // TODO: Apply automatic simplification steps if specified in the config options
-
-    let str = (simp.value !== null) ? simp.value.toString() : ''
-    const unitStr = _formatUnits(simp)
-    if (unitStr.length > 0 && str.length > 0) {
-      str += ' '
-    }
-    str += unitStr
-
-    return str
   }
 
   /**
@@ -729,6 +724,9 @@ let _config = function _config (options) {
 
   // Create a parser configured for these options
   let parser = createParser(options, unitStore)
+
+
+  // Public functions available on the unitmath namespace
 
   /**
    * Create a clone of the this unit factory function, but with the specified options.
