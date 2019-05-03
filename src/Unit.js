@@ -83,7 +83,7 @@ let _config = function _config (options) {
     }
 
     // These are public methods available to each instance of a Unit. They each should return a frozen Unit.
-    
+
     /**
      * create a copy of this unit
      * @memberof Unit
@@ -724,7 +724,6 @@ let _config = function _config (options) {
 
   // Create a parser configured for these options
   let parser = createParser(options, unitStore)
-
 
   // Public functions available on the unitmath namespace
 
