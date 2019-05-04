@@ -30,13 +30,30 @@ describe('unitmath', () => {
     })
 
     it('should have the correct default config options', () => {
-      let optionsToCheckEquality = { levelOfAwesomeness: 11 }
+      let optionsToCheckEquality = {
+        prefix: 'auto',
+        prefixMin: 0.1,
+        prefixMax: 1000,
+        simplify: true,
+        simplifyThreshold: 2,
+        system: 'auto',
+        subsystem: 'auto'
+      }
       let actualOptions = unit.config()
       for (let key in optionsToCheckEquality) {
-        assert.strictEqual(optionsToCheckEquality[key], actualOptions[key])
+        assert.strictEqual(optionsToCheckEquality[key], actualOptions[key], `config option ${key} has the wrong default value`)
       }
 
-      let optionsToCheckExistence = [ 'customAdd', 'customSub', 'customMul', 'customDiv', 'customPow', 'customEq', 'customConv', 'customClone' ]
+      let optionsToCheckExistence = [
+        'customAdd',
+        'customSub',
+        'customMul',
+        'customDiv',
+        'customPow',
+        'customEq',
+        'customConv',
+        'customClone'
+      ]
       optionsToCheckExistence.forEach(key => { assert(actualOptions.hasOwnProperty(key), `${key} does not exist`) })
     })
   })
@@ -47,7 +64,7 @@ describe('unitmath', () => {
     })
 
     it('should clone the options argument', () => {
-      let options = { levelOfAwesomeness: 12 }
+      let options = { prefix: 'always' }
       let newUnit = unit.config(options)
       assert.notStrictEqual(options, newUnit.config())
     })
@@ -55,13 +72,13 @@ describe('unitmath', () => {
     it('should freeze the options', () => {
       let newUnit = unit.config({})
       let options = newUnit.config()
-      assert.throws(() => { options.levelOfAwesomeness = 0 })
+      assert.throws(() => { options.prefix = 'always' })
     })
 
     it('should set new config options', () => {
-      let newUnit = unit.config({ levelOfAwesomeness: 12 })
-      assert.strictEqual(unit.config().levelOfAwesomeness, 11)
-      assert.strictEqual(newUnit.config().levelOfAwesomeness, 12)
+      let newUnit = unit.config({ prefix: 'always' })
+      assert.strictEqual(unit.config().prefix, 'auto')
+      assert.strictEqual(newUnit.config().prefix, 'always')
     })
 
     describe('newly returned namespace', () => {

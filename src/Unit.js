@@ -845,7 +845,13 @@ let customClone = (a) => {
 }
 
 let defaultOptions = {
-  levelOfAwesomeness: 11,
+  prefix: 'auto',
+  prefixMin: 0.1,
+  prefixMax: 1000,
+  simplify: true,
+  simplifyThreshold: 2,
+  system: 'auto',
+  subsystem: 'auto',
   customAdd,
   customSub,
   customMul,
