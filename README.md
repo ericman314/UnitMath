@@ -115,11 +115,56 @@ UnitMath can be configured using various options. The factory method `config(opt
 const unit = require('unitmath').config(options)    // TODO: show simple example using actual options
 ```
 
-The available options are:
+The available options and their **defaults** are:
 
-- **format**: *Object*
-  - **system**: *String* -- The unit system to use. Examples are `US` and `SI`.
-- **extendType**: *Object* -- See below
+- `prefix`: **`"auto"`**, `"always"`, or `"never"`  
+When formatting a unit, this option will specify whether the `toString` and `format` methods are allowed to choose an appropriately sized prefix in case of very small or very large quantities. The `"auto"` setting behaves exactly like `"always"`, unless the `unit` was constructed using the `to()` method.
+
+- `prefixMin`: **`0.1`**  
+When `prefix` is `"auto"` or `"always"`, the smallest formatted value of a `unit` that is allowed before choosing a different prefix.
+
+- `prefixMax`: **`1000`**  
+When `prefix` is `"auto"` or `"always"`, the largest formatted value of a `unit` that is allowed before choosing a different prefix.
+
+- `simplify`: **`true`**  
+Whether to automatically simplify units when calling the `toString` or `format` methods. If true, then `u.toString()` becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. Simplification is skipped if the unit was constructed using the `to()` method.
+
+- `simplifyThreshold`: **`2`**  
+A factor that affects whether a `unit` gets simplified. Simplification will not occur unless the "complexity" of the resulting `unit` is reduced by an amount equal to or greater than the `simplifyThreshold`. A lower value results in more `unit`s being simplified, while a higher number results in fewer `unit`s being simplified. The complexity of a `unit` is roughly equal to the number of "symbols" that are required to write the `unit`.
+
+- `system`: **`"auto"`**, `"si"`, `"us"`  
+The unit system to use when simplifying a `unit`. When `system === "auto"`, UnitMath will try to infer the unit system from the individual units that make up that `unit`: 
+
+  ```js
+  unit = unit.config({ system: 'auto' })
+
+  unit('150 lbf').div('10 in^2').toString()  // "15 psi"
+  unit('400 N').div('10 cm^2').toString()  // "400 kPa"
+  ```
+
+- `subsystem`: **`"auto"`**, `"mechanics"`, `"chemistry"`, `"electricity_and_magnetism"`, etc.
+The subsystem, or technical field, etc., to use when simplifying a `unit`. It can provide additional hints about which units to use when there are multiple options within the same system. When `subsystem === "auto"`, UnitMath will try to infer the subsystem from the individual units that make up that `unit`:
+
+  ```js
+  unit = unit.config({ subsystem: 'auto' })
+
+  unit('240 V').mul('5 A').mul('1 hr').toString()  // "1.2 kWh"
+  unit('4000 kg').mul('9.8 m/s^2').mul('100 m').toString()  // "3.92 MJ"
+  ```
+
+
+
+- **`customAdd`**
+- **`customSub`**
+- **`customMul`**
+- **`customDiv`**
+- **`customPow`**
+- **`customEq`**
+- **`customLT`**
+- **`customGT`**
+- **`customClone`**
+- **`customConv`**
+- **`customFormat`**
 
 TODO: List the options here
 
