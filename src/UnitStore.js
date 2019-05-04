@@ -252,7 +252,7 @@ export default function createUnitStore (options) {
     ELECTRIC_CHARGE_DENSITY: {
       dimensions: [0, -3, 1, 1, 0, 0, 0, 0, 0]
     },
-    ELECTRIC_CHARGE_DISPLACEMENT: {
+    ELECTRIC_DISPLACEMENT: {
       dimensions: [0, -2, 1, 1, 0, 0, 0, 0, 0]
     },
     ELECTRIC_FIELD_STRENGTH: {
@@ -376,7 +376,7 @@ export default function createUnitStore (options) {
       dimensions: [1, 0, -2, 0, 0, 0, 0, 0, 0]
     },
     TEMPERATURE_GRADIENT: {
-      dimensions: [-1, 0, 0, 0, 1, 0, 0, 0, 0]
+      dimensions: [0, -1, 0, 0, 1, 0, 0, 0, 0]
     },
     THERMAL_CONDUCTIVITY: {
       dimensions: [1, 1, -3, 0, -1, 0, 0, 0, 0]
