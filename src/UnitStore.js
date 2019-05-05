@@ -411,6 +411,7 @@ export default function createUnitStore (options) {
       name: 'meter',
       base: DIMENSIONS.LENGTH,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['nano', 'micro', 'milli', 'centi', 'kilo'],
       value: 1,
       offset: 0
     },
@@ -475,6 +476,7 @@ export default function createUnitStore (options) {
       name: 'm',
       base: DIMENSIONS.LENGTH,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['n', 'u', 'm', 'cm', 'k'],
       value: 1,
       offset: 0
     },
@@ -540,6 +542,7 @@ export default function createUnitStore (options) {
       name: 'm2',
       base: DIMENSIONS.AREA,
       prefixes: PREFIXES.SQUARED,
+      commonPrefixes: ['m', 'c', 'k'],
       value: 1,
       offset: 0
     },
@@ -612,6 +615,7 @@ export default function createUnitStore (options) {
       name: 'm3',
       base: DIMENSIONS.VOLUME,
       prefixes: PREFIXES.CUBIC,
+      commonPrefixes: ['m', 'c', 'k'],
       value: 1,
       offset: 0
     },
@@ -619,6 +623,7 @@ export default function createUnitStore (options) {
       name: 'L',
       base: DIMENSIONS.VOLUME,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['n', 'u', 'm'],
       value: 0.001,
       offset: 0
     }, // litre
@@ -626,6 +631,7 @@ export default function createUnitStore (options) {
       name: 'l',
       base: DIMENSIONS.VOLUME,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['n', 'u', 'm'],
       value: 0.001,
       offset: 0
     }, // litre
@@ -633,6 +639,7 @@ export default function createUnitStore (options) {
       name: 'litre',
       base: DIMENSIONS.VOLUME,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['nano', 'micro', 'milli'],
       value: 0.001,
       offset: 0
     },
@@ -844,6 +851,7 @@ export default function createUnitStore (options) {
       name: 'g',
       base: DIMENSIONS.MASS,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['n', 'u', 'm', 'k'],
       value: 0.001,
       offset: 0
     },
@@ -851,6 +859,7 @@ export default function createUnitStore (options) {
       name: 'gram',
       base: DIMENSIONS.MASS,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['nano', 'micro', 'milli', 'kilo'],
       value: 0.001,
       offset: 0
     },
@@ -858,14 +867,15 @@ export default function createUnitStore (options) {
     ton: {
       name: 'ton',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.SHORT,
+      prefixes: PREFIXES.NONE,
       value: 907.18474,
       offset: 0
     },
     tonne: {
       name: 'tonne',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.SHORT,
+      prefixes: PREFIXES.LONG,
+      commonPrefixes: ['kilo', 'mega', 'giga'],
       value: 1000,
       offset: 0
     },
@@ -961,6 +971,7 @@ export default function createUnitStore (options) {
       name: 's',
       base: DIMENSIONS.TIME,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['f', 'p', 'n', 'u', 'm'],
       value: 1,
       offset: 0
     },
@@ -982,6 +993,7 @@ export default function createUnitStore (options) {
       name: 'second',
       base: DIMENSIONS.TIME,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['femto', 'pico', 'nano', 'micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -989,6 +1001,7 @@ export default function createUnitStore (options) {
       name: 'sec',
       base: DIMENSIONS.TIME,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['femto', 'pico', 'nano', 'micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -1061,6 +1074,7 @@ export default function createUnitStore (options) {
       name: 'Hertz',
       base: DIMENSIONS.FREQUENCY,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['kilo', 'mega', 'giga', 'tera'],
       value: 1,
       offset: 0,
       reciprocal: true
@@ -1069,6 +1083,7 @@ export default function createUnitStore (options) {
       name: 'Hz',
       base: DIMENSIONS.FREQUENCY,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['k', 'M', 'G', 'T'],
       value: 1,
       offset: 0,
       reciprocal: true
@@ -1079,6 +1094,7 @@ export default function createUnitStore (options) {
       name: 'rad',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['m'],
       value: 1,
       offset: 0
     },
@@ -1086,20 +1102,21 @@ export default function createUnitStore (options) {
       name: 'radian',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['milli'],
       value: 1,
       offset: 0
     },
     deg: {
       name: 'deg',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: PREFIXES.NONE,    // Prefer arcminutes and arcseconds
       value: Math.PI / 180,
       offset: 0
     },
     degree: {
       name: 'degree',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.LONG,
+      prefixes: PREFIXES.NONE,
       value: Math.PI / 180,
       offset: 0
     },
@@ -1107,6 +1124,7 @@ export default function createUnitStore (options) {
       name: 'grad',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['c'],
       value: Math.PI / 200,
       offset: 0
     },
@@ -1114,6 +1132,7 @@ export default function createUnitStore (options) {
       name: 'gradian',
       base: DIMENSIONS.ANGLE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['centi'],
       value: Math.PI / 200,
       offset: 0
     },
@@ -1146,6 +1165,7 @@ export default function createUnitStore (options) {
       name: 'A',
       base: DIMENSIONS.CURRENT,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['u', 'm', 'K'],
       value: 1,
       offset: 0
     },
@@ -1153,6 +1173,7 @@ export default function createUnitStore (options) {
       name: 'ampere',
       base: DIMENSIONS.CURRENT,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['micro', 'milli', 'kilo'],
       value: 1,
       offset: 0
     },
@@ -1164,7 +1185,8 @@ export default function createUnitStore (options) {
     K: {
       name: 'K',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
+      prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['n', 'u', 'm'],
       value: 1,
       offset: 0
     },
@@ -1192,7 +1214,8 @@ export default function createUnitStore (options) {
     kelvin: {
       name: 'kelvin',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
+      prefixes: PREFIXES.LONG,
+      commonPrefixes: ['nano', 'micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -1223,6 +1246,7 @@ export default function createUnitStore (options) {
       name: 'mol',
       base: DIMENSIONS.AMOUNT_OF_SUBSTANCE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['k'],
       value: 1,
       offset: 0
     },
@@ -1230,6 +1254,7 @@ export default function createUnitStore (options) {
       name: 'mole',
       base: DIMENSIONS.AMOUNT_OF_SUBSTANCE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['kilo'],
       value: 1,
       offset: 0
     },
@@ -1258,6 +1283,7 @@ export default function createUnitStore (options) {
       name: 'N',
       base: DIMENSIONS.FORCE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['u', 'm', 'k', 'M'],   // These could be debatable
       value: 1,
       offset: 0
     },
@@ -1265,6 +1291,7 @@ export default function createUnitStore (options) {
       name: 'newton',
       base: DIMENSIONS.FORCE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['micro', 'milli', 'kilo', 'mega'],
       value: 1,
       offset: 0
     },
@@ -1299,7 +1326,7 @@ export default function createUnitStore (options) {
     kip: {
       name: 'kip',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: PREFIXES.NONE,
       value: 4448.2216,
       offset: 0
     },
@@ -1309,6 +1336,7 @@ export default function createUnitStore (options) {
       name: 'J',
       base: DIMENSIONS.ENERGY,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['m', 'k', 'M', 'G'],
       value: 1,
       offset: 0
     },
@@ -1316,6 +1344,7 @@ export default function createUnitStore (options) {
       name: 'joule',
       base: DIMENSIONS.ENERGY,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['milli', 'kilo', 'mega', 'giga'],
       value: 1,
       offset: 0
     },
@@ -1330,6 +1359,7 @@ export default function createUnitStore (options) {
       name: 'Wh',
       base: DIMENSIONS.ENERGY,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['k', 'M', 'G', 'T'],
       value: 3600,
       offset: 0
     },
@@ -1337,6 +1367,7 @@ export default function createUnitStore (options) {
       name: 'BTU',
       base: DIMENSIONS.ENERGY,
       prefixes: PREFIXES.BTU,
+      commonPrefixes: ['MM'],
       value: 1055.05585262,
       offset: 0
     },
@@ -1344,6 +1375,7 @@ export default function createUnitStore (options) {
       name: 'eV',
       base: DIMENSIONS.ENERGY,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['u', 'm', 'k', 'M', 'G'],
       value: 1.602176565e-19,
       offset: 0
     },
@@ -1351,6 +1383,7 @@ export default function createUnitStore (options) {
       name: 'electronvolt',
       base: DIMENSIONS.ENERGY,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['micro', 'milli', 'kilo', 'mega', 'giga'],
       value: 1.602176565e-19,
       offset: 0
     },
@@ -1360,6 +1393,7 @@ export default function createUnitStore (options) {
       name: 'W',
       base: DIMENSIONS.POWER,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['p', 'n', 'u', 'm', 'k', 'M', 'G', 'T', 'P'],
       value: 1,
       offset: 0
     },
@@ -1367,6 +1401,7 @@ export default function createUnitStore (options) {
       name: 'watt',
       base: DIMENSIONS.POWER,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['pico', 'nano', 'micro', 'milli', 'kilo', 'mega', 'tera', 'peta'],
       value: 1,
       offset: 0
     },
@@ -1383,6 +1418,7 @@ export default function createUnitStore (options) {
       name: 'VA',
       base: DIMENSIONS.POWER,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['k'],
       value: 1,
       offset: 0
     },
@@ -1392,13 +1428,14 @@ export default function createUnitStore (options) {
       name: 'Pa',
       base: DIMENSIONS.PRESSURE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['k', 'M', 'G'],    // 'h' is sometimes used but not often
       value: 1,
       offset: 0
     },
     psi: {
       name: 'psi',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE,
+      prefixes: PREFIXES.NONE,    // kpsi is sometimes used
       value: 6894.75729276459,
       offset: 0
     },
@@ -1413,13 +1450,23 @@ export default function createUnitStore (options) {
       name: 'bar',
       base: DIMENSIONS.PRESSURE,
       prefixes: PREFIXES.SHORTLONG,
+      commonPrefixes: ['m'],
       value: 100000,
       offset: 0
     },
     torr: {
       name: 'torr',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE,
+      prefixes: PREFIXES.LONG,
+      commonPrefixes: ['milli'],
+      value: 133.322,
+      offset: 0
+    },
+    Torr: {
+      name: 'torr',
+      base: DIMENSIONS.PRESSURE,
+      prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['m'],
       value: 133.322,
       offset: 0
     },
@@ -1450,6 +1497,7 @@ export default function createUnitStore (options) {
       name: 'coulomb',
       base: DIMENSIONS.ELECTRIC_CHARGE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['pico', 'nano', 'micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -1457,6 +1505,7 @@ export default function createUnitStore (options) {
       name: 'C',
       base: DIMENSIONS.ELECTRIC_CHARGE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['p', 'n', 'u', 'm'],
       value: 1,
       offset: 0
     },
@@ -1465,6 +1514,7 @@ export default function createUnitStore (options) {
       name: 'farad',
       base: DIMENSIONS.CAPACITANCE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['pico', 'nano', 'micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -1472,6 +1522,7 @@ export default function createUnitStore (options) {
       name: 'F',
       base: DIMENSIONS.CAPACITANCE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['p', 'n', 'u', 'm'],
       value: 1,
       offset: 0
     },
@@ -1480,6 +1531,7 @@ export default function createUnitStore (options) {
       name: 'volt',
       base: DIMENSIONS.ELECTRIC_POTENTIAL,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['milli', 'kilo', 'mega'],
       value: 1,
       offset: 0
     },
@@ -1487,6 +1539,7 @@ export default function createUnitStore (options) {
       name: 'V',
       base: DIMENSIONS.ELECTRIC_POTENTIAL,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['m', 'k', 'M'],
       value: 1,
       offset: 0
     },
@@ -1495,11 +1548,13 @@ export default function createUnitStore (options) {
       name: 'ohm',
       base: DIMENSIONS.RESISTANCE,
       prefixes: PREFIXES.SHORTLONG, // Both Mohm and megaohm are acceptable
+      commonPrefixes: ['k', 'M'],
       value: 1,
       offset: 0
     },
     /*
      * Unicode breaks in browsers if charset is not specified
+     * TODO: Allow with config option?
     Ω: {
       name: 'Ω',
       base: BASE_UNITS.ELECTRIC_RESISTANCE,
@@ -1513,6 +1568,7 @@ export default function createUnitStore (options) {
       name: 'henry',
       base: DIMENSIONS.INDUCTANCE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['micro', 'milli'], // Just guessing here
       value: 1,
       offset: 0
     },
@@ -1520,6 +1576,7 @@ export default function createUnitStore (options) {
       name: 'H',
       base: DIMENSIONS.INDUCTANCE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['u', 'm'],
       value: 1,
       offset: 0
     },
@@ -1528,6 +1585,7 @@ export default function createUnitStore (options) {
       name: 'siemens',
       base: DIMENSIONS.ELECTRICAL_CONDUCTANCE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -1535,6 +1593,7 @@ export default function createUnitStore (options) {
       name: 'S',
       base: DIMENSIONS.ELECTRICAL_CONDUCTANCE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['u', 'm'],
       value: 1,
       offset: 0
     },
@@ -1543,6 +1602,7 @@ export default function createUnitStore (options) {
       name: 'weber',
       base: DIMENSIONS.MAGNETIC_FLUX,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['nano', 'micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -1550,6 +1610,7 @@ export default function createUnitStore (options) {
       name: 'Wb',
       base: DIMENSIONS.MAGNETIC_FLUX,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['n', 'u', 'm'],
       value: 1,
       offset: 0
     },
@@ -1558,6 +1619,7 @@ export default function createUnitStore (options) {
       name: 'tesla',
       base: DIMENSIONS.MAGNETIC_FLUX_DENSITY,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['nano', 'micro', 'milli'],
       value: 1,
       offset: 0
     },
@@ -1565,11 +1627,13 @@ export default function createUnitStore (options) {
       name: 'T',
       base: DIMENSIONS.MAGNETIC_FLUX_DENSITY,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['n', 'u', 'm'],
       value: 1,
       offset: 0
     },
 
     // Binary
+    // TODO: Figure out how to do SI vs. IEC while formatting
     b: {
       name: 'b',
       base: DIMENSIONS.BIT,
