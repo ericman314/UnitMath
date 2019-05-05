@@ -10,7 +10,8 @@
     "prepublishOnly": "npm test",
     "test": "npm run lint && npm run test:src",
     "test:src": "mocha --require @babel/register --recursive test",
-    "lint": "standard --env=mocha --env=worker"
+    "lint": "standard --env=mocha --env=worker",
+    "lint:fix": "standard --env=mocha --env=worker --fix"
   },
   "repository": {
     "type": "git",
