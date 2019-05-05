@@ -102,6 +102,8 @@ Use either the `toString` or `format` methods to format a unit as a string:
 // TODO: example
 ```
 
+If the `prefix` or `simplify` options are set (which they are by default), the `toString` and `format` methods will try to simplify the unit before outputting. This can be prevented by calling `.to()` on a unit with no parameters, which will return a new unit that will *not* be simplified automatically.
+
 ### Namespace Functions
 
 - `unit.config(options:object)` -- Configure a new unit namespace with the given options (see TODO: link)
@@ -117,14 +119,17 @@ const unit = require('unitmath').config(options)    // TODO: show simple example
 
 The available options and their **defaults** are:
 
+- `parentheses`: **`false`**  
+When formatting a unit, group the numerator and/or denominator in parentheses if multiple units are present. TODO: example
+
 - `prefix`: **`"auto"`**, `"always"`, or `"never"`  
 When formatting a unit, this option will specify whether the `toString` and `format` methods are allowed to choose an appropriately sized prefix in case of very small or very large quantities. The `"auto"` setting behaves exactly like `"always"`, unless the `unit` was constructed using the `to()` method.
 
 - `prefixMin`: **`0.1`**  
-When `prefix` is `"auto"` or `"always"`, the smallest formatted value of a `unit` that is allowed before choosing a different prefix.
+When choosing a prefix, the smallest formatted value of a `unit` that is allowed.
 
 - `prefixMax`: **`1000`**  
-When `prefix` is `"auto"` or `"always"`, the largest formatted value of a `unit` that is allowed before choosing a different prefix.
+When choosing a prefix, the largest formatted value of a `unit` that is allowed.
 
 - `simplify`: **`true`**  
 Whether to automatically simplify units when calling the `toString` or `format` methods. If true, then `u.toString()` becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. Simplification is skipped if the unit was constructed using the `to()` method.

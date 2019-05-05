@@ -170,17 +170,26 @@ let _config = function _config (options) {
     /**
      * Convert the unit to a specific unit.
      * @memberof Unit
-     * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm"
+     * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm". If omitted, a new unit is returned which is fixed (will not be auto-simplified)
      * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
      */
     to (valuelessUnit) {
-      if (!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
-        throw new TypeError('Parameter must be a Unit or a string.')
+      let unit
+      if (typeof valuelessUnit === 'undefined') {
+        // Special case. Just clone the unit and set as fixed.
+        unit = _clone(this)
+        unit.fixed = true
+        Object.freeze(unit)
+        return unit
+      } else {
+        if (!(valuelessUnit instanceof Unit) && typeof valuelessUnit !== 'string') {
+          throw new TypeError('Parameter must be a Unit or a string.')
+        }
+        valuelessUnit = _convertParamToUnit(valuelessUnit)
+        unit = _to(this, valuelessUnit)
+        Object.freeze(unit)
+        return unit
       }
-      valuelessUnit = _convertParamToUnit(valuelessUnit)
-      let unit = _to(this, valuelessUnit)
-      Object.freeze(unit)
-      return unit
     }
 
     /**
@@ -286,9 +295,14 @@ let _config = function _config (options) {
      * @param {Object} [options]  Formatting options.
      * @return {string}
      */
-    format (options) {
+    format () {
       let simp = this.clone()
-      // TODO: Apply automatic simplification steps if specified in the config options
+
+      // TODO: Simplify unit
+      if (options.prefix === 'always' || (options.prefix === 'auto' && !this.fixed)) {
+        _choosePrefix(simp)
+      }
+
       let str = (simp.value !== null) ? simp.value.toString() : ''
       const unitStr = _formatUnits(simp)
       if (unitStr.length > 0 && str.length > 0) {
@@ -495,6 +509,7 @@ let _config = function _config (options) {
    * @param {number|custom} p The exponent
    */
   function _pow (unit, p) {
+    // TODO: combineDuplicateUnits
     const result = _clone(unit)
     for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
       result.dimensions[i] = options.customMul(unit.dimensions[i], p)
@@ -612,7 +627,100 @@ let _config = function _config (options) {
     }
     result = _clone(valuelessUnit)
     result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, value)))
+    result.fixed = true // Don't auto simplify
     return result
+  }
+
+  /**
+   * Private function _choosePrefix
+   * @param {Unit} unit The unit to choose the best prefix for.
+   * @returns {Unit} A new unit that contains the "best" prefix, or, if no prefix could be found, returns the same unit unchanged.
+   */
+  function _choosePrefix (unit) {
+    console.log('entering _choosePrefix')
+    if (unit.units.length !== 1) {
+      // TODO: Support for compound units
+      console.log('Not a single unit')
+      return unit
+    }
+    if (Math.abs(unit.units[0].power - Math.round(unit.units[0].power)) >= 1e-14) {
+      // TODO: Support for non-integer powers
+      console.log('Not an integer power')
+      return unit
+    }
+    if (Math.abs(unit.units[0].power) < 1e-14) {
+      // Unit has power of 0, so prefix will have no effect
+      console.log('Power is zero')
+      return unit
+    }
+    if (options.customLE(unit.value, options.prefixMax) && options.customGE(unit.value, options.prefixMin)) {
+      console.log('Unit is already acceptable')
+      // Unit's value is already acceptable
+      return unit
+    }
+
+    let searchDirection
+    if (options.customLT(unit.value, options.prefixMin)) {
+      searchDirection = -1
+      // Choose smaller prefixes (or larger, if the power is negative)
+    }
+    if (options.customGT(unit.value, options.prefixMax)) {
+      searchDirection = 1
+      // Choose larger prefixes (or smaller, if the power is positive)
+    }
+    searchDirection *= Math.sign(unit.units[0].power)
+
+    console.log(searchDirection)
+    // TODO: Have a preferred prefix list for each unit as a subset of the complete list.
+    // Like, avoid megameters because no one does that. (Still parseable, just won't ever choose that prefix for formatting.)
+
+    // Beginning at the current prefix, search until an acceptable prefix is found. Or, if the next prefix in the list is unacceptable in the other direction,
+    // then choose whichever was closest? Or maybe just the one before it?
+
+    // Sort the prefix keys by value (TODO: Do this when building the UnitStore?)
+    const prefixes = unit.units[0].unit.prefixes
+    let prefixKeys = Object.keys(prefixes)
+    prefixKeys.sort((a, b) => prefixes[a].value < prefixes[b].value ? -1 : 1)
+
+    console.log(prefixKeys)
+
+    /*
+    // find the best prefix value (resulting in the value of which
+    // the absolute value of the log10 is closest to zero,
+    // though with a little offset of 1.2 for nicer values: you get a
+    // sequence 1mm 100mm 500mm 0.6m 1m 10m 100m 500m 0.6km 1km ...
+
+    // Note: the units value can be any numeric type, but to find the best
+    // prefix it's enough to work with limited precision of a regular number
+    // Update: using mathjs abs since we also allow complex numbers
+    const absValue = this.value !== null ? abs(this.value) : 0
+    const absUnitValue = abs(this.units[0].unit.value)
+    let bestPrefix = this.units[0].prefix
+    if (absValue === 0) {
+      return bestPrefix
+    }
+    const power = this.units[0].power
+    let bestDiff = Math.log(absValue / Math.pow(bestPrefix.value * absUnitValue, power)) / Math.LN10 - 1.2
+    if (bestDiff > -2.200001 && bestDiff < 1.800001) return bestPrefix // Allow the original prefix
+    bestDiff = Math.abs(bestDiff)
+    for (const p in prefixes) {
+      if (prefixes.hasOwnProperty(p)) {
+        const prefix = prefixes[p]
+        if (prefix.scientific) {
+          const diff = Math.abs(
+            Math.log(absValue / Math.pow(prefix.value * absUnitValue, power)) / Math.LN10 - 1.2)
+
+          if (diff < bestDiff ||
+              (diff === bestDiff && prefix.name.length < bestPrefix.name.length)) {
+            // choose the prefix with the smallest diff, or if equal, choose the one
+            // with the shortest name (can happen with SHORTLONG for example)
+            bestPrefix = prefix
+            bestDiff = diff
+          }
+        }
+      }
+    }
+    */
   }
 
   /**
@@ -645,7 +753,7 @@ let _config = function _config (options) {
     // Replace this unit list with the proposed list
     result.units = proposedUnitList
     if (unit.value !== null) { result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, unit.value))) }
-
+    result.fixed = true // Don't auto simplify
     return result
   }
 
@@ -703,12 +811,14 @@ let _config = function _config (options) {
     strNum = strNum.substr(1)
     strDen = strDen.substr(1)
 
-    // Add parans for better copy/paste back into evaluate, for example, or for better pretty print formatting
-    if (nNum > 1 && nDen > 0) {
-      strNum = '(' + strNum + ')'
-    }
-    if (nDen > 1 && nNum > 0) {
-      strDen = '(' + strDen + ')'
+    if (options.parentheses) {
+      // Add parans for better copy/paste back into evaluate, for example, or for better pretty print formatting
+      if (nNum > 1 && nDen > 0) {
+        strNum = '(' + strNum + ')'
+      }
+      if (nDen > 1 && nNum > 0) {
+        strDen = '(' + strDen + ')'
+      }
     }
 
     let str = strNum
@@ -835,7 +945,12 @@ let customSub = (a, b) => a - b
 let customMul = (a, b) => a * b
 let customDiv = (a, b) => a / b
 let customPow = (a, b) => Math.pow(a, b)
+let customAbs = (a) => Math.abs(a)
 let customEq = (a, b) => a === b
+let customLT = (a, b) => a < b
+let customGT = (a, b) => a > b
+let customLE = (a, b) => a <= b
+let customGE = (a, b) => a >= b
 let customConv = a => a
 let customClone = (a) => {
   if (typeof (a) !== 'number') {
@@ -845,6 +960,7 @@ let customClone = (a) => {
 }
 
 let defaultOptions = {
+  parentheses: false,
   prefix: 'auto',
   prefixMin: 0.1,
   prefixMax: 1000,
@@ -857,7 +973,12 @@ let defaultOptions = {
   customMul,
   customDiv,
   customPow,
+  customAbs,
   customEq,
+  customLT,
+  customGT,
+  customLE,
+  customGE,
   customConv,
   customClone
 }

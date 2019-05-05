@@ -31,6 +31,7 @@ describe('unitmath', () => {
 
     it('should have the correct default config options', () => {
       let optionsToCheckEquality = {
+        parentheses: false,
         prefix: 'auto',
         prefixMin: 0.1,
         prefixMax: 1000,
@@ -448,30 +449,29 @@ describe('unitmath', () => {
       assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
       assert.strictEqual(unit(2 / 3, 'm').toString(), '0.6666666666666666 m')
       assert.strictEqual(unit(5, 'N').toString(), '5 N')
-      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString(), '5 (kg m) / s^2')
+      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString(), '5 kg m / s^2')
       assert.strictEqual(unit(5, 's^-2').toString(), '5 s^-2')
       assert.strictEqual(unit(5, 'm / s ^ 2').toString(), '5 m / s^2')
-      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').toString(), '(kg m^2) / (s^2 mol)')
+      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').toString(), 'kg m^2 / s^2 mol')
       assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
       assert.strictEqual(unit('3.14 rad').toString(), '3.14 rad')
-      assert.strictEqual(unit('J / mol K').toString(), 'J / (mol K)')
+      assert.strictEqual(unit('J / mol K').toString(), 'J / mol K')
       assert.strictEqual(unit(2).toString(), '2')
       assert.strictEqual(unit().toString(), '')
     })
 
-    it.skip('should convert to string properly', function () {
-      assert.strictEqual(unit(5000, 'cm').toString(), '50 m')
+    it('should convert to string properly', function () {
       assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
       assert.strictEqual(unit(2 / 3, 'm').toString(), '0.6666666666666666 m')
       assert.strictEqual(unit(5, 'N').toString(), '5 N')
-      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString(), '5 (kg m) / s^2')
+      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString(), '5 kg m / s^2')
       assert.strictEqual(unit(5, 's^-2').toString(), '5 s^-2')
       assert.strictEqual(unit(5, 'm / s ^ 2').toString(), '5 m / s^2')
-      assert.strictEqual(unit(null, 'kg m^2 / s^2 / mol').toString(), '(kg m^2) / (s^2 mol)')
+      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').toString(), 'kg m^2 / s^2 mol')
       assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
     })
 
-    it.skip('should render with the best prefix', function () {
+    it('should render with the best prefix', function () {
       assert.strictEqual(unit(0.000001, 'm').format(8), '1 um')
       assert.strictEqual(unit(0.00001, 'm').format(8), '10 um')
       assert.strictEqual(unit(0.0001, 'm').format(8), '100 um')
@@ -1088,7 +1088,7 @@ describe('unitmath', () => {
 
       assert.strictEqual(unit(1, 'radian').to('rad').equals(unit(1, 'rad')), true)
       assert.strictEqual(unit(1, 'radians').to('rad').equals(unit(1, 'rad')), true)
-      assert.deepStrictEqual(unit(1, 'deg').to('rad'), unit(2 * Math.PI / 360, 'rad'))
+      assert.deepStrictEqual(unit(1, 'deg').to('rad'), unit(2 * Math.PI / 360, 'rad').to())
       assert.strictEqual(unit(1, 'degree').to('rad').equals(unit(2 * Math.PI / 360, 'rad')), true)
       assert.strictEqual(unit(1, 'degrees').to('rad').equals(unit(2 * Math.PI / 360, 'rad')), true)
       assert.strictEqual(unit(1, 'gradian').to('rad').equals(unit(Math.PI / 200, 'rad')), true)
@@ -1242,17 +1242,17 @@ describe('unitmath', () => {
     })
 
     it('should return the unit in SI units', function () {
-      assert.deepStrictEqual(unit('4 ft').toSI(), unit('1.2192 m'))
-      assert.deepStrictEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2'))
+      assert.deepStrictEqual(unit('4 ft').toSI(), unit('1.2192 m').to())
+      assert.deepStrictEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2').to())
     })
 
     it('should return SI units for valueless units', function () {
-      assert.deepStrictEqual(unit('ft/minute').toSI(), unit('m / s'))
+      assert.deepStrictEqual(unit('ft/minute').toSI(), unit('m / s').to())
     })
 
     it('alterate api syntax should work too', () => {
-      assert.deepStrictEqual(unit.toSI(unit('4 ft')), unit('1.2192 m'))
-      assert.deepStrictEqual(unit.toSI('4 ft'), unit('1.2192 m'))
+      assert.deepStrictEqual(unit.toSI(unit('4 ft')), unit('1.2192 m').to())
+      assert.deepStrictEqual(unit.toSI('4 ft'), unit('1.2192 m').to())
     })
 
     it.skip('should return SI units for custom units defined from other units', function () {
