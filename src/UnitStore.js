@@ -1830,9 +1830,9 @@ export default function createUnitStore (options) {
     const unit = UNITS[key]
     // Convert commonPrefix from string array to prefix array and sort the array
     if (unit.commonPrefixes) {
-      for (let i=0; i<unit.commonPrefixes.length; i++) {
+      for (let i = 0; i < unit.commonPrefixes.length; i++) {
         let s = unit.commonPrefixes[i]
-        if(!unit.prefixes.hasOwnProperty(s)) {
+        if (!unit.prefixes.hasOwnProperty(s)) {
           throw new Error(`In unit ${unit.name}, common prefix ${s} was not found among the allowable prefixes`)
         }
         unit.commonPrefixes[i] = unit.prefixes[s]

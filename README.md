@@ -250,6 +250,10 @@ This is a community-supported project; all contributions are welcome. Please ope
 
 Many thanks to Jos de Jong (@josdejong), the original author of `Unit.js`, who suggested the idea of splitting the file off from [Math.js](https://mathjs.org/) and into its own library.
 
+### Contributors
+
+- Harry Sarson (https://github.com/harrysarson)
+
 ## License
 
 UnitMath is released under the Apache-2.0 license.

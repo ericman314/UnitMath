@@ -304,10 +304,9 @@ let _config = function _config (options) {
       }
 
       let str = ''
-      if(typeof simp.value === 'number') {
+      if (typeof simp.value === 'number') {
         str += +simp.value.toPrecision(options.precision) // The extra + at the beginning removes trailing zeroes
-      }
-      else if (simp.value !== null) {
+      } else if (simp.value !== null) {
         str += simp.value.toString()
       }
       const unitStr = _formatUnits(simp)
@@ -687,11 +686,11 @@ let _config = function _config (options) {
 
     console.log(prefixes)
 
-    function calcValue(prefix) {
+    function calcValue (prefix) {
       return options.customDiv(unit.value, options.customPow(prefix.value / piece.prefix.value, piece.power))
     }
 
-    function calcScore(prefix) {
+    function calcScore (prefix) {
       let thisValue = calcValue(prefix)
       if (options.customLT(thisValue, options.prefixMin)) {
         // prefix makes the value too small
@@ -714,34 +713,28 @@ let _config = function _config (options) {
     // Find the index to begin searching. This might be tricky because the unit could have a prefix that is *not* common.
     let bestPrefix = piece.prefix
     let bestScore = calcScore(bestPrefix)
-    
+
     console.log(`The original unit is ${unit.to().toString()}`)
 
-    for(let i=0; i<prefixes.length; i++) {
+    for (let i = 0; i < prefixes.length; i++) {
       // What would the value of the unit be if this prefix were applied?
       let thisPrefix = prefixes[i]
       let thisValue = calcValue(thisPrefix)
       let thisScore = calcScore(thisPrefix)
 
-      if(thisScore < bestScore) {
+      if (thisScore < bestScore) {
         bestScore = thisScore
         bestPrefix = thisPrefix
       }
       console.log(`With prefix ${thisPrefix.name}, the unit has a value of ${thisValue} and the score is ${thisScore}`)
-
-      
     }
 
     piece.prefix = bestPrefix
     result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, unit.value)))
 
-
     Object.freeze(result)
     return result
-    
 
-
-    
     // // find the best prefix value (resulting in the value of which
     // // the absolute value of the log10 is closest to zero,
     // // though with a little offset of 1.2 for nicer values: you get a
@@ -777,7 +770,6 @@ let _config = function _config (options) {
     //     }
     //   }
     // }
-    
   }
 
   /**
