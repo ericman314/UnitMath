@@ -32,6 +32,7 @@ describe('unitmath', () => {
     it('should have the correct default config options', () => {
       let optionsToCheckEquality = {
         parentheses: false,
+        precision: 16,
         prefix: 'auto',
         prefixMin: 0.1,
         prefixMax: 1000,
@@ -445,19 +446,19 @@ describe('unitmath', () => {
 
   describe('toString', function () {
     it('should convert to string when no extra simplification is requested', () => {
-      assert.strictEqual(unit(5000, 'cm').toString(), '5000 cm')
-      assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
-      assert.strictEqual(unit(2 / 3, 'm').toString(), '0.6666666666666666 m')
-      assert.strictEqual(unit(5, 'N').toString(), '5 N')
-      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString(), '5 kg m / s^2')
-      assert.strictEqual(unit(5, 's^-2').toString(), '5 s^-2')
-      assert.strictEqual(unit(5, 'm / s ^ 2').toString(), '5 m / s^2')
-      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').toString(), 'kg m^2 / s^2 mol')
-      assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
-      assert.strictEqual(unit('3.14 rad').toString(), '3.14 rad')
-      assert.strictEqual(unit('J / mol K').toString(), 'J / mol K')
-      assert.strictEqual(unit(2).toString(), '2')
-      assert.strictEqual(unit().toString(), '')
+      assert.strictEqual(unit(5000, 'cm').to().toString(), '5000 cm')
+      assert.strictEqual(unit(5, 'kg').to().toString(), '5 kg')
+      assert.strictEqual(unit(2 / 3, 'm').to().toString(), '0.6666666666666666 m')
+      assert.strictEqual(unit(5, 'N').to().toString(), '5 N')
+      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').to().toString(), '5 kg m / s^2')
+      assert.strictEqual(unit(5, 's^-2').to().toString(), '5 s^-2')
+      assert.strictEqual(unit(5, 'm / s ^ 2').to().toString(), '5 m / s^2')
+      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').to().toString(), 'kg m^2 / s^2 mol')
+      assert.strictEqual(unit(10, 'hertz').to().toString(), '10 hertz')
+      assert.strictEqual(unit('3.14 rad').to().toString(), '3.14 rad')
+      assert.strictEqual(unit('J / mol K').to().toString(), 'J / mol K')
+      assert.strictEqual(unit(2).to().toString(), '2')
+      assert.strictEqual(unit().to().toString(), '')
     })
 
     it('should convert to string properly', function () {
@@ -471,24 +472,24 @@ describe('unitmath', () => {
       assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
     })
 
-    it.skip('should render with the best prefix', function () {
+    it('should render with the best prefix', function () {
       assert.strictEqual(unit(0.000001, 'm').format(8), '1 um')
       assert.strictEqual(unit(0.00001, 'm').format(8), '10 um')
-      assert.strictEqual(unit(0.0001, 'm').format(8), '100 um')
-      assert.strictEqual(unit(0.0005, 'm').format(8), '500 um')
+      assert.strictEqual(unit(0.0001, 'm').format(8), '0.1 mm')
+      assert.strictEqual(unit(0.0005, 'm').format(8), '0.5 mm')
       assert.strictEqual(unit(0.0006, 'm').toString(), '0.6 mm')
-      assert.strictEqual(unit(0.001, 'm').toString(), '1 mm')
-      assert.strictEqual(unit(0.01, 'm').toString(), '10 mm')
+      assert.strictEqual(unit(0.001, 'm').toString(), '0.1 cm')
+      assert.strictEqual(unit(0.01, 'm').toString(), '1 cm')
       assert.strictEqual(unit(100000, 'm').toString(), '100 km')
       assert.strictEqual(unit(300000, 'm').toString(), '300 km')
       assert.strictEqual(unit(500000, 'm').toString(), '500 km')
-      assert.strictEqual(unit(600000, 'm').toString(), '0.6 Mm')
-      assert.strictEqual(unit(1000000, 'm').toString(), '1 Mm')
+      assert.strictEqual(unit(600000, 'm').toString(), '600 km')
+      assert.strictEqual(unit(1000000, 'm').toString(), '1000 km')
       assert.strictEqual(unit(2000, 'ohm').toString(), '2 kohm')
     })
 
-    it.skip('should keep the original prefix when in range', function () {
-      assert.strictEqual(unit(0.0999, 'm').toString(), '99.9 mm')
+    it('should keep the original prefix when in range', function () {
+      assert.strictEqual(unit(0.0999, 'm').toString(), '9.99 cm')
       assert.strictEqual(unit(0.1, 'm').toString(), '0.1 m')
       assert.strictEqual(unit(0.5, 'm').toString(), '0.5 m')
       assert.strictEqual(unit(0.6, 'm').toString(), '0.6 m')
@@ -502,21 +503,20 @@ describe('unitmath', () => {
       assert.strictEqual(unit(1001, 'm').toString(), '1.001 km')
     })
 
-    it.skip('should render best prefix for a single unit raised to integral power', function () {
+    it('should render best prefix for a single unit raised to integral power', function () {
       assert.strictEqual(unit(3.2e7, 'm^2').toString(), '32 km^2')
       assert.strictEqual(unit(3.2e-7, 'm^2').toString(), '0.32 mm^2')
-      assert.strictEqual(unit(15000, 'm^-1').toString(), '15 mm^-1')
-      assert.strictEqual(unit(3e-9, 'm^-2').toString(), '3000 Mm^-2')
+      assert.strictEqual(unit(15000, 'm^-1').toString(), '150 cm^-1')
+      assert.strictEqual(unit(3e-9, 'm^-2').toString(), '0.003 km^-2')
       assert.strictEqual(unit(3e-9, 'm^-1.5').toString(), '3e-9 m^-1.5')
       assert.strictEqual(unit(2, 'kg^0').toString(), '2')
     })
 
-    it.skip('should not render best prefix if "fixPrefix" is set', function () {
+    it('should not render best prefix if "fixed" by the `to` method', function () {
       const u = unit(5e-3, 'm')
-      u.fixPrefix = true
-      assert.strictEqual(u.toString(), '0.005 m')
-      u.fixPrefix = false
-      assert.strictEqual(u.toString(), '5 mm')
+      assert.strictEqual(u.toString(), '0.5 cm')
+      const v = u.to()
+      assert.strictEqual(v.toString(), '0.005 m')
     })
   })
 

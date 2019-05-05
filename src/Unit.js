@@ -300,10 +300,16 @@ let _config = function _config (options) {
 
       // TODO: Simplify unit
       if (options.prefix === 'always' || (options.prefix === 'auto' && !this.fixed)) {
-        _choosePrefix(simp)
+        simp = _choosePrefix(simp)
       }
 
-      let str = (simp.value !== null) ? simp.value.toString() : ''
+      let str = ''
+      if(typeof simp.value === 'number') {
+        str += +simp.value.toPrecision(options.precision) // The extra + at the beginning removes trailing zeroes
+      }
+      else if (simp.value !== null) {
+        str += simp.value.toString()
+      }
       const unitStr = _formatUnits(simp)
       if (unitStr.length > 0 && str.length > 0) {
         str += ' '
@@ -634,93 +640,144 @@ let _config = function _config (options) {
   /**
    * Private function _choosePrefix
    * @param {Unit} unit The unit to choose the best prefix for.
-   * @returns {Unit} A new unit that contains the "best" prefix, or, if no prefix could be found, returns the same unit unchanged.
+   * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
    */
   function _choosePrefix (unit) {
+    let result = _clone(unit)
+    let piece = result.units[0] // TODO: Someday this might choose the most "dominant" unit, or something, to prefix, rather than the first unit
+
     console.log('entering _choosePrefix')
     if (unit.units.length !== 1) {
       // TODO: Support for compound units
       console.log('Not a single unit')
       return unit
     }
-    if (Math.abs(unit.units[0].power - Math.round(unit.units[0].power)) >= 1e-14) {
+    if (unit.value === null) {
+      // Unit does not have a value
+      console.log('Unit does not have a value')
+      return unit
+    }
+    if (Math.abs(piece.power - Math.round(piece.power)) >= 1e-14) {
       // TODO: Support for non-integer powers
       console.log('Not an integer power')
       return unit
     }
-    if (Math.abs(unit.units[0].power) < 1e-14) {
+    if (Math.abs(piece.power) < 1e-14) {
       // Unit has power of 0, so prefix will have no effect
       console.log('Power is zero')
       return unit
     }
-    if (options.customLE(unit.value, options.prefixMax) && options.customGE(unit.value, options.prefixMin)) {
+    if (options.customLT(options.customAbs(unit.value), options.customConv(1e-50))) {
+      // Unit is too small for the prefix to matter
+      console.log('Unit is too small for the prefix to matter')
+      return unit
+    }
+    if (options.customLE(options.customAbs(unit.value), options.prefixMax) && options.customGE(options.customAbs(unit.value), options.prefixMin)) {
       console.log('Unit is already acceptable')
       // Unit's value is already acceptable
       return unit
     }
 
-    let searchDirection
-    if (options.customLT(unit.value, options.prefixMin)) {
-      searchDirection = -1
-      // Choose smaller prefixes (or larger, if the power is negative)
+    const prefixes = piece.unit.commonPrefixes
+    if (!prefixes) {
+      console.log('Unit does not have any common prefixes for formatting')
+      // Unit does not have any common prefixes for formatting
+      return unit
     }
-    if (options.customGT(unit.value, options.prefixMax)) {
-      searchDirection = 1
-      // Choose larger prefixes (or smaller, if the power is positive)
+
+    console.log(prefixes)
+
+    function calcValue(prefix) {
+      return options.customDiv(unit.value, options.customPow(prefix.value / piece.prefix.value, piece.power))
     }
-    searchDirection *= Math.sign(unit.units[0].power)
 
-    console.log(searchDirection)
-    // TODO: Have a preferred prefix list for each unit as a subset of the complete list.
-    // Like, avoid megameters because no one does that. (Still parseable, just won't ever choose that prefix for formatting.)
+    function calcScore(prefix) {
+      let thisValue = calcValue(prefix)
+      if (options.customLT(thisValue, options.prefixMin)) {
+        // prefix makes the value too small
+        return options.customAbs(options.customDiv(options.prefixMin, thisValue))
+      }
+      if (options.customGT(thisValue, options.prefixMax)) {
+        // prefix makes the value too large
+        return options.customAbs(options.customDiv(thisValue, options.prefixMax))
+      }
 
-    // Beginning at the current prefix, search until an acceptable prefix is found. Or, if the next prefix in the list is unacceptable in the other direction,
-    // then choose whichever was closest? Or maybe just the one before it?
-
-    // Sort the prefix keys by value (TODO: Do this when building the UnitStore?)
-    const prefixes = unit.units[0].unit.prefixes
-    let prefixKeys = Object.keys(prefixes)
-    prefixKeys.sort((a, b) => prefixes[a].value < prefixes[b].value ? -1 : 1)
-
-    console.log(prefixKeys)
-
-    /*
-    // find the best prefix value (resulting in the value of which
-    // the absolute value of the log10 is closest to zero,
-    // though with a little offset of 1.2 for nicer values: you get a
-    // sequence 1mm 100mm 500mm 0.6m 1m 10m 100m 500m 0.6km 1km ...
-
-    // Note: the units value can be any numeric type, but to find the best
-    // prefix it's enough to work with limited precision of a regular number
-    // Update: using mathjs abs since we also allow complex numbers
-    const absValue = this.value !== null ? abs(this.value) : 0
-    const absUnitValue = abs(this.units[0].unit.value)
-    let bestPrefix = this.units[0].prefix
-    if (absValue === 0) {
-      return bestPrefix
-    }
-    const power = this.units[0].power
-    let bestDiff = Math.log(absValue / Math.pow(bestPrefix.value * absUnitValue, power)) / Math.LN10 - 1.2
-    if (bestDiff > -2.200001 && bestDiff < 1.800001) return bestPrefix // Allow the original prefix
-    bestDiff = Math.abs(bestDiff)
-    for (const p in prefixes) {
-      if (prefixes.hasOwnProperty(p)) {
-        const prefix = prefixes[p]
-        if (prefix.scientific) {
-          const diff = Math.abs(
-            Math.log(absValue / Math.pow(prefix.value * absUnitValue, power)) / Math.LN10 - 1.2)
-
-          if (diff < bestDiff ||
-              (diff === bestDiff && prefix.name.length < bestPrefix.name.length)) {
-            // choose the prefix with the smallest diff, or if equal, choose the one
-            // with the shortest name (can happen with SHORTLONG for example)
-            bestPrefix = prefix
-            bestDiff = diff
-          }
-        }
+      // The prefix is in range, but return a score that says how close it is to the original value.
+      if (options.customLE(thisValue, unit.value)) {
+        return -options.customAbs(options.customDiv(thisValue, unit.value))
+      } else {
+        return -options.customAbs(options.customDiv(unit.value, thisValue))
       }
     }
-    */
+
+    // We should be able to do this in one pass. Start on one end of the array, as determined by searchDirection, and search until 1) the prefix results in a value within the acceptable range, 2) or the values start getting worse.
+    // Find the index to begin searching. This might be tricky because the unit could have a prefix that is *not* common.
+    let bestPrefix = piece.prefix
+    let bestScore = calcScore(bestPrefix)
+    
+    console.log(`The original unit is ${unit.to().toString()}`)
+
+    for(let i=0; i<prefixes.length; i++) {
+      // What would the value of the unit be if this prefix were applied?
+      let thisPrefix = prefixes[i]
+      let thisValue = calcValue(thisPrefix)
+      let thisScore = calcScore(thisPrefix)
+
+      if(thisScore < bestScore) {
+        bestScore = thisScore
+        bestPrefix = thisPrefix
+      }
+      console.log(`With prefix ${thisPrefix.name}, the unit has a value of ${thisValue} and the score is ${thisScore}`)
+
+      
+    }
+
+    piece.prefix = bestPrefix
+    result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, unit.value)))
+
+
+    Object.freeze(result)
+    return result
+    
+
+
+    
+    // // find the best prefix value (resulting in the value of which
+    // // the absolute value of the log10 is closest to zero,
+    // // though with a little offset of 1.2 for nicer values: you get a
+    // // sequence 1mm 100mm 500mm 0.6m 1m 10m 100m 500m 0.6km 1km ...
+
+    // // Note: the units value can be any numeric type, but to find the best
+    // // prefix it's enough to work with limited precision of a regular number
+    // // Update: using mathjs abs since we also allow complex numbers
+    // const absValue = this.value !== null ? abs(this.value) : 0
+    // const absUnitValue = abs(this.units[0].unit.value)
+    // let bestPrefix = this.units[0].prefix
+    // if (absValue === 0) {
+    //   return bestPrefix
+    // }
+    // const power = this.units[0].power
+    // let bestDiff = Math.log(absValue / Math.pow(bestPrefix.value * absUnitValue, power)) / Math.LN10 - 1.2
+    // if (bestDiff > -2.200001 && bestDiff < 1.800001) return bestPrefix // Allow the original prefix
+    // bestDiff = Math.abs(bestDiff)
+    // for (const p in prefixes) {
+    //   if (prefixes.hasOwnProperty(p)) {
+    //     const prefix = prefixes[p]
+    //     if (prefix.scientific) {
+    //       const diff = Math.abs(
+    //         Math.log(absValue / Math.pow(prefix.value * absUnitValue, power)) / Math.LN10 - 1.2)
+
+    //       if (diff < bestDiff ||
+    //           (diff === bestDiff && prefix.name.length < bestPrefix.name.length)) {
+    //         // choose the prefix with the smallest diff, or if equal, choose the one
+    //         // with the shortest name (can happen with SHORTLONG for example)
+    //         bestPrefix = prefix
+    //         bestDiff = diff
+    //       }
+    //     }
+    //   }
+    // }
+    
   }
 
   /**
@@ -961,6 +1018,7 @@ let customClone = (a) => {
 
 let defaultOptions = {
   parentheses: false,
+  precision: 16,
   prefix: 'auto',
   prefixMin: 0.1,
   prefixMax: 1000,

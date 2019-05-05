@@ -122,6 +122,9 @@ The available options and their **defaults** are:
 - `parentheses`: **`false`**  
 When formatting a unit, group the numerator and/or denominator in parentheses if multiple units are present. TODO: example
 
+- `precision`: **16**  
+The number of significant figures to output when converting a unit to a string. Reducing this can help reduce the appearance of round-off errors, which happen quite frequently when using a computer. (It is the author's belief that all attempts to eliminate round-off error eventually converge toward the strategy of carrying around extra digits during a calculation, and then hiding them before showing the answer to the user.)
+
 - `prefix`: **`"auto"`**, `"always"`, or `"never"`  
 When formatting a unit, this option will specify whether the `toString` and `format` methods are allowed to choose an appropriately sized prefix in case of very small or very large quantities. The `"auto"` setting behaves exactly like `"always"`, unless the `unit` was constructed using the `to()` method.
 
@@ -164,9 +167,12 @@ The subsystem, or technical field, etc., to use when simplifying a `unit`. It ca
 - **`customMul`**
 - **`customDiv`**
 - **`customPow`**
+- **`customAbs`**
 - **`customEq`**
 - **`customLT`**
 - **`customGT`**
+- **`customLE`**
+- **`customGE`**
 - **`customClone`**
 - **`customConv`**
 - **`customFormat`**
