@@ -471,7 +471,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
     })
 
-    it('should render with the best prefix', function () {
+    it.skip('should render with the best prefix', function () {
       assert.strictEqual(unit(0.000001, 'm').format(8), '1 um')
       assert.strictEqual(unit(0.00001, 'm').format(8), '10 um')
       assert.strictEqual(unit(0.0001, 'm').format(8), '100 um')

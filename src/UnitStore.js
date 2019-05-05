@@ -1109,7 +1109,7 @@ export default function createUnitStore (options) {
     deg: {
       name: 'deg',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.NONE,    // Prefer arcminutes and arcseconds
+      prefixes: PREFIXES.NONE, // Prefer arcminutes and arcseconds
       value: Math.PI / 180,
       offset: 0
     },
@@ -1283,7 +1283,7 @@ export default function createUnitStore (options) {
       name: 'N',
       base: DIMENSIONS.FORCE,
       prefixes: PREFIXES.SHORT,
-      commonPrefixes: ['u', 'm', 'k', 'M'],   // These could be debatable
+      commonPrefixes: ['u', 'm', 'k', 'M'], // These could be debatable
       value: 1,
       offset: 0
     },
@@ -1428,14 +1428,14 @@ export default function createUnitStore (options) {
       name: 'Pa',
       base: DIMENSIONS.PRESSURE,
       prefixes: PREFIXES.SHORT,
-      commonPrefixes: ['k', 'M', 'G'],    // 'h' is sometimes used but not often
+      commonPrefixes: ['k', 'M', 'G'], // 'h' is sometimes used but not often
       value: 1,
       offset: 0
     },
     psi: {
       name: 'psi',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE,    // kpsi is sometimes used
+      prefixes: PREFIXES.NONE, // kpsi is sometimes used
       value: 6894.75729276459,
       offset: 0
     },
@@ -1463,7 +1463,7 @@ export default function createUnitStore (options) {
       offset: 0
     },
     Torr: {
-      name: 'torr',
+      name: 'Torr',
       base: DIMENSIONS.PRESSURE,
       prefixes: PREFIXES.SHORT,
       commonPrefixes: ['m'],
