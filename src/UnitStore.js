@@ -169,7 +169,7 @@ export default function createUnitStore (options) {
    *   2    Time
    *   3    Current
    *   4    Temperature
-   *   5    Luminous flux
+   *   5    Luminous intensity
    *   6    Amount of substance
    *   7    Angle
    *   8    Bit (digital)
@@ -177,222 +177,80 @@ export default function createUnitStore (options) {
    *
    */
 
-  const BASE_DIMENSIONS = ['MASS', 'LENGTH', 'TIME', 'CURRENT', 'TEMPERATURE', 'LUMINOUS_FLUX', 'AMOUNT_OF_SUBSTANCE', 'ANGLE', 'BIT']
+  const BASE_DIMENSIONS = ['MASS', 'LENGTH', 'TIME', 'CURRENT', 'TEMPERATURE', 'LUMINOUS_INTENSITY', 'AMOUNT_OF_SUBSTANCE', 'ANGLE', 'BIT', 'SOLID_ANGLE']
 
   const DIMENSIONS = {
-    // Base
-    MASS: {
-      dimensions: [1, 0, 0, 0, 0, 0, 0, 0, 0]
-    },
-    LENGTH: {
-      dimensions: [0, 1, 0, 0, 0, 0, 0, 0, 0]
-    },
-    TIME: {
-      dimensions: [0, 0, 1, 0, 0, 0, 0, 0, 0]
-    },
-    CURRENT: {
-      dimensions: [0, 0, 0, 1, 0, 0, 0, 0, 0]
-    },
-    TEMPERATURE: {
-      dimensions: [0, 0, 0, 0, 1, 0, 0, 0, 0]
-    },
-    LUMINOUS_FLUX: {
-      dimensions: [0, 0, 0, 0, 0, 1, 0, 0, 0]
-    },
-    AMOUNT_OF_SUBSTANCE: {
-      dimensions: [0, 0, 0, 0, 0, 0, 1, 0, 0]
-    },
-    ANGLE: {
-      dimensions: [0, 0, 0, 0, 0, 0, 0, 1, 0]
-    },
-    BIT: {
-      dimensions: [0, 0, 0, 0, 0, 0, 0, 0, 1]
-    },
+    UNITLESS:                { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0] },
+    MASS:                    { dimensions: [ 1,  0,  0,  0,  0,  0,  0,  0,  0,  0] },
+    LENGTH:                  { dimensions: [ 0,  1,  0,  0,  0,  0,  0,  0,  0,  0] },
+    TIME:                    { dimensions: [ 0,  0,  1,  0,  0,  0,  0,  0,  0,  0] },
+    CURRENT:                 { dimensions: [ 0,  0,  0,  1,  0,  0,  0,  0,  0,  0] },
+    TEMPERATURE:             { dimensions: [ 0,  0,  0,  0,  1,  0,  0,  0,  0,  0] },
+    LUMINOUS_INTENSITY:      { dimensions: [ 0,  0,  0,  0,  0,  1,  0,  0,  0,  0] },
+    AMOUNT_OF_SUBSTANCE:     { dimensions: [ 0,  0,  0,  0,  0,  0,  1,  0,  0,  0] },
+    ANGLE:                   { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  1,  0,  0] },
+    BIT:                     { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  1,  0] },
+    SOLID_ANGLE:             { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  1] },
 
     // Derived
-    UNITLESS: {
-      dimensions: [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    },
-    ABSEMENT: {
-      dimensions: [0, 1, 1, 0, 0, 0, 0, 0, 0]
-    },
-    ACCELERATION: {
-      dimensions: [0, 1, -2, 0, 0, 0, 0, 0, 0]
-    },
-    ANGULAR_ACCELERATION: {
-      dimensions: [0, 0, -2, 0, 0, 0, 0, 1, 0]
-    },
-    ANGULAR_MOMENTUM: {
-      dimensions: [1, 2, -1, 0, 0, 0, 0, 1, 0]
-    },
-    ANGULAR_VELOCITY: {
-      dimensions: [0, 0, -1, 0, 0, 0, 0, 1, 0]
-    },
-    AREA: {
-      dimensions: [0, 2, 0, 0, 0, 0, 0, 0, 0]
-    },
-    AREA_DENSITY: {
-      dimensions: [1, -2, 0, 0, 0, 0, 0, 0, 0]
-    },
-    BIT_RATE: {
-      dimensions: [0, 0, -1, 0, 0, 0, 0, 0, 1]
-    },
-    CAPACITANCE: {
-      dimensions: [-1, -2, 4, 2, 0, 0, 0, 0, 0]
-    },
-    CURRENT_DENSITY: {
-      dimensions: [0, -2, 0, 1, 0, 0, 0, 0, 0]
-    },
-    DYNAMIC_VISCOSITY: {
-      dimensions: [1, -1, -1, 0, 0, 0, 0, 0, 0]
-    },
-    ELECTRIC_CHARGE: {
-      dimensions: [0, 0, 1, 1, 0, 0, 0, 0, 0]
-    },
-    ELECTRIC_CHARGE_DENSITY: {
-      dimensions: [0, -3, 1, 1, 0, 0, 0, 0, 0]
-    },
-    ELECTRIC_DISPLACEMENT: {
-      dimensions: [0, -2, 1, 1, 0, 0, 0, 0, 0]
-    },
-    ELECTRIC_FIELD_STRENGTH: {
-      dimensions: [1, 1, -3, -1, 0, 0, 0, 0, 0]
-    },
-    ELECTRICAL_CONDUCTANCE: {
-      dimensions: [-1, -2, 3, 2, 0, 0, 0, 0, 0]
-    },
-    ELECTRICAL_CONDUCTIVITY: {
-      dimensions: [-1, -3, 3, 2, 0, 0, 0, 0, 0]
-    },
-    ELECTRIC_POTENTIAL: {
-      dimensions: [1, 2, -3, -1, 0, 0, 0, 0, 0]
-    },
-    RESISTANCE: {
-      dimensions: [1, 2, -3, -2, 0, 0, 0, 0, 0]
-    },
-    ELECTRICAL_RESISTIVITY: {
-      dimensions: [1, 3, -3, -2, 0, 0, 0, 0, 0]
-    },
-    ENERGY: {
-      dimensions: [1, 2, -2, 0, 0, 0, 0, 0, 0]
-    },
-    // ENERGY_DENSITY: {
-    //   dimensions: [1, -1, -2, 0, 0, 0, 0, 0, 0]
-    // },
-    ENTROPY: {
-      dimensions: [1, 2, -2, 0, -1, 0, 0, 0, 0]
-    },
-    FORCE: {
-      dimensions: [1, 1, -2, 0, 0, 0, 0, 0, 0]
-    },
-    FREQUENCY: {
-      dimensions: [0, 0, -1, 0, 0, 0, 0, 0, 0]
-    },
-    HEAT_CAPACITY: {
-      dimensions: [1, 2, -2, 0, -1, 0, 0, 0, 0]
-    },
-    HEAT_FLUX_DENSITY: {
-      dimensions: [1, 0, -3, 0, 0, 0, 0, 0, 0]
-    },
-    ILLUMINANCE: {
-      dimensions: [0, -2, 0, 0, 0, 1, 0, 0, 0]
-    },
-    IMPEDANCE: {
-      dimensions: [1, 2, -3, -2, 0, 0, 0, 0, 0]
-    },
-    IMPULSE: {
-      dimensions: [1, 1, -1, 0, 0, 0, 0, 0, 0]
-    },
-    INDUCTANCE: {
-      dimensions: [1, 2, -2, -2, 0, 0, 0, 0, 0]
-    },
-    IRRADIANCE: {
-      dimensions: [1, 0, -3, 0, 0, 0, 0, 0, 0]
-    },
-    JERK: {
-      dimensions: [0, 1, -3, 0, 0, 0, 0, 0, 0]
-    },
-    KINEMATIC_VISCOSITY: {
-      dimensions: [0, 2, -1, 0, 0, 0, 0, 0, 0]
-    },
-    LINEAR_DENSITY: {
-      dimensions: [1, -1, 0, 0, 0, 0, 0, 0, 0]
-    },
-    MAGNETIC_FIELD_STRENGTH: {
-      dimensions: [0, -1, 0, 1, 0, 0, 0, 0, 0]
-    },
-    MAGNETIC_FLUX: {
-      dimensions: [1, 2, -2, -1, 0, 0, 0, 0, 0]
-    },
-    MAGNETIC_FLUX_DENSITY: {
-      dimensions: [1, 0, -2, -1, 0, 0, 0, 0, 0]
-    },
-    MOLAR_CONCENTRATION: {
-      dimensions: [0, -3, 0, 0, 0, 0, 1, 0, 0]
-    },
-    MOLAR_ENERGY: {
-      dimensions: [1, 2, -2, 0, 0, 0, -1, 0, 0]
-    },
-    MOLAR_ENTROPY: {
-      dimensions: [1, 2, -2, 0, -1, 0, -1, 0, 0]
-    },
-    MOLAR_HEAT_CAPACITY: {
-      dimensions: [1, 2, -2, 0, -1, 0, -1, 0, 0]
-    },
-    MOMENT_OF_INERTIA: {
-      dimensions: [1, 2, 0, 0, 0, 0, 0, 0, 0]
-    },
-    MOMENTUM: {
-      dimensions: [1, 1, -1, 0, 0, 0, 0, 0, 0]
-    },
-    PERMEABILITY: {
-      dimensions: [1, 1, -2, -2, 0, 0, 0, 0, 0]
-    },
-    PERMITTIVITY: {
-      dimensions: [-1, -3, 4, 2, 0, 0, 0, 0, 0]
-    },
-    POWER: {
-      dimensions: [1, 2, -3, 0, 0, 0, 0, 0, 0]
-    },
-    PRESSURE: {
-      dimensions: [1, -1, -2, 0, 0, 0, 0, 0, 0]
-    },
-    RELUCTANCE: {
-      dimensions: [-1, -2, 2, 2, 0, 0, 0, 0, 0]
-    },
-    SPECIFIC_ENERGY: {
-      dimensions: [0, 2, -2, 0, 0, 0, 0, 0, 0]
-    },
-    SPECIFIC_HEAT_CAPACITY: {
-      dimensions: [0, 2, -2, 0, -1, 0, 0, 0, 0]
-    },
-    SPECIFIC_VOLUME: {
-      dimensions: [-1, 3, 0, 0, 0, 0, 0, 0, 0]
-    },
-    SPIN: {
-      dimensions: [1, 2, -1, 0, 0, 0, 0, 0, 0]
-    },
-    SURFACE_TENSION: {
-      dimensions: [1, 0, -2, 0, 0, 0, 0, 0, 0]
-    },
-    TEMPERATURE_GRADIENT: {
-      dimensions: [0, -1, 0, 0, 1, 0, 0, 0, 0]
-    },
-    THERMAL_CONDUCTIVITY: {
-      dimensions: [1, 1, -3, 0, -1, 0, 0, 0, 0]
-    },
-    TORQUE: {
-      dimensions: [1, 2, -2, 0, 0, 0, 0, 0, 0]
-    },
-    VELOCITY: {
-      dimensions: [0, 1, -1, 0, 0, 0, 0, 0, 0]
-    },
-    VOLUME: {
-      dimensions: [0, 3, 0, 0, 0, 0, 0, 0, 0]
-    },
-    VOLUMETRIC_FLOW_RATE: {
-      dimensions: [0, 3, -1, 0, 0, 0, 0, 0, 0]
-    }
+    ABSEMENT:                { dimensions: [ 0,  1,  1,  0,  0,  0,  0,  0,  0,  0] },
+    ACCELERATION:            { dimensions: [ 0,  1, -2,  0,  0,  0,  0,  0,  0,  0] },
+    ANGULAR_ACCELERATION:    { dimensions: [ 0,  0, -2,  0,  0,  0,  0,  1,  0,  0] },
+    ANGULAR_MOMENTUM:        { dimensions: [ 1,  2, -1,  0,  0,  0,  0,  1,  0,  0] },
+    ANGULAR_VELOCITY:        { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  1,  0,  0] },
+    AREA:                    { dimensions: [ 0,  2,  0,  0,  0,  0,  0,  0,  0,  0] },
+    AREA_DENSITY:            { dimensions: [ 1, -2,  0,  0,  0,  0,  0,  0,  0,  0] },
+    BIT_RATE:                { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  0,  1,  0] },
+    CAPACITANCE:             { dimensions: [-1, -2,  4,  2,  0,  0,  0,  0,  0,  0] },
+    CURRENT_DENSITY:         { dimensions: [ 0, -2,  0,  1,  0,  0,  0,  0,  0,  0] },
+    DYNAMIC_VISCOSITY:       { dimensions: [ 1, -1, -1,  0,  0,  0,  0,  0,  0,  0] },
+    ELECTRIC_CHARGE:         { dimensions: [ 0,  0,  1,  1,  0,  0,  0,  0,  0,  0] },
+    ELECTRIC_CHARGE_DENSITY: { dimensions: [ 0, -3,  1,  1,  0,  0,  0,  0,  0,  0] },
+    ELECTRIC_DISPLACEMENT:   { dimensions: [ 0, -2,  1,  1,  0,  0,  0,  0,  0,  0] },
+    ELECTRIC_FIELD_STRENGTH: { dimensions: [ 1,  1, -3, -1,  0,  0,  0,  0,  0,  0] },
+    ELECTRICAL_CONDUCTANCE:  { dimensions: [-1, -2,  3,  2,  0,  0,  0,  0,  0,  0] },
+    ELECTRICAL_CONDUCTIVITY: { dimensions: [-1, -3,  3,  2,  0,  0,  0,  0,  0,  0] },
+    ELECTRIC_POTENTIAL:      { dimensions: [ 1,  2, -3, -1,  0,  0,  0,  0,  0,  0] },
+    RESISTANCE:              { dimensions: [ 1,  2, -3, -2,  0,  0,  0,  0,  0,  0] },
+    ELECTRICAL_RESISTIVITY:  { dimensions: [ 1,  3, -3, -2,  0,  0,  0,  0,  0,  0] },
+    ENERGY:                  { dimensions: [ 1,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
+    ENTROPY:                 { dimensions: [ 1,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
+    FORCE:                   { dimensions: [ 1,  1, -2,  0,  0,  0,  0,  0,  0,  0] },
+    FREQUENCY:               { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  0,  0,  0] },
+    HEAT_CAPACITY:           { dimensions: [ 1,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
+    HEAT_FLUX_DENSITY:       { dimensions: [ 1,  0, -3,  0,  0,  0,  0,  0,  0,  0] },
+    IMPEDANCE:               { dimensions: [ 1,  2, -3, -2,  0,  0,  0,  0,  0,  0] },
+    IMPULSE:                 { dimensions: [ 1,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
+    INDUCTANCE:              { dimensions: [ 1,  2, -2, -2,  0,  0,  0,  0,  0,  0] },
+    IRRADIANCE:              { dimensions: [ 1,  0, -3,  0,  0,  0,  0,  0,  0,  0] },
+    JERK:                    { dimensions: [ 0,  1, -3,  0,  0,  0,  0,  0,  0,  0] },
+    KINEMATIC_VISCOSITY:     { dimensions: [ 0,  2, -1,  0,  0,  0,  0,  0,  0,  0] },
+    LINEAR_DENSITY:          { dimensions: [ 1, -1,  0,  0,  0,  0,  0,  0,  0,  0] },
+    MAGNETIC_FIELD_STRENGTH: { dimensions: [ 0, -1,  0,  1,  0,  0,  0,  0,  0,  0] },
+    MAGNETIC_FLUX:           { dimensions: [ 1,  2, -2, -1,  0,  0,  0,  0,  0,  0] },
+    MAGNETIC_FLUX_DENSITY:   { dimensions: [ 1,  0, -2, -1,  0,  0,  0,  0,  0,  0] },
+    MOLAR_CONCENTRATION:     { dimensions: [ 0, -3,  0,  0,  0,  0,  1,  0,  0,  0] },
+    MOLAR_ENERGY:            { dimensions: [ 1,  2, -2,  0,  0,  0, -1,  0,  0,  0] },
+    MOLAR_ENTROPY:           { dimensions: [ 1,  2, -2,  0, -1,  0, -1,  0,  0,  0] },
+    MOLAR_HEAT_CAPACITY:     { dimensions: [ 1,  2, -2,  0, -1,  0, -1,  0,  0,  0] },
+    MOMENT_OF_INERTIA:       { dimensions: [ 1,  2,  0,  0,  0,  0,  0,  0,  0,  0] },
+    MOMENTUM:                { dimensions: [ 1,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
+    PERMEABILITY:            { dimensions: [ 1,  1, -2, -2,  0,  0,  0,  0,  0,  0] },
+    PERMITTIVITY:            { dimensions: [-1, -3,  4,  2,  0,  0,  0,  0,  0,  0] },
+    POWER:                   { dimensions: [ 1,  2, -3,  0,  0,  0,  0,  0,  0,  0] },
+    PRESSURE:                { dimensions: [ 1, -1, -2,  0,  0,  0,  0,  0,  0,  0] },
+    RELUCTANCE:              { dimensions: [-1, -2,  2,  2,  0,  0,  0,  0,  0,  0] },
+    SPECIFIC_ENERGY:         { dimensions: [ 0,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
+    SPECIFIC_HEAT_CAPACITY:  { dimensions: [ 0,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
+    SPECIFIC_VOLUME:         { dimensions: [-1,  3,  0,  0,  0,  0,  0,  0,  0,  0] },
+    SPIN:                    { dimensions: [ 1,  2, -1,  0,  0,  0,  0,  0,  0,  0] },
+    SURFACE_TENSION:         { dimensions: [ 1,  0, -2,  0,  0,  0,  0,  0,  0,  0] },
+    TEMPERATURE_GRADIENT:    { dimensions: [ 0, -1,  0,  0,  1,  0,  0,  0,  0,  0] },
+    THERMAL_CONDUCTIVITY:    { dimensions: [ 1,  1, -3,  0, -1,  0,  0,  0,  0,  0] },
+    TORQUE:                  { dimensions: [ 1,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
+    VELOCITY:                { dimensions: [ 0,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
+    VOLUME:                  { dimensions: [ 0,  3,  0,  0,  0,  0,  0,  0,  0,  0] },
+    VOLUMETRIC_FLOW_RATE:    { dimensions: [ 0,  3, -1,  0,  0,  0,  0,  0,  0,  0] }
 
   }
 
@@ -1106,6 +964,22 @@ export default function createUnitStore (options) {
       value: 1,
       offset: 0
     },
+    sr: {
+      name: 'sr',
+      base: DIMENSIONS.SOLID_ANGLE,
+      prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['u', 'm', ''],
+      value: 1,
+      offset: 0,
+    },
+    steradian: {
+      name: 'steradian',
+      base: DIMENSIONS.SOLID_ANGLE,
+      prefixes: PREFIXES.LONG,
+      commonPrefixes: ['micro', 'milli', ''],
+      value: 1,
+      offset: 0,
+    },
     deg: {
       name: 'deg',
       base: DIMENSIONS.ANGLE,
@@ -1262,21 +1136,18 @@ export default function createUnitStore (options) {
     // luminous intensity
     cd: {
       name: 'cd',
-      base: DIMENSIONS.LUMINOUS_FLUX,
+      base: DIMENSIONS.LUMINOUS_INTENSITY,
       prefixes: PREFIXES.NONE,
       value: 1,
       offset: 0
     },
     candela: {
       name: 'candela',
-      base: DIMENSIONS.LUMINOUS_FLUX,
+      base: DIMENSIONS.LUMINOUS_INTENSITY,
       prefixes: PREFIXES.NONE,
       value: 1,
       offset: 0
     },
-    // TODO: units STERADIAN
-    // {name: 'sr', base: BASE_UNITS.STERADIAN, prefixes: PREFIXES.NONE, value: 1, offset: 0},
-    // {name: 'steradian', base: BASE_UNITS.STERADIAN, prefixes: PREFIXES.NONE, value: 1, offset: 0},
 
     // Force
     N: {
@@ -1664,6 +1535,8 @@ export default function createUnitStore (options) {
     }
   }
 
+  // Add additional units here.
+
   // aliases (formerly plurals)
   const ALIASES = {
     meters: 'meter',
@@ -1762,70 +1635,81 @@ export default function createUnitStore (options) {
 
   }
 
+  // Add additional aliases here.
+
   /**
    * A unit system is a set of dimensionally independent base dimensions plus a set of derived dimensions, formed by multiplication and division of the base dimensions, that are by convention used with the unit system.
-   * A user perhaps could issue a command to select a preferred unit system, or use the default (see below).
-   * Auto unit system: The default unit system is updated on the fly anytime a unit is parsed. The corresponding unit in the default unit system is updated, so that answers are given in the same units the user supplies.
    */
+
   const UNIT_SYSTEMS = {
     si: {
-      // Base dimensions
-      LENGTH: { unit: UNITS.m, prefix: PREFIXES.SHORT[''] },
-      MASS: { unit: UNITS.g, prefix: PREFIXES.SHORT['k'] },
-      TIME: { unit: UNITS.s, prefix: PREFIXES.SHORT[''] },
-      CURRENT: { unit: UNITS.A, prefix: PREFIXES.SHORT[''] },
-      TEMPERATURE: { unit: UNITS.K, prefix: PREFIXES.SHORT[''] },
-      LUMINOUS_FLUX: { unit: UNITS.cd, prefix: PREFIXES.SHORT[''] },
-      AMOUNT_OF_SUBSTANCE: { unit: UNITS.mol, prefix: PREFIXES.SHORT[''] },
-      ANGLE: { unit: UNITS.rad, prefix: PREFIXES.SHORT[''] },
-      BIT: { unit: UNITS.bit, prefix: PREFIXES.SHORT[''] },
-
-      // Derived dimensions
-      UNITLESS: { unit: UNIT_NONE, prefix: PREFIXES.NONE[''] },
-      FORCE: { unit: UNITS.N, prefix: PREFIXES.SHORT[''] },
-      ENERGY: { unit: UNITS.J, prefix: PREFIXES.SHORT[''] },
-      POWER: { unit: UNITS.W, prefix: PREFIXES.SHORT[''] },
-      PRESSURE: { unit: UNITS.Pa, prefix: PREFIXES.SHORT[''] },
-      ELECTRIC_CHARGE: { unit: UNITS.C, prefix: PREFIXES.SHORT[''] },
-      CAPACITANCE: { unit: UNITS.F, prefix: PREFIXES.SHORT[''] },
-      ELECTRIC_POTENTIAL: { unit: UNITS.V, prefix: PREFIXES.SHORT[''] },
-      RESISTANCE: { unit: UNITS.ohm, prefix: PREFIXES.SHORT[''] },
-      INDUCTANCE: { unit: UNITS.H, prefix: PREFIXES.SHORT[''] },
-      ELECTRICAL_CONDUCTANCE: { unit: UNITS.S, prefix: PREFIXES.SHORT[''] },
-      MAGNETIC_FLUX: { unit: UNITS.Wb, prefix: PREFIXES.SHORT[''] },
-      MAGNETIC_FLUX_DENSITY: { unit: UNITS.T, prefix: PREFIXES.SHORT[''] },
-      FREQUENCY: { unit: UNITS.Hz, prefix: PREFIXES.SHORT[''] }
+      AMOUNT_OF_SUBSTANCE: 'mol',
+      BIT: 'b',
+      CAPACITANCE: 'F',
+      CURRENT: 'A',
+      ELECTRIC_CHARGE: 'C',
+      ELECTRICAL_CONDUCTANCE: 'S',
+      ELECTRIC_POTENTIAL: 'V',
+      RESISTANCE: 'ohm',
+      ENERGY: 'J',
+      FORCE: 'N',
+      FREQUENCY: 'Hz',
+      IMPEDANCE: 'ohm',
+      INDUCTANCE: 'H',
+      LENGTH: 'm',
+      LUMINOUS_INTENSITY: 'cd',
+      MAGNETIC_FLUX: 'Wb',
+      MAGNETIC_FLUX_DENSITY: 'T',
+      MASS: 'kg',
+      POWER: 'W',
+      PRESSURE: 'Pa',
+      TEMPERATURE: 'K',
+      TIME: 's'
     }
   }
 
   // Clone to create the other unit systems
   UNIT_SYSTEMS.cgs = JSON.parse(JSON.stringify(UNIT_SYSTEMS.si))
-  UNIT_SYSTEMS.cgs.LENGTH = { unit: UNITS.m, prefix: PREFIXES.SHORT['c'] }
-  UNIT_SYSTEMS.cgs.MASS = { unit: UNITS.g, prefix: PREFIXES.SHORT[''] }
-  UNIT_SYSTEMS.cgs.FORCE = { unit: UNITS.dyn, prefix: PREFIXES.SHORT[''] }
-  UNIT_SYSTEMS.cgs.ENERGY = { unit: UNITS.erg, prefix: PREFIXES.NONE[''] }
+  UNIT_SYSTEMS.cgs.LENGTH = 'cm'
+  UNIT_SYSTEMS.cgs.MASS = 'g'
+  UNIT_SYSTEMS.cgs.FORCE = 'dyn'
+  UNIT_SYSTEMS.cgs.ENERGY = 'erg'
   // there are wholly 4 unique cgs systems for electricity and magnetism,
   // so let's not worry about it unless somebody complains
 
+  // These maybe are not canonical
   UNIT_SYSTEMS.us = JSON.parse(JSON.stringify(UNIT_SYSTEMS.si))
-  UNIT_SYSTEMS.us.LENGTH = { unit: UNITS.ft, prefix: PREFIXES.NONE[''] }
-  UNIT_SYSTEMS.us.MASS = { unit: UNITS.lbm, prefix: PREFIXES.NONE[''] }
-  UNIT_SYSTEMS.us.TEMPERATURE = { unit: UNITS.degF, prefix: PREFIXES.NONE[''] }
-  UNIT_SYSTEMS.us.FORCE = { unit: UNITS.lbf, prefix: PREFIXES.NONE[''] }
-  UNIT_SYSTEMS.us.ENERGY = { unit: UNITS.BTU, prefix: PREFIXES.BTU[''] }
-  UNIT_SYSTEMS.us.POWER = { unit: UNITS.hp, prefix: PREFIXES.NONE[''] }
-  UNIT_SYSTEMS.us.PRESSURE = { unit: UNITS.psi, prefix: PREFIXES.NONE[''] }
+  UNIT_SYSTEMS.us.LENGTH = 'ft'
+  UNIT_SYSTEMS.us.MASS = 'lbm'
+  UNIT_SYSTEMS.us.TEMPERATURE = 'degF'
+  UNIT_SYSTEMS.us.FORCE = 'lbf'
+  UNIT_SYSTEMS.us.ENERGY = 'BTU'
+  UNIT_SYSTEMS.us.POWER = 'hp'
+  UNIT_SYSTEMS.us.PRESSURE = 'psi'
 
   // Add additional unit systems here.
 
-  // Choose a unit system to seed the auto unit system.
-  UNIT_SYSTEMS.auto = JSON.parse(JSON.stringify(UNIT_SYSTEMS.si))
+  // Check to make sure config options has selected a unit system that exists.
+  if (options.system !== 'auto') {
+    if (!UNIT_SYSTEMS.hasOwnProperty(options.system)) {
+      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(UNIT_SYSTEMS).join(', ')} `)
+    }
+  }
 
-  // Set the current unit system
-  // TODO: use this value or delete the next line.
-  // eslint-disable-next-line no-unused-vars
-  let currentUnitSystem = UNIT_SYSTEMS.auto
+  // Convert unit systems from strings to unit/prefix pairs
+  for(let sysKey in UNIT_SYSTEMS) {
+    let sys = UNIT_SYSTEMS[sysKey]
+    for(let dimKey in sys) {
+      let unitPrefixPair = findUnit(sys[dimKey])
+      if(unitPrefixPair) {
+        sys[dimKey] = unitPrefixPair
+      } else {
+        throw new Error(`Unknown unit ${sys[dimKey]} for dimension ${dimKey} in unit system ${sysKey}`)
+      }
+    }
+  }
 
+  // Final setup for units
   for (let key in UNITS) {
     const unit = UNITS[key]
     // Convert commonPrefix from string array to prefix array and sort the array
@@ -1844,6 +1728,7 @@ export default function createUnitStore (options) {
     if (!unit.base) {
       throw new Error(`Cannot find dimension for unit ${unit.name}`)
     }
+    console.log(unit.base)
     unit.dimensions = unit.base.dimensions
   }
 

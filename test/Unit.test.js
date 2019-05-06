@@ -221,7 +221,7 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit(5, 'm^2/s')._getDimension(), ['KINEMATIC_VISCOSITY'])
       assert.deepStrictEqual(unit(5, 'cm')._getDimension(), ['LENGTH'])
       assert.deepStrictEqual(unit(5, 'kg/m')._getDimension(), ['LINEAR_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'candela')._getDimension(), ['LUMINOUS_FLUX'])
+      assert.deepStrictEqual(unit(5, 'candela')._getDimension(), ['LUMINOUS_INTENSITY'])
       assert.deepStrictEqual(unit(5, 'A/m')._getDimension(), ['MAGNETIC_FIELD_STRENGTH'])
       assert.deepStrictEqual(unit(5, 'tesla m^2')._getDimension(), ['MAGNETIC_FLUX'])
       assert.deepStrictEqual(unit(5, 'tesla')._getDimension(), ['MAGNETIC_FLUX_DENSITY'])
@@ -485,6 +485,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit(500000, 'm').toString(), '500 km')
       assert.strictEqual(unit(600000, 'm').toString(), '600 km')
       assert.strictEqual(unit(1000000, 'm').toString(), '1000 km')
+      assert.strictEqual(unit(10000000, 'm').toString(), '10000 km')
       assert.strictEqual(unit(2000, 'ohm').toString(), '2 kohm')
     })
 
@@ -520,84 +521,52 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('simplify', function () {
-    it('should not simplify units created with unit()', function () {
-      const unit1 = unit(10, 'kg m/s^2')
+  describe('simplify', function () {
+    it('should not simplify units fixed by the to() method', function () {
+      const unit1 = unit(10, 'kg m/s^2').to()
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'm')
       assert.strictEqual(unit1.units[2].unit.name, 's')
-      assert.strictEqual(unit1.toString(), '10 (kg m) / s^2')
+      assert.strictEqual(unit1.toString(), '10 kg m / s^2')
     })
 
     it('should only simplify units with values', function () {
-      let unit1 = unit(null, 'kg m mol / s^2 / mol').pow(1) // Remove the "skipSimplify" flag
-      assert.strictEqual(unit1.toString(), '(kg m mol) / (s^2 mol)')
-      unit1 = math.multiply(unit1, 1)
+      let unit1 = unit(null, 'kg m mol / s^2 mol')
+      assert.strictEqual(unit1.toString(), 'kg m / s^2')
+      unit1 = unit1.mul(1)
       assert.strictEqual(unit1.toString(), '1 N')
     })
 
-    it('should simplify units when they cancel out with {predictable: true}', function () {
-      const math2 = math.create({ predictable: true })
-      const unit1 = new math2.Unit(2, 'Hz')
-      const unit2 = new math2.Unit(2, 's')
-      const unit3 = math2.multiply(unit1, unit2)
+    it('should simplify units when they cancel out', function () {
+      const unit1 = unit(2, 'Hz')
+      const unit2 = unit(2, 's')
+      const unit3 = unit1.mul(unit2)
       assert.strictEqual(unit3.toString(), '4')
-      assert.strictEqual(unit3.simplify().units.length, 0)
+      assert.strictEqual(unit3.units.length, 0)
 
-      const nounit = math2.evaluate('40m * 40N / (40J)')
+      const nounit = unit('40m').mul('40N').div('40J')
       assert.strictEqual(nounit.toString(), '40')
-      assert.strictEqual(nounit.simplify().units.length, 0)
+      assert.strictEqual(nounit.units.length, 0)
 
-      const a = math2.unit('3 s^-1')
-      const b = math2.unit('4 s')
-      assert.strictEqual(math2.multiply(a, b).type, 'Unit')
-
-      const c = math2.unit('8.314 J / mol / K')
-      assert.strictEqual(math2.pow(c, 0).type, 'Unit')
-
-      const d = math2.unit('60 minute')
-      const e = math2.unit('1 s')
-      assert.strictEqual(math2.divide(d, e).type, 'Unit')
-    })
-
-    it('should convert units to appropriate _numeric_ values when they cancel out with {predictable: false}', function () {
-      const origConfig = math.config()
-      math.config({ predictable: false })
-
-      assert.strictEqual(typeof (math.evaluate('40 m * 40 N / (40 J)')), 'number')
-
-      const a = math.unit('3 s^-1')
-      const b = math.unit('4 s')
-      assert.strictEqual(typeof (math.multiply(a, b)), 'number')
-
-      const c = math.unit('8.314 J / mol / K')
-      assert.strictEqual(typeof (math.pow(c, 0)), 'number')
-
-      const d = math.unit('60 minute')
-      const e = math.unit('1 s')
-      assert.strictEqual(typeof (math.divide(d, e)), 'number')
-
-      math.config(origConfig)
     })
 
     it('should simplify units according to chosen unit system', function () {
-      const unit1 = unit(10, 'N')
-      Unit.setUnitSystem('us')
-      assert.strictEqual(unit1.simplify().toString(), '2.248089430997105 lbf')
-      assert.strictEqual(unit1.simplify().units[0].unit.name, 'lbf')
 
-      Unit.setUnitSystem('cgs')
-      assert.strictEqual(unit1.simplify().format(2), '1 Mdyn')
-      assert.strictEqual(unit1.simplify().units[0].unit.name, 'dyn')
+      let unit1 = unit.config({system: 'us'})('10 N')
+      assert.strictEqual(unit1.toString(), '2.248089430997105 lbf')
+      assert.strictEqual(unit1.units[0].unit.name, 'lbf')
+
+      let unit2 = unit.config({system: 'cgs'})('10 N')
+      assert.strictEqual(unit2.toString(), '1 Mdyn')
+      assert.strictEqual(unit2.units[0].unit.name, 'dyn')
     })
 
     it('should correctly simplify units when unit system is "auto"', function () {
-      Unit.setUnitSystem('auto')
       const unit1 = unit(5, 'lbf min / s')
       assert.strictEqual(unit1.simplify().toString(), '300 lbf')
     })
 
-    it('should simplify user-defined units when unit system is "auto"', function () {
+    it.skip('should simplify user-defined units when unit system is "auto"', function () {
       Unit.setUnitSystem('auto')
       Unit.createUnit({ 'USD': '' })
       Unit.createUnit({ 'EUR': '1.15 USD' })

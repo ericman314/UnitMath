@@ -135,7 +135,7 @@ When choosing a prefix, the smallest formatted value of a `unit` that is allowed
 When choosing a prefix, the largest formatted value of a `unit` that is allowed.
 
 - `simplify`: **`true`**  
-Whether to automatically simplify units when calling the `toString` or `format` methods. If true, then `u.toString()` becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. Simplification is skipped if the unit was constructed using the `to()` method.
+Whether to automatically simplify units when calling the `toString` or `format` methods. If true, then `u.toString()` becomes equivalent to `u.simplify(true).toString()`. The original `u` is never modified. Simplification is skipped if the unit was constructed using the `to()` method.
 
 - `simplifyThreshold`: **`2`**  
 A factor that affects whether a `unit` gets simplified. Simplification will not occur unless the "complexity" of the resulting `unit` is reduced by an amount equal to or greater than the `simplifyThreshold`. A lower value results in more `unit`s being simplified, while a higher number results in fewer `unit`s being simplified. The complexity of a `unit` is roughly equal to the number of "symbols" that are required to write the `unit`.
@@ -239,8 +239,6 @@ For best results, you should extend all of the `custom...` functions. If you try
 When using custom types, UnitMath cannot implicitly convert strings to units. Therefore, you must use the two-argument `unit(value, unitString)` to construct units. This is because UnitMath's string parser only works with native `number` types. To see why this must be, consider the string `"1 / 2 kg"`, which the user of a fraction library may wish to parse. UnitMath's parser wouldn't know what to do with `1 / 2`, and the fraction library's parser might choke when it encounters `kg`. The proper way to create this unit would be `unit(fraction(1, 2), 'kg')`.
 
 ## API Reference
-
-
 
 ## Contributing
 

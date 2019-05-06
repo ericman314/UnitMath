@@ -204,6 +204,76 @@ let _config = function _config (options) {
     }
 
     /**
+     * Simplify this Unit's unit list and return a new Unit with the simplified list.
+     * The returned Unit will contain a list of the "best" units for formatting.
+     * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
+     */
+    simplify (skipIfThresholdNotMet = false) {
+      const result = this.clone()
+
+      // If the unit system is 'auto', then try to determine what system we are using.
+
+      return this
+
+      const proposedUnitList = []
+
+      // Search for a matching base
+      let matchingBase
+      for (const key in currentUnitSystem) {
+        if (result.hasBase(BASE_UNITS[key])) {
+          matchingBase = key
+          break
+        }
+      }
+
+      if (matchingBase === 'NONE') {
+        result.units = []
+      } else {
+        let matchingUnit
+        if (matchingBase) {
+          // Does the unit system have a matching unit?
+          if (currentUnitSystem.hasOwnProperty(matchingBase)) {
+            matchingUnit = currentUnitSystem[matchingBase]
+          }
+        }
+        if (matchingUnit) {
+          result.units = [{
+            unit: matchingUnit.unit,
+            prefix: matchingUnit.prefix,
+            power: 1.0
+          }]
+        } else {
+          // Multiple units or units with powers are formatted like this:
+          // 5 kg m^2 / s^3 mol
+          // Build a representation from the base units of the current unit system
+          let missingBaseDim = false
+          for (let i = 0; i < BASE_DIMENSIONS.length; i++) {
+            const baseDim = BASE_DIMENSIONS[i]
+            if (Math.abs(result.dimensions[i] || 0) > 1e-12) {
+              if (currentUnitSystem.hasOwnProperty(baseDim)) {
+                proposedUnitList.push({
+                  unit: currentUnitSystem[baseDim].unit,
+                  prefix: currentUnitSystem[baseDim].prefix,
+                  power: result.dimensions[i] || 0
+                })
+              } else {
+                missingBaseDim = true
+              }
+            }
+          }
+
+          // Is the proposed unit list "simpler" than the existing one?
+          if (proposedUnitList.length < result.units.length && !missingBaseDim) {
+            // Replace this unit list with the proposed list
+            result.units = proposedUnitList
+          }
+        }
+      }
+
+      return result
+    }
+
+    /**
      * Returns this unit without a value.
      * @memberof Unit
      * @returns {Unit} A new unit formed by removing the value from this unit.
@@ -299,6 +369,9 @@ let _config = function _config (options) {
       let simp = this.clone()
 
       // TODO: Simplify unit
+      if (options.simplify && !this.fixed) {
+        simp = simp.simplify()
+      }
       if (options.prefix === 'always' || (options.prefix === 'auto' && !this.fixed)) {
         simp = _choosePrefix(simp)
       }
@@ -734,42 +807,6 @@ let _config = function _config (options) {
 
     Object.freeze(result)
     return result
-
-    // // find the best prefix value (resulting in the value of which
-    // // the absolute value of the log10 is closest to zero,
-    // // though with a little offset of 1.2 for nicer values: you get a
-    // // sequence 1mm 100mm 500mm 0.6m 1m 10m 100m 500m 0.6km 1km ...
-
-    // // Note: the units value can be any numeric type, but to find the best
-    // // prefix it's enough to work with limited precision of a regular number
-    // // Update: using mathjs abs since we also allow complex numbers
-    // const absValue = this.value !== null ? abs(this.value) : 0
-    // const absUnitValue = abs(this.units[0].unit.value)
-    // let bestPrefix = this.units[0].prefix
-    // if (absValue === 0) {
-    //   return bestPrefix
-    // }
-    // const power = this.units[0].power
-    // let bestDiff = Math.log(absValue / Math.pow(bestPrefix.value * absUnitValue, power)) / Math.LN10 - 1.2
-    // if (bestDiff > -2.200001 && bestDiff < 1.800001) return bestPrefix // Allow the original prefix
-    // bestDiff = Math.abs(bestDiff)
-    // for (const p in prefixes) {
-    //   if (prefixes.hasOwnProperty(p)) {
-    //     const prefix = prefixes[p]
-    //     if (prefix.scientific) {
-    //       const diff = Math.abs(
-    //         Math.log(absValue / Math.pow(prefix.value * absUnitValue, power)) / Math.LN10 - 1.2)
-
-    //       if (diff < bestDiff ||
-    //           (diff === bestDiff && prefix.name.length < bestPrefix.name.length)) {
-    //         // choose the prefix with the smallest diff, or if equal, choose the one
-    //         // with the shortest name (can happen with SHORTLONG for example)
-    //         bestPrefix = prefix
-    //         bestDiff = diff
-    //       }
-    //     }
-    //   }
-    // }
   }
 
   /**

@@ -268,15 +268,6 @@ export default function createParser (options, unitStore) {
         powerMultiplierCurrent = -1
         expectingUnit = true
       }
-
-      // Replace the unit into the auto unit system
-      if (res.unit.base) {
-        const baseDim = res.unit.base.key
-        unitStore.UNIT_SYSTEMS.auto[baseDim] = {
-          unit: res.unit,
-          prefix: res.prefix
-        }
-      }
     }
 
     // Has the string been entirely consumed?
