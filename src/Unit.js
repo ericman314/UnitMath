@@ -206,70 +206,96 @@ let _config = function _config (options) {
     /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
+     * @param {boolean} coerce Always simplify: do not perform checking.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
      */
-    simplify (skipIfThresholdNotMet = false) {
-      const result = this.clone()
+    simplify (coerce = true) {
+      const result = _clone(this)
 
-      // If the unit system is 'auto', then try to determine what system we are using.
+      if (!coerce && this.fixed) {
+        // Unit is fixed, do not simplify.
+        return this
+      }
+      if (!coerce && this.value === null) {
+        // Unit is valueless, do not simplify.
+        return this
+      }
 
-      return this
+      let systemStr = options.system
+      if (systemStr === 'auto') {
+        // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si' in the event of a tie.
+        let identifiedSystems = { si: 0.1 }
+        for (let i = 0; i < this.units.length; i++) {
+          if (this.units[i].unit.systems) {
+            this.units[i].unit.systems.forEach(sys => {
+              identifiedSystems[sys] = (identifiedSystems[sys] || 0) + 1
+            })
+          }
+        }
+        let ids = Object.keys(identifiedSystems)
+        ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
+        console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+        systemStr = ids[0]
+      }
+
+      let system = unitStore.UNIT_SYSTEMS[systemStr]
 
       const proposedUnitList = []
 
-      // Search for a matching base
-      let matchingBase
-      for (const key in currentUnitSystem) {
-        if (result.hasBase(BASE_UNITS[key])) {
-          matchingBase = key
+      // Search for a matching dimension in the given unit system
+      let matchingDim
+      for (const key in system) {
+        if (result._hasDimension(key)) {
+          console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
+          matchingDim = key
           break
         }
       }
 
-      if (matchingBase === 'NONE') {
-        result.units = []
+      let ok = true
+      if (matchingDim) {
+        console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix.name}${system[matchingDim].unit.name}`)
+        proposedUnitList.push({
+          unit: system[matchingDim].unit,
+          prefix: system[matchingDim].prefix,
+          power: 1.0
+        })
       } else {
-        let matchingUnit
-        if (matchingBase) {
-          // Does the unit system have a matching unit?
-          if (currentUnitSystem.hasOwnProperty(matchingBase)) {
-            matchingUnit = currentUnitSystem[matchingBase]
-          }
-        }
-        if (matchingUnit) {
-          result.units = [{
-            unit: matchingUnit.unit,
-            prefix: matchingUnit.prefix,
-            power: 1.0
-          }]
-        } else {
-          // Multiple units or units with powers are formatted like this:
-          // 5 kg m^2 / s^3 mol
-          // Build a representation from the base units of the current unit system
-          let missingBaseDim = false
-          for (let i = 0; i < BASE_DIMENSIONS.length; i++) {
-            const baseDim = BASE_DIMENSIONS[i]
-            if (Math.abs(result.dimensions[i] || 0) > 1e-12) {
-              if (currentUnitSystem.hasOwnProperty(baseDim)) {
-                proposedUnitList.push({
-                  unit: currentUnitSystem[baseDim].unit,
-                  prefix: currentUnitSystem[baseDim].prefix,
-                  power: result.dimensions[i] || 0
-                })
-              } else {
-                missingBaseDim = true
-              }
+        // Multiple units or units with powers are formatted like this:
+        // 5 kg m^2 / s^3 mol
+        // Build a representation from the base units of the current unit system
+        for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
+          const baseDim = unitStore.BASE_DIMENSIONS[i]
+          if (Math.abs(result.dimensions[i] || 0) > 1e-12) {
+            if (system.hasOwnProperty(baseDim)) {
+              proposedUnitList.push({
+                unit: system[baseDim].unit,
+                prefix: system[baseDim].prefix,
+                power: result.dimensions[i] || 0
+              })
+            } else {
+              ok = false
             }
-          }
-
-          // Is the proposed unit list "simpler" than the existing one?
-          if (proposedUnitList.length < result.units.length && !missingBaseDim) {
-            // Replace this unit list with the proposed list
-            result.units = proposedUnitList
           }
         }
       }
 
+      // TODO: Calculate complexity and decide whether to proceed with simplifying
+
+      // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
+
+      // TODO: Use coerce
+
+      // TODO: Tests for all this stuff
+
+      // Is the proposed unit list "simpler" than the existing one?
+      if (proposedUnitList.length < result.units.length && ok) {
+        // Replace this unit list with the proposed list
+        result.units = proposedUnitList
+        result.value = options.customClone(_denormalize(result.units, _normalize(this.units, this.value)))
+      }
+
+      Object.freeze(result)
       return result
     }
 
@@ -370,7 +396,7 @@ let _config = function _config (options) {
 
       // TODO: Simplify unit
       if (options.simplify && !this.fixed) {
-        simp = simp.simplify()
+        simp = simp.simplify(false)
       }
       if (options.prefix === 'always' || (options.prefix === 'auto' && !this.fixed)) {
         simp = _choosePrefix(simp)
@@ -718,46 +744,36 @@ let _config = function _config (options) {
     let result = _clone(unit)
     let piece = result.units[0] // TODO: Someday this might choose the most "dominant" unit, or something, to prefix, rather than the first unit
 
-    console.log('entering _choosePrefix')
     if (unit.units.length !== 1) {
       // TODO: Support for compound units
-      console.log('Not a single unit')
       return unit
     }
     if (unit.value === null) {
       // Unit does not have a value
-      console.log('Unit does not have a value')
       return unit
     }
     if (Math.abs(piece.power - Math.round(piece.power)) >= 1e-14) {
       // TODO: Support for non-integer powers
-      console.log('Not an integer power')
       return unit
     }
     if (Math.abs(piece.power) < 1e-14) {
       // Unit has power of 0, so prefix will have no effect
-      console.log('Power is zero')
       return unit
     }
     if (options.customLT(options.customAbs(unit.value), options.customConv(1e-50))) {
       // Unit is too small for the prefix to matter
-      console.log('Unit is too small for the prefix to matter')
       return unit
     }
     if (options.customLE(options.customAbs(unit.value), options.prefixMax) && options.customGE(options.customAbs(unit.value), options.prefixMin)) {
-      console.log('Unit is already acceptable')
       // Unit's value is already acceptable
       return unit
     }
 
     const prefixes = piece.unit.commonPrefixes
     if (!prefixes) {
-      console.log('Unit does not have any common prefixes for formatting')
       // Unit does not have any common prefixes for formatting
       return unit
     }
-
-    console.log(prefixes)
 
     function calcValue (prefix) {
       return options.customDiv(unit.value, options.customPow(prefix.value / piece.prefix.value, piece.power))
@@ -787,19 +803,15 @@ let _config = function _config (options) {
     let bestPrefix = piece.prefix
     let bestScore = calcScore(bestPrefix)
 
-    console.log(`The original unit is ${unit.to().toString()}`)
-
     for (let i = 0; i < prefixes.length; i++) {
       // What would the value of the unit be if this prefix were applied?
       let thisPrefix = prefixes[i]
-      let thisValue = calcValue(thisPrefix)
       let thisScore = calcScore(thisPrefix)
 
       if (thisScore < bestScore) {
         bestScore = thisScore
         bestPrefix = thisPrefix
       }
-      console.log(`With prefix ${thisPrefix.name}, the unit has a value of ${thisValue} and the score is ${thisScore}`)
     }
 
     piece.prefix = bestPrefix
