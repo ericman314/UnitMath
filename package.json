@@ -15,6 +15,7 @@
     "prepublishOnly": "npm test",
     "test": "npm run test:src && npm run lint",
     "test:src": "mocha --require esm --recursive test",
+    "test:bundle": "npm run build && mocha --recursive test-bundle",
     "lint": "standard --env=mocha --env=worker --verbose",
     "lint:fix": "standard --env=mocha --env=worker --fix --verbose"
   },
