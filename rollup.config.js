@@ -1,4 +1,6 @@
 import babel from 'rollup-plugin-babel'
+import resolve from 'rollup-plugin-node-resolve'
+import commonjs from 'rollup-plugin-commonjs'
 import { terser } from 'rollup-plugin-terser'
 
 const teserOptions = {
@@ -7,6 +9,19 @@ const teserOptions = {
     unsafe: true,
     unsafe_comps: true
   }
+}
+
+const babelOptions = {
+  presets: [
+    ['@babel/preset-env', {
+      useBuiltIns: 'usage',
+      debug: true,
+      corejs: 3
+    }]
+  ],
+  ignore: [
+    'node_modules'
+  ]
 }
 
 const name = 'UnitMath'
@@ -21,7 +36,9 @@ export default [
       file: 'dist/UnitMath.js',
       format: 'umd'
     },
-    plugins: [babel()]
+    plugins: [babel(babelOptions),
+      resolve(),
+      commonjs()]
   },
   // minified UMD build
   {
@@ -33,7 +50,22 @@ export default [
       name
     },
     plugins: [
-      babel(),
+      babel(babelOptions),
+      resolve(),
+      commonjs(),
+      terser(teserOptions)
+    ]
+  },
+  // minified UMD build
+  {
+    input,
+    output: {
+      file: 'dist/UnitMath.min2.js',
+      format: 'umd',
+      indent: false,
+      name
+    },
+    plugins: [
       terser(teserOptions)
     ]
   },
