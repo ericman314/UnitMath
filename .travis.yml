@@ -4,3 +4,13 @@ node_js:
   - 12
   - 10
   - 8
+
+script: npm run test:src
+
+jobs:
+  include:
+    - stage: other
+      script: npm run lint
+      name: Lint
+    - script: npm run test:bundle
+      name: Bundling Test
