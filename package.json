@@ -3,14 +3,12 @@
   "version": "0.0.1",
   "description": "JavaScript library for unit conversion and arithmetic",
   "main": "index.js",
-  "module": "main.js",
+  "module": "src/Unit.js",
   "files": [
     "dist",
     "lib",
     "es",
-    "src",
-    "index.js",
-    "main.js"
+    "src"
   ],
   "scripts": {
     "build": "rollup -c",

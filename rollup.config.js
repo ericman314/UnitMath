@@ -10,7 +10,7 @@ const teserOptions = {
 }
 
 const name = 'UnitMath'
-const input = 'main.js'
+const input = 'src/Unit.js'
 
 export default [
   // UMD build
