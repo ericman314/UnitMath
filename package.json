@@ -2,14 +2,20 @@
   "name": "unitmath",
   "version": "0.0.1",
   "description": "JavaScript library for unit conversion and arithmetic",
-  "main": "lib/Unit.js",
+  "main": "index.js",
   "module": "src/Unit.js",
-  "type": "module",
+  "files": [
+    "dist",
+    "lib",
+    "es",
+    "src"
+  ],
   "scripts": {
-    "build": "babel src -d lib",
+    "build": "rollup -c",
     "prepublishOnly": "npm test",
     "test": "npm run test:src && npm run lint",
-    "test:src": "mocha --require @babel/register --recursive test",
+    "test:src": "mocha --require esm 'test/**/*.test.js'",
+    "test:bundle": "npm run build && mocha 'test/**/*.test-bundle.js'",
     "lint": "standard --env=mocha --env=worker --verbose",
     "lint:fix": "standard --env=mocha --env=worker --fix --verbose"
   },
@@ -32,13 +38,18 @@
   },
   "homepage": "https://github.com/ericman314/unitmath#readme",
   "devDependencies": {
-    "@babel/cli": "^7.4.4",
-    "@babel/preset-env": "^7.4.3",
-    "@babel/register": "^7.4.0",
+    "@babel/core": "7.4.4",
+    "@babel/preset-env": "7.4.4",
+    "core-js": "3.0.1",
     "mocha": "^6.1.4",
+    "rollup": "1.11.3",
+    "rollup-plugin-babel": "4.3.2",
+    "rollup-plugin-commonjs": "9.3.4",
+    "rollup-plugin-node-resolve": "4.2.3",
+    "rollup-plugin-terser": "4.0.4",
     "standard": "^12.0.1"
   },
   "dependencies": {
-    "@babel/core": "^7.4.3"
+    "esm": "3.2.22"
   }
 }
