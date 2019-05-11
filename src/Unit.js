@@ -206,14 +206,13 @@ let _config = function _config (options) {
     /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
-     * @param {boolean} coerce Always simplify the unit even if the resulting simplification doesn't meet the configured threshold.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
      */
-    simplify (coerce = true) {
+    simplify () {
       // console.log(this)
       const result = _clone(this)
 
-      let systemStr = options.format.system
+      let systemStr = options.system
       if (systemStr === 'auto') {
         // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si' in the event of a tie.
         let identifiedSystems = { si: 0.1 }
@@ -272,29 +271,11 @@ let _config = function _config (options) {
         }
       }
 
-      function calcComplexity (unitList) {
-        // Number of total units
-        let comp = unitList.length
-
-        // Number of units containing powers !== +/-1
-        comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length
-
-        // At least one unit in denominator
-        if (unitList.filter(a => a.power < 0).length > 0) {
-          comp += 1
-        }
-
-        return comp
-      }
-
-      // TODO: Calculate complexity and decide whether to proceed with simplifying
-
       // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
 
       // TODO: Tests for all this stuff
 
-      // Is the proposed unit list "simpler" than the existing one?
-      if (ok && (coerce || (calcComplexity(proposedUnitList) <= calcComplexity(result.units) - options.format.simplifyThreshold))) {
+      if (ok) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList
         if (this.value !== null) {
@@ -390,29 +371,62 @@ let _config = function _config (options) {
       return this._equalDimension(other) && options.type.eq(_normalize(this.units, this.value), _normalize(other.units, other.value))
     }
 
-    toString () {
-      return this.format()
+    /**
+     * Get a string representation of the Unit, with optional formatting options. Alias of `format`.
+     * @memberof Unit
+     * @param {Object} [options]  Formatting options.
+     * @return {string}
+     */
+    toString (options) {
+      return this.format(options)
     }
 
     /**
      * Get a string representation of the Unit, with optional formatting options.
      * @memberof Unit
-     * @param {Object} [options]  Formatting options.
+     * @param {Object} [opts]  Formatting options.
      * @return {string}
      */
-    format () {
+    format (opts) {
       let simp = this.clone()
 
-      if (options.format.simplify === 'always' || (options.format.simplify === 'auto' && !this.fixed && this.value !== null)) {
-        simp = simp.simplify(false)
+      let _opts = Object.assign({}, options, opts)
+
+      if (_opts.simplify === 'always') {
+        simp = simp.simplify()
+      } else if (_opts.simplify === 'auto' && !this.fixed && this.value !== null) {
+        let simp2 = simp.simplify()
+
+        // Determine if the simplified unit is simpler
+        let calcComplexity = (unitList) => {
+          // Number of total units
+          let comp = unitList.length
+          // Number of units containing powers !== +/-1
+          comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length
+          // At least one unit in denominator
+          if (unitList.filter(a => a.power < 0).length > 0) {
+            comp += 1
+          }
+          return comp
+        }
+
+        // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
+
+        // TODO: Tests for all this stuff
+
+        // Is the proposed unit list "simpler" than the existing one?
+        if (calcComplexity(simp2.units) <= calcComplexity(simp.units) - _opts.simplifyThreshold) {
+          simp = simp2
+        }
       }
-      if (options.format.prefix === 'always' || (options.format.prefix === 'auto' && !this.fixed)) {
+
+      if (_opts.prefix === 'always' || (_opts.prefix === 'auto' && !this.fixed)) {
         simp = _choosePrefix(simp)
       }
 
       let str = ''
       if (typeof simp.value === 'number') {
-        str += +simp.value.toPrecision(options.format.precision) // The extra + at the beginning removes trailing zeroes
+        str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
         str += simp.value.toString()
       }
@@ -728,7 +742,7 @@ let _config = function _config (options) {
    */
   function _to (unit, valuelessUnit) {
     let result
-    const value = unit.value === null ? _normalize(unit.units, 1) : unit.value
+    const value = unit.value === null ? 1 : unit.value
 
     if (!unit._equalDimension(valuelessUnit)) {
       throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
@@ -771,7 +785,7 @@ let _config = function _config (options) {
       // Unit is too small for the prefix to matter
       return unit
     }
-    if (options.type.le(options.type.abs(unit.value), options.format.prefixMax) && options.type.ge(options.type.abs(unit.value), options.format.prefixMin)) {
+    if (options.type.le(options.type.abs(unit.value), options.prefixMax) && options.type.ge(options.type.abs(unit.value), options.prefixMin)) {
       // Unit's value is already acceptable
       return unit
     }
@@ -788,13 +802,13 @@ let _config = function _config (options) {
 
     function calcScore (prefix) {
       let thisValue = calcValue(prefix)
-      if (options.type.lt(thisValue, options.format.prefixMin)) {
+      if (options.type.lt(thisValue, options.prefixMin)) {
         // prefix makes the value too small
-        return options.type.abs(options.type.div(options.format.prefixMin, thisValue))
+        return options.type.abs(options.type.div(options.prefixMin, thisValue))
       }
-      if (options.type.gt(thisValue, options.format.prefixMax)) {
+      if (options.type.gt(thisValue, options.prefixMax)) {
         // prefix makes the value too large
-        return options.type.abs(options.type.div(thisValue, options.format.prefixMax))
+        return options.type.abs(options.type.div(thisValue, options.prefixMax))
       }
 
       // The prefix is in range, but return a score that says how close it is to the original value.
@@ -916,7 +930,7 @@ let _config = function _config (options) {
     strNum = strNum.substr(1)
     strDen = strDen.substr(1)
 
-    if (options.format.parentheses) {
+    if (options.parentheses) {
       // Add parans for better copy/paste back into evaluate, for example, or for better pretty print formatting
       if (nNum > 1 && nDen > 0) {
         strNum = '(' + strNum + ')'
@@ -954,11 +968,20 @@ let _config = function _config (options) {
       return options
     }
 
-    // We are NOT going any deeper than one nested level with our config. Even going this far was a stretch.
-    let format = Object.assign({}, options.format, newOptions.format)
-    let unit = Object.assign({}, options.unit, newOptions.unit)
-    let type = Object.assign({}, options.type, newOptions.type)
-    return _config({ format, unit, type })
+    // Shallow copy existing config
+    let retOptions = Object.assign({}, options)
+
+    // Shallow copy new options (except unit and type)
+    for (let key in newOptions) {
+      if (key !== 'unit' && key !== 'type') {
+        retOptions[key] = newOptions[key]
+      }
+    }
+
+    // Shallow copy unit and type
+    retOptions.unit = Object.assign({}, options.unit, newOptions.unit)
+    retOptions.type = Object.assign({}, options.type, newOptions.type)
+    return _config(retOptions)
   }
 
   /* Alternate API syntax */
@@ -1071,17 +1094,15 @@ let defaultClone = (a) => {
 }
 
 let defaultOptions = {
-  format: {
-    parentheses: false,
-    precision: 15,
-    prefix: 'auto',
-    prefixMin: 0.1,
-    prefixMax: 1000,
-    simplify: 'auto',
-    simplifyThreshold: 2,
-    system: 'auto',
-    subsystem: 'auto'
-  },
+  parentheses: false,
+  precision: 15,
+  prefix: 'auto',
+  prefixMin: 0.1,
+  prefixMax: 1000,
+  simplify: 'auto',
+  simplifyThreshold: 2,
+  system: 'auto',
+  subsystem: 'auto',
   unit: { /* No extra units */ },
   type: {
     add: defaultAdd,

@@ -28,7 +28,7 @@ describe('unitmath', () => {
     })
 
     it('should have the correct default format config options', () => {
-      let formatOptionsToCheckEquality = {
+      let optionsToCheckEquality = {
         parentheses: false,
         precision: 15,
         prefix: 'auto',
@@ -40,8 +40,8 @@ describe('unitmath', () => {
         subsystem: 'auto'
       }
       let actualOptions = unit.config()
-      for (let key in formatOptionsToCheckEquality) {
-        assert.strictEqual(formatOptionsToCheckEquality[key], actualOptions.format[key], `config option format.${key} has the wrong default value`)
+      for (let key in optionsToCheckEquality) {
+        assert.strictEqual(optionsToCheckEquality[key], actualOptions[key], `config option ${key} has the wrong default value`)
       }
     })
   })
@@ -64,10 +64,10 @@ describe('unitmath', () => {
     })
 
     it('should set new config options', () => {
-      let newUnit = unit.config({ format: { prefix: 'always' } })
-      assert.strictEqual(unit.config().format.prefix, 'auto')
-      assert.strictEqual(newUnit.config().format.prefix, 'always')
-      assert.strictEqual(newUnit.config().format.simplify, 'auto')
+      let newUnit = unit.config({ prefix: 'always' })
+      assert.strictEqual(unit.config().prefix, 'auto')
+      assert.strictEqual(newUnit.config().prefix, 'always')
+      assert.strictEqual(newUnit.config().simplify, 'auto')
     })
 
     describe('newly returned namespace', () => {
@@ -371,6 +371,11 @@ describe('unitmath', () => {
       assert.strictEqual(u4.units[0].unit.name, 'm')
       assert.strictEqual(u4.units[1].unit.name, 's')
       assert.strictEqual(u4.units[0].prefix.name, 'c')
+
+      const u5 = unit(null, 'km').to('cm')
+      assert.strictEqual(u5.value, 100000)
+      assert.strictEqual(u5.units[0].unit.name, 'm')
+      assert.strictEqual(u5.units[0].prefix.name, 'c')
     })
 
     it('should convert a binary prefixes (1)', function () {
@@ -511,6 +516,26 @@ describe('unitmath', () => {
       const v = u.to()
       assert.strictEqual(v.toString(), '0.005 m')
     })
+
+    it('should format a unit without value', function () {
+      assert.strictEqual(unit(null, 'cm').toString(), 'cm')
+      assert.strictEqual(unit(null, 'm').toString(), 'm')
+      assert.strictEqual(unit(null, 'kg m/s').toString(), 'kg m / s')
+    })
+
+    it('should format a unit with fixed prefix and without value', function () {
+      assert.strictEqual(unit(null, 'km').to('cm').toString(), '100000 cm')
+      assert.strictEqual(unit(null, 'inch').to('cm').toString(), '2.54 cm')
+      assert.strictEqual(unit(null, 'N/m^2').to('lbf/inch^2').toString({ precision: 10 }), '0.0001450377377 lbf / inch^2')
+    })
+
+    it('should ignore properties in Object.prototype when finding the best prefix', function () {
+      Object.prototype.foo = 'bar' // eslint-disable-line no-extend-native
+
+      assert.strictEqual(unit(5e5, 'cm').format(), '5 km')
+
+      delete Object.prototype.foo
+    })
   })
 
   describe('simplify', function () {
@@ -541,19 +566,19 @@ describe('unitmath', () => {
 
     it('should simplify units according to chosen unit system', function () {
       // Simplify explicitly
-      let unit1 = unit.config({ format: { system: 'us' } })('10 N')
+      let unit1 = unit.config({ system: 'us' })('10 N')
       assert.strictEqual(unit1.simplify().toString(), '2.2480894309971 lbf')
 
-      let unit2 = unit.config({ format: { system: 'cgs' } })('10 N')
+      let unit2 = unit.config({ system: 'cgs' })('10 N')
       assert.strictEqual(unit2.simplify().toString(), '1000 kdyn')
 
       // Reduce threshold to 0
-      let newUnit = unit.config({ format: { simplifyThreshold: 0 } })
+      let newUnit = unit.config({ simplifyThreshold: 0 })
 
-      let unit3 = newUnit.config({ format: { system: 'us' } })('10 N')
+      let unit3 = newUnit.config({ system: 'us' })('10 N')
       assert.strictEqual(unit3.toString(), '2.2480894309971 lbf')
 
-      let unit4 = newUnit.config({ format: { system: 'cgs' } })('10 N')
+      let unit4 = newUnit.config({ system: 'cgs' })('10 N')
       assert.strictEqual(unit4.toString(), '1000 kdyn')
     })
 
@@ -576,89 +601,28 @@ describe('unitmath', () => {
       assert.strictEqual(unit('10 J / m').toString(), '10 N')
       assert.strictEqual(unit('10 m^3 Pa').toString(), '10 J')
 
-      let newUnit = unit.config({ format: { simplifyThreshold: 10 } })
+      let newUnit = unit.config({ simplifyThreshold: 10 })
       assert.strictEqual(newUnit('10 N m').toString(), '10 N m')
       assert.strictEqual(newUnit('10 J / m').toString(), '10 J / m')
       assert.strictEqual(newUnit('10 m^3 Pa').toString(), '10 m^3 Pa')
 
-      newUnit = newUnit.config({ format: { simplifyThreshold: 0 } })
+      newUnit = newUnit.config({ simplifyThreshold: 0 })
       assert.strictEqual(newUnit('10 N m').toString(), '10 J')
       assert.strictEqual(newUnit('10 J / m').toString(), '10 N')
       assert.strictEqual(newUnit('10 m^3 Pa').toString(), '10 J')
     })
   })
 
-  describe.skip('valueOf', function () {
-    it('should return string representation when calling valueOf', function () {
-      assert.strictEqual(unit(5000, 'cm').valueOf(), '50 m')
-      assert.strictEqual(unit(5, 'kg').valueOf(), '5 kg')
-      assert.strictEqual(unit(2 / 3, 'm').valueOf(), '0.6666666666666666 m')
-      assert.strictEqual(unit(5, 'N').valueOf(), '5 N')
-      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').valueOf(), '5 (kg m) / s^2')
-      assert.strictEqual(unit(5, 's^-2').valueOf(), '5 s^-2')
-    })
-  })
-
-  describe.skip('json', function () {
-    it('toJSON', function () {
-      assert.deepStrictEqual(unit(5, 'cm').toJSON(),
-        { 'mathjs': 'Unit', value: 5, unit: 'cm', fixPrefix: false })
-      assert.deepStrictEqual(unit(5, 'cm').to('mm').toJSON(),
-        { 'mathjs': 'Unit', value: 50, unit: 'mm', fixPrefix: true })
-      assert.deepStrictEqual(unit(5, 'kN').to('kg m s ^ -2').toJSON(),
-        { 'mathjs': 'Unit', value: 5000, unit: '(kg m) / s^2', fixPrefix: true })
-    })
-
-    it('fromJSON', function () {
-      const u1 = unit(5, 'cm')
-      const u2 = Unit.fromJSON({ 'mathjs': 'Unit', value: 5, unit: 'cm', fixPrefix: false })
-      assert.ok(u2 instanceof Unit)
-      assert.deepStrictEqual(u2, u1)
-
-      const u3 = unit(5, 'cm').to('mm')
-      const u4 = Unit.fromJSON({ 'mathjs': 'Unit', value: 50, unit: 'mm', fixPrefix: true })
-      assert.ok(u4 instanceof Unit)
-      assert.deepStrictEqual(u4, u3)
-
-      const u5 = unit(5, 'kN').to('kg m/s^2')
-      const u6 = Unit.fromJSON({ 'mathjs': 'Unit', value: 5000, unit: 'kg m s^-2', fixPrefix: true })
-      assert.ok(u6 instanceof Unit)
-      assert.deepStrictEqual(u5, u6)
-    })
-
-    it('toJSON -> fromJSON should recover an "equal" unit', function () {
-      const unit1 = Unit.parse('1.23(m/(s/(kg mol)/(lbm/h)K))')
-      const unit2 = Unit.fromJSON(unit1.toJSON())
-      assert.strictEqual(unit1.equals(unit2), true)
-    })
-  })
-
-  describe.skip('format', function () {
+  describe('precision', () => {
     it('should format units with given precision', function () {
-      assert.strictEqual(unit(2 / 3, 'm').format(3), '0.667 m')
-      assert.strictEqual(unit(2 / 3, 'm').format(4), '0.6667 m')
-      assert.strictEqual(unit(2 / 3, 'm').format(), '0.6666666666666666 m')
+      assert.strictEqual(unit.config({ precision: 3 })(2 / 3, 'm').toString(), '0.667 m')
+      assert.strictEqual(unit.config({ precision: 1 })(2 / 3, 'm').toString(), '0.7 m')
+      assert.strictEqual(unit.config({ precision: 10 })(2 / 3, 'm').toString(), '0.6666666667 m')
     })
+  })
 
-    it('should format a unit without value', function () {
-      assert.strictEqual(unit(null, 'cm').format(), 'cm')
-      assert.strictEqual(unit(null, 'm').format(), 'm')
-      assert.strictEqual(unit(null, 'kg m/s').format(), '(kg m) / s')
-    })
+  describe('format', () => {
 
-    it('should format a unit with fixed prefix and without value', function () {
-      assert.strictEqual(unit(null, 'km').to('cm').format(), '1e+5 cm')
-      assert.strictEqual(unit(null, 'inch').to('cm').format(), '2.54 cm')
-      assert.strictEqual(unit(null, 'N/m^2').to('lbf/inch^2').format(5), '1.4504e-4 lbf / inch^2')
-    })
-
-    it('should ignore properties in Object.prototype when finding the best prefix', function () {
-      Object.prototype.foo = 'bar' // eslint-disable-line no-extend-native
-
-      assert.strictEqual(unit(5e5, 'cm').format(), '5 km')
-
-      delete Object.prototype.foo
-    })
   })
 
   describe('parse', function () {
@@ -958,29 +922,21 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('multiply, divide, and pow', function () {
-    it('should return a Unit that will be automatically simplified', function () {
-      const unit1 = unit(10, 'kg')
-      const unit2 = unit(9.81, 'm/s^2')
-      assert.strictEqual(unit1.multiply(unit2).skipAutomaticSimplification, false)
-      assert.strictEqual(unit1.divide(unit2).skipAutomaticSimplification, false)
-      assert.strictEqual(unit1.pow(2).skipAutomaticSimplification, false)
-    })
-
+  describe('mul, div, and pow', function () {
     it('should retain the units of their operands without simplifying', function () {
       const unit1 = unit(10, 'N/s')
       const unit2 = unit(10, 'h')
-      const unitM = unit1.multiply(unit2)
+      const unitM = unit1.mul(unit2)
       assert.strictEqual(unitM.units[0].unit.name, 'N')
       assert.strictEqual(unitM.units[1].unit.name, 's')
       assert.strictEqual(unitM.units[2].unit.name, 'h')
 
       const unit3 = unit(14.7, 'lbf')
       const unit4 = unit(1, 'in in')
-      const unitD = unit3.divide(unit4)
+      const unitD = unit3.div(unit4)
       assert.strictEqual(unitD.units[0].unit.name, 'lbf')
       assert.strictEqual(unitD.units[1].unit.name, 'in')
-      assert.strictEqual(unitD.units[2].unit.name, 'in')
+      assert.strictEqual(unitD.units[1].power, -2)
 
       const unit5 = unit(1, 'N h/s')
       const unitP = unit5.pow(-3.5)
@@ -1078,18 +1034,14 @@ describe('unitmath', () => {
       assert.strictEqual(unit(1, 'gradians').to('rad').equals(unit(Math.PI / 200, 'rad')), true)
     })
 
-    it.skip('should have correct long/short prefixes', function () {
-      assert.strictEqual(unit(20000, 'rad').toString(), '20 krad')
-      assert.strictEqual(unit(20000, 'radian').toString(), '20 kiloradian')
-      assert.strictEqual(unit(20000, 'radians').toString(), '20 kiloradians')
+    it('should have correct long/short prefixes', function () {
+      assert.strictEqual(unit(0.02, 'rad').toString(), '20 mrad')
+      assert.strictEqual(unit(0.02, 'radian').toString(), '20 milliradian')
+      assert.strictEqual(unit(0.02, 'radians').toString(), '20 milliradians')
 
-      assert.strictEqual(unit(20000, 'deg').toString(), '20 kdeg')
-      assert.strictEqual(unit(20000, 'degree').toString(), '20 kilodegree')
-      assert.strictEqual(unit(20000, 'degrees').toString(), '20 kilodegrees')
-
-      assert.strictEqual(unit(20000, 'grad').toString(), '20 kgrad')
-      assert.strictEqual(unit(20000, 'gradian').toString(), '20 kilogradian')
-      assert.strictEqual(unit(20000, 'gradians').toString(), '20 kilogradians')
+      assert.strictEqual(unit(0.02, 'grad').toString(), '2 cgrad')
+      assert.strictEqual(unit(0.02, 'gradian').toString(), '2 centigradian')
+      assert.strictEqual(unit(0.02, 'gradians').toString(), '2 centigradians')
     })
   })
 

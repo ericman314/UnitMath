@@ -1567,9 +1567,9 @@ export default function createUnitStore (options) {
   // Add additional unit systems here.
 
   // Check to make sure config options has selected a unit system that exists.
-  if (options.format.system !== 'auto') {
-    if (!UNIT_SYSTEMS.hasOwnProperty(options.format.system)) {
-      throw new Error(`Unknown unit system ${options.format.system}. Available systems are: auto, ${Object.keys(UNIT_SYSTEMS).join(', ')} `)
+  if (options.system !== 'auto') {
+    if (!UNIT_SYSTEMS.hasOwnProperty(options.system)) {
+      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(UNIT_SYSTEMS).join(', ')} `)
     }
   }
 
