@@ -206,22 +206,13 @@ let _config = function _config (options) {
     /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
-     * @param {boolean} coerce Always simplify: do not perform checking.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
      */
-    simplify (coerce = true) {
+    simplify () {
+      // console.log(this)
       const result = _clone(this)
 
-      if (!coerce && this.fixed) {
-        // Unit is fixed, do not simplify.
-        return this
-      }
-      if (!coerce && this.value === null) {
-        // Unit is valueless, do not simplify.
-        return this
-      }
-
-      let systemStr = options.system
+      let systemStr = options.format.system
       if (systemStr === 'auto') {
         // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si' in the event of a tie.
         let identifiedSystems = { si: 0.1 }
@@ -234,7 +225,7 @@ let _config = function _config (options) {
         }
         let ids = Object.keys(identifiedSystems)
         ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
-        console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+        // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
         systemStr = ids[0]
       }
 
@@ -246,7 +237,7 @@ let _config = function _config (options) {
       let matchingDim
       for (const key in system) {
         if (result._hasDimension(key)) {
-          console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
+          // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
           matchingDim = key
           break
         }
@@ -254,7 +245,7 @@ let _config = function _config (options) {
 
       let ok = true
       if (matchingDim) {
-        console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix.name}${system[matchingDim].unit.name}`)
+        // console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix.name}${system[matchingDim].unit.name}`)
         proposedUnitList.push({
           unit: system[matchingDim].unit,
           prefix: system[matchingDim].prefix,
@@ -292,7 +283,11 @@ let _config = function _config (options) {
       if (proposedUnitList.length < result.units.length && ok) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList
-        result.value = options.customClone(_denormalize(result.units, _normalize(this.units, this.value)))
+        if (this.value !== null) {
+          result.value = options.type.clone(_denormalize(result.units, _normalize(this.units, this.value)))
+        } else {
+          result.value = null
+        }
       }
 
       Object.freeze(result)
@@ -378,7 +373,7 @@ let _config = function _config (options) {
      */
     equals (other) {
       other = _convertParamToUnit(other)
-      return this._equalDimension(other) && options.customEq(_normalize(this.units, this.value), _normalize(other.units, other.value))
+      return this._equalDimension(other) && options.type.eq(_normalize(this.units, this.value), _normalize(other.units, other.value))
     }
 
     toString () {
@@ -394,17 +389,16 @@ let _config = function _config (options) {
     format () {
       let simp = this.clone()
 
-      // TODO: Simplify unit
-      if (options.simplify && !this.fixed) {
-        simp = simp.simplify(false)
+      if (options.format.simplify === 'always' || (options.format.simplify === 'auto' && !this.fixed && this.value !== null)) {
+        simp = simp.simplify()
       }
-      if (options.prefix === 'always' || (options.prefix === 'auto' && !this.fixed)) {
+      if (options.format.prefix === 'always' || (options.format.prefix === 'auto' && !this.fixed)) {
         simp = _choosePrefix(simp)
       }
 
       let str = ''
       if (typeof simp.value === 'number') {
-        str += +simp.value.toPrecision(options.precision) // The extra + at the beginning removes trailing zeroes
+        str += +simp.value.toPrecision(options.format.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
         str += simp.value.toString()
       }
@@ -438,8 +432,7 @@ let _config = function _config (options) {
    */
   function _clone (unit) {
     const result = new Unit()
-
-    result.value = unit.value === null ? null : options.customClone(unit.value)
+    result.value = unit.value === null ? null : options.type.clone(unit.value)
     result.dimensions = unit.dimensions.slice(0)
     result.units = []
     for (let i = 0; i < unit.units.length; i++) {
@@ -510,7 +503,7 @@ let _config = function _config (options) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = _denormalize(unit1.units, options.customAdd(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
+    result.value = _denormalize(unit1.units, options.type.add(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
     return result
   }
 
@@ -528,7 +521,7 @@ let _config = function _config (options) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = _denormalize(unit1.units, options.customSub(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
+    result.value = _denormalize(unit1.units, options.type.sub(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
     return result
   }
 
@@ -562,7 +555,7 @@ let _config = function _config (options) {
     if (unit1.value !== null || unit2.value !== null) {
       const val1 = unit1.value === null ? _normalize(unit1.units, 1) : _normalize(unit1.units, unit1.value)
       const val2 = unit2.value === null ? _normalize(unit2.units, 1) : _normalize(unit2.units, unit2.value)
-      result.value = _denormalize(result.units, options.customMul(val1, val2))
+      result.value = _denormalize(result.units, options.type.mul(val1, val2))
     } else {
       result.value = null
     }
@@ -599,7 +592,7 @@ let _config = function _config (options) {
     if (unit1.value !== null || unit2.value !== null) {
       const val1 = unit1.value === null ? _normalize(unit1.units, 1) : _normalize(unit1.units, unit1.value)
       const val2 = unit2.value === null ? _normalize(unit2.units, 1) : _normalize(unit2.units, unit2.value)
-      result.value = _denormalize(result.units, options.customDiv(val1, val2))
+      result.value = _denormalize(result.units, options.type.div(val1, val2))
     } else {
       result.value = null
     }
@@ -616,16 +609,16 @@ let _config = function _config (options) {
     // TODO: combineDuplicateUnits
     const result = _clone(unit)
     for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      result.dimensions[i] = options.customMul(unit.dimensions[i], p)
+      result.dimensions[i] = options.type.mul(unit.dimensions[i], p)
     }
 
     // Adjust the power of each unit in the list
     for (let i = 0; i < result.units.length; i++) {
-      result.units[i].power = options.customMul(result.units[i].power, p)
+      result.units[i].power = options.type.mul(result.units[i].power, p)
     }
 
     if (result.value !== null) {
-      result.value = options.customPow(result.value, p)
+      result.value = options.type.pow(result.value, p)
     } else {
       result.value = null
     }
@@ -634,7 +627,7 @@ let _config = function _config (options) {
   }
 
   function _sqrt (unit) {
-    return _pow(unit, options.customConv(0.5))
+    return _pow(unit, options.type.conv(0.5))
   }
 
   /**
@@ -655,20 +648,20 @@ let _config = function _config (options) {
       let result = value
 
       for (let i = 0; i < unitPieces.length; i++) {
-        unitValue = options.customConv(unitPieces[i].unit.value)
-        unitPrefixValue = options.customConv(unitPieces[i].prefix.value)
-        unitPower = options.customConv(unitPieces[i].power)
-        result = options.customMul(result, options.customPow(options.customMul(unitValue, unitPrefixValue), unitPower))
+        unitValue = options.type.conv(unitPieces[i].unit.value)
+        unitPrefixValue = options.type.conv(unitPieces[i].prefix.value)
+        unitPower = options.type.conv(unitPieces[i].power)
+        result = options.type.mul(result, options.type.pow(options.type.mul(unitValue, unitPrefixValue), unitPower))
       }
 
       return result
     } else {
       // units is a single unit of power 1, like kg or degC
-      unitValue = options.customConv(unitPieces[0].unit.value)
-      unitOffset = options.customConv(unitPieces[0].unit.offset)
-      unitPrefixValue = options.customConv(unitPieces[0].prefix.value)
+      unitValue = options.type.conv(unitPieces[0].unit.value)
+      unitOffset = options.type.conv(unitPieces[0].unit.offset)
+      unitPrefixValue = options.type.conv(unitPieces[0].prefix.value)
 
-      return options.customMul(options.customAdd(value, unitOffset), options.customMul(unitValue, unitPrefixValue))
+      return options.type.mul(options.type.add(value, unitOffset), options.type.mul(unitValue, unitPrefixValue))
     }
   }
 
@@ -692,24 +685,24 @@ let _config = function _config (options) {
       let result = value
 
       for (let i = 0; i < unitPieces.length; i++) {
-        unitValue = options.customConv(unitPieces[i].unit.value)
-        unitPrefixValue = options.customConv(unitPieces[i].prefix.value)
-        unitPower = options.customConv(unitPieces[i].power)
-        result = options.customDiv(result, options.customPow(options.customMul(unitValue, unitPrefixValue), unitPower))
+        unitValue = options.type.conv(unitPieces[i].unit.value)
+        unitPrefixValue = options.type.conv(unitPieces[i].prefix.value)
+        unitPower = options.type.conv(unitPieces[i].power)
+        result = options.type.div(result, options.type.pow(options.type.mul(unitValue, unitPrefixValue), unitPower))
       }
 
       return result
     } else {
       // unit is a single unit of power 1, like kg or degC
 
-      unitValue = options.customConv(unitPieces[0].unit.value)
-      unitPrefixValue = options.customConv(unitPieces[0].prefix.value)
-      unitOffset = options.customConv(unitPieces[0].unit.offset)
+      unitValue = options.type.conv(unitPieces[0].unit.value)
+      unitPrefixValue = options.type.conv(unitPieces[0].prefix.value)
+      unitOffset = options.type.conv(unitPieces[0].unit.offset)
 
       if (prefixValue === undefined || prefixValue === null) {
-        return options.customSub(options.customDiv(options.customDiv(value, unitValue), unitPrefixValue), unitOffset)
+        return options.type.sub(options.type.div(options.type.div(value, unitValue), unitPrefixValue), unitOffset)
       } else {
-        return options.customSub(options.customDiv(options.customDiv(value, unitValue), prefixValue), unitOffset)
+        return options.type.sub(options.type.div(options.type.div(value, unitValue), prefixValue), unitOffset)
       }
     }
   }
@@ -730,7 +723,7 @@ let _config = function _config (options) {
       throw new Error(`Cannot convert ${unit.toString()}: target unit must be valueless`)
     }
     result = _clone(valuelessUnit)
-    result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, value)))
+    result.value = options.type.clone(_denormalize(result.units, _normalize(unit.units, value)))
     result.fixed = true // Don't auto simplify
     return result
   }
@@ -760,11 +753,11 @@ let _config = function _config (options) {
       // Unit has power of 0, so prefix will have no effect
       return unit
     }
-    if (options.customLT(options.customAbs(unit.value), options.customConv(1e-50))) {
+    if (options.type.lt(options.type.abs(unit.value), options.type.conv(1e-50))) {
       // Unit is too small for the prefix to matter
       return unit
     }
-    if (options.customLE(options.customAbs(unit.value), options.prefixMax) && options.customGE(options.customAbs(unit.value), options.prefixMin)) {
+    if (options.type.le(options.type.abs(unit.value), options.format.prefixMax) && options.type.ge(options.type.abs(unit.value), options.format.prefixMin)) {
       // Unit's value is already acceptable
       return unit
     }
@@ -776,25 +769,25 @@ let _config = function _config (options) {
     }
 
     function calcValue (prefix) {
-      return options.customDiv(unit.value, options.customPow(prefix.value / piece.prefix.value, piece.power))
+      return options.type.div(unit.value, options.type.pow(prefix.value / piece.prefix.value, piece.power))
     }
 
     function calcScore (prefix) {
       let thisValue = calcValue(prefix)
-      if (options.customLT(thisValue, options.prefixMin)) {
+      if (options.type.lt(thisValue, options.format.prefixMin)) {
         // prefix makes the value too small
-        return options.customAbs(options.customDiv(options.prefixMin, thisValue))
+        return options.type.abs(options.type.div(options.format.prefixMin, thisValue))
       }
-      if (options.customGT(thisValue, options.prefixMax)) {
+      if (options.type.gt(thisValue, options.format.prefixMax)) {
         // prefix makes the value too large
-        return options.customAbs(options.customDiv(thisValue, options.prefixMax))
+        return options.type.abs(options.type.div(thisValue, options.format.prefixMax))
       }
 
       // The prefix is in range, but return a score that says how close it is to the original value.
-      if (options.customLE(thisValue, unit.value)) {
-        return -options.customAbs(options.customDiv(thisValue, unit.value))
+      if (options.type.le(thisValue, unit.value)) {
+        return -options.type.abs(options.type.div(thisValue, unit.value))
       } else {
-        return -options.customAbs(options.customDiv(unit.value, thisValue))
+        return -options.type.abs(options.type.div(unit.value, thisValue))
       }
     }
 
@@ -815,7 +808,7 @@ let _config = function _config (options) {
     }
 
     piece.prefix = bestPrefix
-    result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, unit.value)))
+    result.value = options.type.clone(_denormalize(result.units, _normalize(unit.units, unit.value)))
 
     Object.freeze(result)
     return result
@@ -850,7 +843,7 @@ let _config = function _config (options) {
 
     // Replace this unit list with the proposed list
     result.units = proposedUnitList
-    if (unit.value !== null) { result.value = options.customClone(_denormalize(result.units, _normalize(unit.units, unit.value))) }
+    if (unit.value !== null) { result.value = options.type.clone(_denormalize(result.units, _normalize(unit.units, unit.value))) }
     result.fixed = true // Don't auto simplify
     return result
   }
@@ -909,7 +902,7 @@ let _config = function _config (options) {
     strNum = strNum.substr(1)
     strDen = strDen.substr(1)
 
-    if (options.parentheses) {
+    if (options.format.parentheses) {
       // Add parans for better copy/paste back into evaluate, for example, or for better pretty print formatting
       if (nNum > 1 && nDen > 0) {
         strNum = '(' + strNum + ')'
@@ -933,20 +926,25 @@ let _config = function _config (options) {
   // Create a parser configured for these options
   let parser = createParser(options, unitStore)
 
+  // TODO: How to add custom units which are defined based on other units? They will need to be parsed, but the parser depends on the unit store, so the unit store can't use the parser.
+
   // Public functions available on the unitmath namespace
 
   /**
    * Create a clone of the this unit factory function, but with the specified options.
    * @param {Object} options Configuration options, in addition to those existing, to set on the new instance.
-   * @returns {Function} A new instance of the unit factory function with the specified options.
+   * @returns {Function} A new instance of the unit factory function with the specified options; or, if no arguments are given, the current options.
    */
   unitmath.config = function config (newOptions) {
     if (typeof (newOptions) === 'undefined') {
       return options
     }
 
-    let retOptions = Object.assign({}, options, newOptions)
-    return _config(retOptions)
+    // We are NOT going any deeper than one nested level with our config. Even going this far was a stretch.
+    let format = Object.assign({}, options.format, newOptions.format)
+    let unit = Object.assign({}, options.unit, newOptions.unit)
+    let type = Object.assign({}, options.type, newOptions.type)
+    return _config({ format, unit, type })
   }
 
   /* Alternate API syntax */
@@ -1030,6 +1028,7 @@ let _config = function _config (options) {
 
   unitmath.exists = unitStore.exists
 
+  // TODO: Temporary, create a public API or something eventually to access the currently configured units
   unitmath._unitStore = unitStore
 
   Object.freeze(unitmath)
@@ -1038,19 +1037,19 @@ let _config = function _config (options) {
 }
 
 // Define default arithmetic functions
-let customAdd = (a, b) => a + b
-let customSub = (a, b) => a - b
-let customMul = (a, b) => a * b
-let customDiv = (a, b) => a / b
-let customPow = (a, b) => Math.pow(a, b)
-let customAbs = (a) => Math.abs(a)
-let customEq = (a, b) => a === b
-let customLT = (a, b) => a < b
-let customGT = (a, b) => a > b
-let customLE = (a, b) => a <= b
-let customGE = (a, b) => a >= b
-let customConv = a => a
-let customClone = (a) => {
+let defaultAdd = (a, b) => a + b
+let defaultSub = (a, b) => a - b
+let defaultMul = (a, b) => a * b
+let defaultDiv = (a, b) => a / b
+let defaultPow = (a, b) => Math.pow(a, b)
+let defaultAbs = (a) => Math.abs(a)
+let defaultEq = (a, b) => a === b
+let defaultLT = (a, b) => a < b
+let defaultGT = (a, b) => a > b
+let defaultLE = (a, b) => a <= b
+let defaultGE = (a, b) => a >= b
+let defaultConv = a => a
+let defaultClone = (a) => {
   if (typeof (a) !== 'number') {
     throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof (a)})`)
   }
@@ -1058,28 +1057,33 @@ let customClone = (a) => {
 }
 
 let defaultOptions = {
-  parentheses: false,
-  precision: 16,
-  prefix: 'auto',
-  prefixMin: 0.1,
-  prefixMax: 1000,
-  simplify: true,
-  simplifyThreshold: 2,
-  system: 'auto',
-  subsystem: 'auto',
-  customAdd,
-  customSub,
-  customMul,
-  customDiv,
-  customPow,
-  customAbs,
-  customEq,
-  customLT,
-  customGT,
-  customLE,
-  customGE,
-  customConv,
-  customClone
+  format: {
+    parentheses: false,
+    precision: 16,
+    prefix: 'auto',
+    prefixMin: 0.1,
+    prefixMax: 1000,
+    simplify: 'auto',
+    simplifyThreshold: 2,
+    system: 'auto',
+    subsystem: 'auto'
+  },
+  unit: { /* No extra units */ },
+  type: {
+    add: defaultAdd,
+    sub: defaultSub,
+    mul: defaultMul,
+    div: defaultDiv,
+    pow: defaultPow,
+    abs: defaultAbs,
+    eq: defaultEq,
+    lt: defaultLT,
+    gt: defaultGT,
+    le: defaultLE,
+    ge: defaultGE,
+    conv: defaultConv,
+    clone: defaultClone
+  }
 }
 
 let firstUnit = _config(defaultOptions, {})

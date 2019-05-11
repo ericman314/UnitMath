@@ -29,34 +29,22 @@ describe('unitmath', () => {
       assert.throws(() => { unit.foo = 42 })
     })
 
-    it('should have the correct default config options', () => {
-      let optionsToCheckEquality = {
+    it('should have the correct default format config options', () => {
+      let formatOptionsToCheckEquality = {
         parentheses: false,
         precision: 16,
         prefix: 'auto',
         prefixMin: 0.1,
         prefixMax: 1000,
-        simplify: true,
+        simplify: 'auto',
         simplifyThreshold: 2,
         system: 'auto',
         subsystem: 'auto'
       }
       let actualOptions = unit.config()
-      for (let key in optionsToCheckEquality) {
-        assert.strictEqual(optionsToCheckEquality[key], actualOptions[key], `config option ${key} has the wrong default value`)
+      for (let key in formatOptionsToCheckEquality) {
+        assert.strictEqual(formatOptionsToCheckEquality[key], actualOptions.format[key], `config option format.${key} has the wrong default value`)
       }
-
-      let optionsToCheckExistence = [
-        'customAdd',
-        'customSub',
-        'customMul',
-        'customDiv',
-        'customPow',
-        'customEq',
-        'customConv',
-        'customClone'
-      ]
-      optionsToCheckExistence.forEach(key => { assert(actualOptions.hasOwnProperty(key), `${key} does not exist`) })
     })
   })
 
@@ -78,9 +66,10 @@ describe('unitmath', () => {
     })
 
     it('should set new config options', () => {
-      let newUnit = unit.config({ prefix: 'always' })
-      assert.strictEqual(unit.config().prefix, 'auto')
-      assert.strictEqual(newUnit.config().prefix, 'always')
+      let newUnit = unit.config({ format: { prefix: 'always' } })
+      assert.strictEqual(unit.config().format.prefix, 'auto')
+      assert.strictEqual(newUnit.config().format.prefix, 'always')
+      assert.strictEqual(newUnit.config().format.simplify, 'auto')
     })
 
     describe('newly returned namespace', () => {
@@ -290,6 +279,11 @@ describe('unitmath', () => {
       const u2 = u1.clone()
       assert.notStrictEqual(u1, u2)
       assert.deepStrictEqual(u1, u2)
+
+      const u3 = unit(8.314, 'km/hr')
+      const u4 = u3.clone()
+      assert.notStrictEqual(u3, u4)
+      assert.deepStrictEqual(u3, u4)
 
       const u7 = unit(8.314, 'kg m^2 / s^2 K mol')
       const u8 = u7.clone()
