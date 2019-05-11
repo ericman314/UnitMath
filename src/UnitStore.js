@@ -1086,12 +1086,14 @@ export default function createUnitStore (options) {
       name: 'dyn',
       base: DIMENSIONS.FORCE,
       prefixes: PREFIXES.SHORT,
+      commonPrefixes: ['m', 'k', 'M'],
       value: 0.00001
     },
     dyne: {
       name: 'dyne',
       base: DIMENSIONS.FORCE,
       prefixes: PREFIXES.LONG,
+      commonPrefixes: ['milli', 'kilo', 'mega'],
       value: 0.00001
     },
     lbf: {

@@ -206,9 +206,10 @@ let _config = function _config (options) {
     /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
+     * @param {boolean} coerce Always simplify the unit even if the resulting simplification doesn't meet the configured threshold.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
      */
-    simplify () {
+    simplify (coerce = true) {
       // console.log(this)
       const result = _clone(this)
 
@@ -271,16 +272,29 @@ let _config = function _config (options) {
         }
       }
 
+      function calcComplexity (unitList) {
+        // Number of total units
+        let comp = unitList.length
+
+        // Number of units containing powers !== +/-1
+        comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length
+
+        // At least one unit in denominator
+        if (unitList.filter(a => a.power < 0).length > 0) {
+          comp += 1
+        }
+
+        return comp
+      }
+
       // TODO: Calculate complexity and decide whether to proceed with simplifying
 
       // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
 
-      // TODO: Use coerce
-
       // TODO: Tests for all this stuff
 
       // Is the proposed unit list "simpler" than the existing one?
-      if (proposedUnitList.length < result.units.length && ok) {
+      if (ok && (coerce || (calcComplexity(proposedUnitList) <= calcComplexity(result.units) - options.format.simplifyThreshold))) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList
         if (this.value !== null) {
@@ -390,7 +404,7 @@ let _config = function _config (options) {
       let simp = this.clone()
 
       if (options.format.simplify === 'always' || (options.format.simplify === 'auto' && !this.fixed && this.value !== null)) {
-        simp = simp.simplify()
+        simp = simp.simplify(false)
       }
       if (options.format.prefix === 'always' || (options.format.prefix === 'auto' && !this.fixed)) {
         simp = _choosePrefix(simp)
@@ -1059,7 +1073,7 @@ let defaultClone = (a) => {
 let defaultOptions = {
   format: {
     parentheses: false,
-    precision: 16,
+    precision: 15,
     prefix: 'auto',
     prefixMin: 0.1,
     prefixMax: 1000,

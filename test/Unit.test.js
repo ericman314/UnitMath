@@ -4,8 +4,6 @@ import unit from '../src/Unit'
 
 // TODO: Bring in any other tests that use units from math.js
 
-// TODO: Implement implicit conversion of strings to units in add, sub, mul, etc.
-
 // TODO: Remove once uses of `math`, and `Unit` are removed or these values
 //       are imported.
 /* global math, Unit */
@@ -32,7 +30,7 @@ describe('unitmath', () => {
     it('should have the correct default format config options', () => {
       let formatOptionsToCheckEquality = {
         parentheses: false,
-        precision: 16,
+        precision: 15,
         prefix: 'auto',
         prefixMin: 0.1,
         prefixMax: 1000,
@@ -442,7 +440,7 @@ describe('unitmath', () => {
     it('should convert to string when no extra simplification is requested', () => {
       assert.strictEqual(unit(5000, 'cm').to().toString(), '5000 cm')
       assert.strictEqual(unit(5, 'kg').to().toString(), '5 kg')
-      assert.strictEqual(unit(2 / 3, 'm').to().toString(), '0.6666666666666666 m')
+      assert.strictEqual(unit(2 / 3, 'm').to().toString(), '0.666666666666667 m')
       assert.strictEqual(unit(5, 'N').to().toString(), '5 N')
       assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').to().toString(), '5 kg m / s^2')
       assert.strictEqual(unit(5, 's^-2').to().toString(), '5 s^-2')
@@ -457,7 +455,7 @@ describe('unitmath', () => {
 
     it('should convert to string properly', function () {
       assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
-      assert.strictEqual(unit(2 / 3, 'm').toString(), '0.6666666666666666 m')
+      assert.strictEqual(unit(2 / 3, 'm').toString(), '0.666666666666667 m')
       assert.strictEqual(unit(5, 'N').toString(), '5 N')
       assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').to().toString(), '5 kg m / s^2')
       assert.strictEqual(unit(5, 's^-2').toString(), '5 s^-2')
@@ -541,12 +539,22 @@ describe('unitmath', () => {
       assert.strictEqual(nounit.toString(), '40')
     })
 
-    it.skip('should simplify units according to chosen unit system', function () {
-      let unit1 = unit.config({ system: 'us' })('10 N')
-      assert.strictEqual(unit1.toString(), '2.248089430997105 lbf')
+    it('should simplify units according to chosen unit system', function () {
+      // Simplify explicitly
+      let unit1 = unit.config({ format: { system: 'us' } })('10 N')
+      assert.strictEqual(unit1.simplify().toString(), '2.2480894309971 lbf')
 
-      let unit2 = unit.config({ system: 'cgs' })('10 N')
-      assert.strictEqual(unit2.toString(), '1 Mdyn')
+      let unit2 = unit.config({ format: { system: 'cgs' } })('10 N')
+      assert.strictEqual(unit2.simplify().toString(), '1000 kdyn')
+
+      // Reduce threshold to 0
+      let newUnit = unit.config({ format: { simplifyThreshold: 0 } })
+
+      let unit3 = newUnit.config({ format: { system: 'us' } })('10 N')
+      assert.strictEqual(unit3.toString(), '2.2480894309971 lbf')
+
+      let unit4 = newUnit.config({ format: { system: 'cgs' } })('10 N')
+      assert.strictEqual(unit4.toString(), '1000 kdyn')
     })
 
     it('should correctly simplify units when unit system is "auto"', function () {
@@ -561,6 +569,22 @@ describe('unitmath', () => {
       Unit.createUnit({ 'USD': '' })
       Unit.createUnit({ 'EUR': '1.15 USD' })
       assert.strictEqual(math.evaluate('10 EUR/hour * 2 hours').toString(), '20 EUR')
+    })
+
+    it('should not simplify unless complexity is reduced by the threshold', () => {
+      assert.strictEqual(unit('10 N m').toString(), '10 N m')
+      assert.strictEqual(unit('10 J / m').toString(), '10 N')
+      assert.strictEqual(unit('10 m^3 Pa').toString(), '10 J')
+
+      let newUnit = unit.config({ format: { simplifyThreshold: 10 } })
+      assert.strictEqual(newUnit('10 N m').toString(), '10 N m')
+      assert.strictEqual(newUnit('10 J / m').toString(), '10 J / m')
+      assert.strictEqual(newUnit('10 m^3 Pa').toString(), '10 m^3 Pa')
+
+      newUnit = newUnit.config({ format: { simplifyThreshold: 0 } })
+      assert.strictEqual(newUnit('10 N m').toString(), '10 J')
+      assert.strictEqual(newUnit('10 J / m').toString(), '10 N')
+      assert.strictEqual(newUnit('10 m^3 Pa').toString(), '10 J')
     })
   })
 
