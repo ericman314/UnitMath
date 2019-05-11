@@ -558,6 +558,8 @@ describe('unitmath', () => {
     it('should correctly simplify units when unit system is "auto"', function () {
       const unit1 = unit(5, 'lbf min / s')
       assert.strictEqual(unit1.simplify().toString(), '300 lbf')
+      assert.strictEqual(unit('150 lbf').div('10 in^2').toString(), '15 psi')
+      assert.strictEqual(unit('400 N').div('10 cm^2').toString(), '400 kPa')
     })
 
     it.skip('should simplify user-defined units when unit system is "auto"', function () {
