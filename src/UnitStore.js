@@ -1206,7 +1206,7 @@ export default function createUnitStore (options) {
       name: 'psi',
       base: DIMENSIONS.PRESSURE,
       prefixes: PREFIXES.NONE, // kpsi is sometimes used
-      value: 6894.75729276459
+      value: 6894.757293168361
     },
     atm: {
       name: 'atm',
