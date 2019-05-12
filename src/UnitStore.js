@@ -1164,23 +1164,23 @@ export default function createUnitStore (options) {
       throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(UNIT_SYSTEMS).join(', ')} `)
     }
   }
-  
+
   // Create aliases
   let keyArr = Object.keys(UNITS)
-  for(let i=0; i<keyArr.length; i++) {
+  for (let i = 0; i < keyArr.length; i++) {
     const unit = UNITS[keyArr[i]]
     const aliases = unit.aliases
-    if(aliases) {
-      if(aliases.forEach) {
-      delete unit.aliases
-      aliases.forEach(alias => {
-        UNITS[alias] = Object.assign({}, unit)
+    if (aliases) {
+      if (aliases.forEach) {
+        delete unit.aliases
+        aliases.forEach(alias => {
+          UNITS[alias] = Object.assign({}, unit)
         // TODO: clone systems and other objects?
-      })
+        })
+      } else {
+        throw new Error(`aliases property for unit '${keyArr[i]}' must be an array`)
+      }
     }
-    else {
-      throw new Error(`aliases property for unit '${keyArr[i]}' must be an array`)
-    }}
   }
 
   // Add unit's name to object
@@ -1250,7 +1250,6 @@ export default function createUnitStore (options) {
       unit.offset = 0
     }
   }
-
 
   /**
    * Tests whether the given string exists as a known unit. The unit may have a prefix.

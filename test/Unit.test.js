@@ -1,7 +1,6 @@
 import assert from 'assert'
 import approx from './approx'
 import unit from '../src/Unit'
-import util from 'util'
 
 // TODO: Bring in any other tests that use units from math.js
 
