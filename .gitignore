@@ -2,3 +2,4 @@ node_modules
 dist/
 es/
 HOWTO.md
+.vscode/launch.json

@@ -5,161 +5,161 @@
 export default function createUnitStore (options) {
   const PREFIXES = {
     NONE: {
-      '': { name: '', value: 1, scientific: true }
+      '': 1
     },
     SHORT: {
-      '': { name: '', value: 1, scientific: true },
+      '': 1,
 
-      'da': { name: 'da', value: 1e1, scientific: false },
-      'h': { name: 'h', value: 1e2, scientific: false },
-      'k': { name: 'k', value: 1e3, scientific: true },
-      'M': { name: 'M', value: 1e6, scientific: true },
-      'G': { name: 'G', value: 1e9, scientific: true },
-      'T': { name: 'T', value: 1e12, scientific: true },
-      'P': { name: 'P', value: 1e15, scientific: true },
-      'E': { name: 'E', value: 1e18, scientific: true },
-      'Z': { name: 'Z', value: 1e21, scientific: true },
-      'Y': { name: 'Y', value: 1e24, scientific: true },
+      'da': 1e1,
+      'h': 1e2,
+      'k': 1e3,
+      'M': 1e6,
+      'G': 1e9,
+      'T': 1e12,
+      'P': 1e15,
+      'E': 1e18,
+      'Z': 1e21,
+      'Y': 1e24,
 
-      'd': { name: 'd', value: 1e-1, scientific: false },
-      'c': { name: 'c', value: 1e-2, scientific: false },
-      'm': { name: 'm', value: 1e-3, scientific: true },
-      'u': { name: 'u', value: 1e-6, scientific: true },
-      'n': { name: 'n', value: 1e-9, scientific: true },
-      'p': { name: 'p', value: 1e-12, scientific: true },
-      'f': { name: 'f', value: 1e-15, scientific: true },
-      'a': { name: 'a', value: 1e-18, scientific: true },
-      'z': { name: 'z', value: 1e-21, scientific: true },
-      'y': { name: 'y', value: 1e-24, scientific: true }
+      'd': 1e-1,
+      'c': 1e-2,
+      'm': 1e-3,
+      'u': 1e-6,
+      'n': 1e-9,
+      'p': 1e-12,
+      'f': 1e-15,
+      'a': 1e-18,
+      'z': 1e-21,
+      'y': 1e-24
     },
     LONG: {
-      '': { name: '', value: 1, scientific: true },
+      '': 1,
 
-      'deca': { name: 'deca', value: 1e1, scientific: false },
-      'hecto': { name: 'hecto', value: 1e2, scientific: false },
-      'kilo': { name: 'kilo', value: 1e3, scientific: true },
-      'mega': { name: 'mega', value: 1e6, scientific: true },
-      'giga': { name: 'giga', value: 1e9, scientific: true },
-      'tera': { name: 'tera', value: 1e12, scientific: true },
-      'peta': { name: 'peta', value: 1e15, scientific: true },
-      'exa': { name: 'exa', value: 1e18, scientific: true },
-      'zetta': { name: 'zetta', value: 1e21, scientific: true },
-      'yotta': { name: 'yotta', value: 1e24, scientific: true },
+      'deca': 1e1,
+      'hecto': 1e2,
+      'kilo': 1e3,
+      'mega': 1e6,
+      'giga': 1e9,
+      'tera': 1e12,
+      'peta': 1e15,
+      'exa': 1e18,
+      'zetta': 1e21,
+      'yotta': 1e24,
 
-      'deci': { name: 'deci', value: 1e-1, scientific: false },
-      'centi': { name: 'centi', value: 1e-2, scientific: false },
-      'milli': { name: 'milli', value: 1e-3, scientific: true },
-      'micro': { name: 'micro', value: 1e-6, scientific: true },
-      'nano': { name: 'nano', value: 1e-9, scientific: true },
-      'pico': { name: 'pico', value: 1e-12, scientific: true },
-      'femto': { name: 'femto', value: 1e-15, scientific: true },
-      'atto': { name: 'atto', value: 1e-18, scientific: true },
-      'zepto': { name: 'zepto', value: 1e-21, scientific: true },
-      'yocto': { name: 'yocto', value: 1e-24, scientific: true }
+      'deci': 1e-1,
+      'centi': 1e-2,
+      'milli': 1e-3,
+      'micro': 1e-6,
+      'nano': 1e-9,
+      'pico': 1e-12,
+      'femto': 1e-15,
+      'atto': 1e-18,
+      'zepto': 1e-21,
+      'yocto': 1e-24
     },
     SQUARED: {
-      '': { name: '', value: 1, scientific: true },
+      '': 1,
 
-      'da': { name: 'da', value: 1e2, scientific: false },
-      'h': { name: 'h', value: 1e4, scientific: false },
-      'k': { name: 'k', value: 1e6, scientific: true },
-      'M': { name: 'M', value: 1e12, scientific: true },
-      'G': { name: 'G', value: 1e18, scientific: true },
-      'T': { name: 'T', value: 1e24, scientific: true },
-      'P': { name: 'P', value: 1e30, scientific: true },
-      'E': { name: 'E', value: 1e36, scientific: true },
-      'Z': { name: 'Z', value: 1e42, scientific: true },
-      'Y': { name: 'Y', value: 1e48, scientific: true },
+      'da': 1e2,
+      'h': 1e4,
+      'k': 1e6,
+      'M': 1e12,
+      'G': 1e18,
+      'T': 1e24,
+      'P': 1e30,
+      'E': 1e36,
+      'Z': 1e42,
+      'Y': 1e48,
 
-      'd': { name: 'd', value: 1e-2, scientific: false },
-      'c': { name: 'c', value: 1e-4, scientific: false },
-      'm': { name: 'm', value: 1e-6, scientific: true },
-      'u': { name: 'u', value: 1e-12, scientific: true },
-      'n': { name: 'n', value: 1e-18, scientific: true },
-      'p': { name: 'p', value: 1e-24, scientific: true },
-      'f': { name: 'f', value: 1e-30, scientific: true },
-      'a': { name: 'a', value: 1e-36, scientific: true },
-      'z': { name: 'z', value: 1e-42, scientific: true },
-      'y': { name: 'y', value: 1e-48, scientific: true }
+      'd': 1e-2,
+      'c': 1e-4,
+      'm': 1e-6,
+      'u': 1e-12,
+      'n': 1e-18,
+      'p': 1e-24,
+      'f': 1e-30,
+      'a': 1e-36,
+      'z': 1e-42,
+      'y': 1e-48
     },
     CUBIC: {
-      '': { name: '', value: 1, scientific: true },
+      '': 1,
 
-      'da': { name: 'da', value: 1e3, scientific: false },
-      'h': { name: 'h', value: 1e6, scientific: false },
-      'k': { name: 'k', value: 1e9, scientific: true },
-      'M': { name: 'M', value: 1e18, scientific: true },
-      'G': { name: 'G', value: 1e27, scientific: true },
-      'T': { name: 'T', value: 1e36, scientific: true },
-      'P': { name: 'P', value: 1e45, scientific: true },
-      'E': { name: 'E', value: 1e54, scientific: true },
-      'Z': { name: 'Z', value: 1e63, scientific: true },
-      'Y': { name: 'Y', value: 1e72, scientific: true },
+      'da': 1e3,
+      'h': 1e6,
+      'k': 1e9,
+      'M': 1e18,
+      'G': 1e27,
+      'T': 1e36,
+      'P': 1e45,
+      'E': 1e54,
+      'Z': 1e63,
+      'Y': 1e72,
 
-      'd': { name: 'd', value: 1e-3, scientific: false },
-      'c': { name: 'c', value: 1e-6, scientific: false },
-      'm': { name: 'm', value: 1e-9, scientific: true },
-      'u': { name: 'u', value: 1e-18, scientific: true },
-      'n': { name: 'n', value: 1e-27, scientific: true },
-      'p': { name: 'p', value: 1e-36, scientific: true },
-      'f': { name: 'f', value: 1e-45, scientific: true },
-      'a': { name: 'a', value: 1e-54, scientific: true },
-      'z': { name: 'z', value: 1e-63, scientific: true },
-      'y': { name: 'y', value: 1e-72, scientific: true }
+      'd': 1e-3,
+      'c': 1e-6,
+      'm': 1e-9,
+      'u': 1e-18,
+      'n': 1e-27,
+      'p': 1e-36,
+      'f': 1e-45,
+      'a': 1e-54,
+      'z': 1e-63,
+      'y': 1e-72
     },
     BINARY_SHORT_SI: {
-      '': { name: '', value: 1, scientific: true },
-      'k': { name: 'k', value: 1e3, scientific: true },
-      'M': { name: 'M', value: 1e6, scientific: true },
-      'G': { name: 'G', value: 1e9, scientific: true },
-      'T': { name: 'T', value: 1e12, scientific: true },
-      'P': { name: 'P', value: 1e15, scientific: true },
-      'E': { name: 'E', value: 1e18, scientific: true },
-      'Z': { name: 'Z', value: 1e21, scientific: true },
-      'Y': { name: 'Y', value: 1e24, scientific: true }
+      '': 1,
+      'k': 1e3,
+      'M': 1e6,
+      'G': 1e9,
+      'T': 1e12,
+      'P': 1e15,
+      'E': 1e18,
+      'Z': 1e21,
+      'Y': 1e24
     },
     BINARY_SHORT_IEC: {
-      '': { name: '', value: 1, scientific: true },
-      'Ki': { name: 'Ki', value: 1024, scientific: true },
-      'Mi': { name: 'Mi', value: Math.pow(1024, 2), scientific: true },
-      'Gi': { name: 'Gi', value: Math.pow(1024, 3), scientific: true },
-      'Ti': { name: 'Ti', value: Math.pow(1024, 4), scientific: true },
-      'Pi': { name: 'Pi', value: Math.pow(1024, 5), scientific: true },
-      'Ei': { name: 'Ei', value: Math.pow(1024, 6), scientific: true },
-      'Zi': { name: 'Zi', value: Math.pow(1024, 7), scientific: true },
-      'Yi': { name: 'Yi', value: Math.pow(1024, 8), scientific: true }
+      '': 1,
+      'Ki': 1024,
+      'Mi': Math.pow(1024, 2),
+      'Gi': Math.pow(1024, 3),
+      'Ti': Math.pow(1024, 4),
+      'Pi': Math.pow(1024, 5),
+      'Ei': Math.pow(1024, 6),
+      'Zi': Math.pow(1024, 7),
+      'Yi': Math.pow(1024, 8)
     },
     BINARY_LONG_SI: {
-      '': { name: '', value: 1, scientific: true },
-      'kilo': { name: 'kilo', value: 1e3, scientific: true },
-      'mega': { name: 'mega', value: 1e6, scientific: true },
-      'giga': { name: 'giga', value: 1e9, scientific: true },
-      'tera': { name: 'tera', value: 1e12, scientific: true },
-      'peta': { name: 'peta', value: 1e15, scientific: true },
-      'exa': { name: 'exa', value: 1e18, scientific: true },
-      'zetta': { name: 'zetta', value: 1e21, scientific: true },
-      'yotta': { name: 'yotta', value: 1e24, scientific: true }
+      '': 1,
+      'kilo': 1e3,
+      'mega': 1e6,
+      'giga': 1e9,
+      'tera': 1e12,
+      'peta': 1e15,
+      'exa': 1e18,
+      'zetta': 1e21,
+      'yotta': 1e24
     },
     BINARY_LONG_IEC: {
-      '': { name: '', value: 1, scientific: true },
-      'kibi': { name: 'kibi', value: 1024, scientific: true },
-      'mebi': { name: 'mebi', value: Math.pow(1024, 2), scientific: true },
-      'gibi': { name: 'gibi', value: Math.pow(1024, 3), scientific: true },
-      'tebi': { name: 'tebi', value: Math.pow(1024, 4), scientific: true },
-      'pebi': { name: 'pebi', value: Math.pow(1024, 5), scientific: true },
-      'exi': { name: 'exi', value: Math.pow(1024, 6), scientific: true },
-      'zebi': { name: 'zebi', value: Math.pow(1024, 7), scientific: true },
-      'yobi': { name: 'yobi', value: Math.pow(1024, 8), scientific: true }
+      '': 1,
+      'kibi': 1024,
+      'mebi': Math.pow(1024, 2),
+      'gibi': Math.pow(1024, 3),
+      'tebi': Math.pow(1024, 4),
+      'pebi': Math.pow(1024, 5),
+      'exi': Math.pow(1024, 6),
+      'zebi': Math.pow(1024, 7),
+      'yobi': Math.pow(1024, 8)
     },
     BTU: {
-      '': { name: '', value: 1, scientific: true },
-      'MM': { name: 'MM', value: 1e6, scientific: true }
+      '': 1,
+      'MM': 1e6
     }
   }
 
-  PREFIXES.SHORTLONG = Object.assign(PREFIXES.SHORT, PREFIXES.LONG)
-  PREFIXES.BINARY_SHORT = Object.assign(PREFIXES.BINARY_SHORT_SI, PREFIXES.BINARY_SHORT_IEC)
-  PREFIXES.BINARY_LONG = Object.assign(PREFIXES.BINARY_LONG_SI, PREFIXES.BINARY_LONG_IEC)
+  PREFIXES.SHORT_LONG = Object.assign({}, PREFIXES.SHORT, PREFIXES.LONG)
+  PREFIXES.BINARY_SHORT = Object.assign({}, PREFIXES.BINARY_SHORT_SI, PREFIXES.BINARY_SHORT_IEC)
+  PREFIXES.BINARY_LONG = Object.assign({}, PREFIXES.BINARY_LONG_SI, PREFIXES.BINARY_LONG_IEC)
 
   /* Internally, each unit is represented by a value and a dimension array. The elements of the dimensions array have the following meaning:
    * Index  Dimension
@@ -264,591 +264,355 @@ export default function createUnitStore (options) {
   const UNITS = {
     // length
     meter: {
-      name: 'meter',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', 'centi', '', 'kilo'],
-      value: 1
+      value: 1,
+      aliases: ['meters']
     },
     inch: {
-      name: 'inch',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.0254
+      value: 0.0254,
+      aliases: ['inches', 'in']
     },
     foot: {
-      name: 'foot',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.3048
+      value: 0.3048,
+      aliases: ['ft']
     },
     yard: {
-      name: 'yard',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.9144
+      value: 0.9144,
+      aliases: ['yd', 'yards']
     },
     mile: {
-      name: 'mile',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 1609.344
+      value: 1609.344,
+      aliases: ['mi', 'miles']
     },
     link: {
-      name: 'link',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.201168
+      value: 0.201168,
+      aliases: ['li', 'links']
     },
     rod: {
-      name: 'rod',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 5.0292
+      value: 5.0292,
+      aliases: ['rd', 'rods']
     },
     chain: {
-      name: 'chain',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 20.1168
+      value: 20.1168,
+      aliases: ['ch', 'chains']
     },
     angstrom: {
-      name: 'angstrom',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 1e-10
+      value: 1e-10,
+      aliases: ['angstroms']
     },
 
     m: {
-      name: 'm',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
       value: 1
     },
-    'in': {
-      name: 'in',
-      base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.0254
-    },
-    ft: {
-      name: 'ft',
-      base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.3048
-    },
-    yd: {
-      name: 'yd',
-      base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.9144
-    },
-    mi: {
-      name: 'mi',
-      base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 1609.344
-    },
-    li: {
-      name: 'li',
-      base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 0.201168
-    },
-    rd: {
-      name: 'rd',
-      base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 5.029210
-    },
-    ch: {
-      name: 'ch',
-      base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
-      value: 20.1168
-    },
     mil: {
-      name: 'mil',
       base: DIMENSIONS.LENGTH,
-      prefixes: PREFIXES.NONE,
       value: 0.0000254
     }, // 1/1000 inch
 
     // Area
     m2: {
-      name: 'm2',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.SQUARED,
+      prefixes: 'SQUARED',
       commonPrefixes: ['m', 'c', '', 'k'],
       value: 1
     },
     sqin: {
-      name: 'sqin',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 0.00064516
     }, // 645.16 mm2
     sqft: {
-      name: 'sqft',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 0.09290304
     }, // 0.09290304 m2
     sqyd: {
-      name: 'sqyd',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 0.83612736
     }, // 0.83612736 m2
     sqmi: {
-      name: 'sqmi',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 2589988.110336
     }, // 2.589988110336 km2
     sqrd: {
-      name: 'sqrd',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 25.29295
     }, // 25.29295 m2
     sqch: {
-      name: 'sqch',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 404.6873
     }, // 404.6873 m2
     sqmil: {
-      name: 'sqmil',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 6.4516e-10
     }, // 6.4516 * 10^-10 m2
     acre: {
-      name: 'acre',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 4046.86
     }, // 4046.86 m2
     hectare: {
-      name: 'hectare',
       base: DIMENSIONS.AREA,
-      prefixes: PREFIXES.NONE,
       value: 10000
     }, // 10000 m2
 
     // Volume
     m3: {
-      name: 'm3',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.CUBIC,
+      prefixes: 'CUBIC',
       commonPrefixes: ['m', 'c', '', 'k'],
       value: 1
     },
     L: {
-      name: 'L',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', ''],
-      value: 0.001
-    }, // litre
-    l: {
-      name: 'l',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.SHORT,
-      commonPrefixes: ['n', 'u', 'm', ''],
-      value: 0.001
+      value: 0.001,
+      aliases: ['l', 'lt']
     }, // litre
     litre: {
-      name: 'litre',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
-      value: 0.001
+      value: 0.001,
+      aliases: ['liter', 'liters', 'litres']
     },
     cuin: {
-      name: 'cuin',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
       value: 1.6387064e-5
     }, // 1.6387064e-5 m3
     cuft: {
-      name: 'cuft',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
       value: 0.028316846592
     }, // 28.316 846 592 L
     cuyd: {
-      name: 'cuyd',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
       value: 0.764554857984
     }, // 764.554 857 984 L
     teaspoon: {
-      name: 'teaspoon',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.000005
+      value: 0.000005,
+      aliases: ['teaspoons']
     }, // 5 mL
     tablespoon: {
-      name: 'tablespoon',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.000015
+      value: 0.000015,
+      aliases: ['tablespoons']
     }, // 15 mL
     // {name: 'cup', base: BASE_UNITS.VOLUME, prefixes: PREFIXES.NONE, value: 0.000240, offset: 0}, // 240 mL  // not possible, we have already another cup
     drop: {
-      name: 'drop',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
       value: 5e-8
     }, // 0.05 mL = 5e-8 m3
     gtt: {
-      name: 'gtt',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
       value: 5e-8
     }, // 0.05 mL = 5e-8 m3
 
     // Liquid volume
     minim: {
-      name: 'minim',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.00000006161152
+      value: 0.00000006161152,
+      aliases: ['minims']
     }, // 0.06161152 mL
     fluiddram: {
-      name: 'fluiddram',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0000036966911
+      value: 0.0000036966911,
+      aliases: ['fldr', 'fluiddrams']
     }, // 3.696691 mL
     fluidounce: {
-      name: 'fluidounce',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.00002957353
+      value: 0.00002957353,
+      aliases: ['floz', 'fluidounces']
     }, // 29.57353 mL
     gill: {
-      name: 'gill',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0001182941
+      value: 0.0001182941,
+      aliases: ['gi', 'gills']
     }, // 118.2941 mL
     cc: {
-      name: 'cc',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
       value: 1e-6
     }, // 1e-6 L
     cup: {
-      name: 'cup',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0002365882
+      value: 0.0002365882,
+      aliases: ['cp', 'cups']
     }, // 236.5882 mL
     pint: {
-      name: 'pint',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0004731765
+      value: 0.0004731765,
+      aliases: ['pt', 'pints']
     }, // 473.1765 mL
     quart: {
-      name: 'quart',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0009463529
+      value: 0.0009463529,
+      aliases: ['qt', 'quarts']
     }, // 946.3529 mL
     gallon: {
-      name: 'gallon',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.003785412
+      value: 0.003785412,
+      aliases: ['gal', 'gallons']
     }, // 3.785412 L
     beerbarrel: {
-      name: 'beerbarrel',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.1173478
+      value: 0.1173478,
+      aliases: ['bbl', 'beerbarrels']
     }, // 117.3478 L
     oilbarrel: {
-      name: 'oilbarrel',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.1589873
+      value: 0.1589873,
+      aliases: ['obl', 'oilbarrels']
     }, // 158.9873 L
     hogshead: {
-      name: 'hogshead',
       base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.2384810
+      value: 0.2384810,
+      aliases: ['hogsheads']
     }, // 238.4810 L
-
-    // {name: 'min', base: BASE_UNITS.VOLUME, prefixes: PREFIXES.NONE, value: 0.00000006161152, offset: 0}, // 0.06161152 mL // min is already in use as minute
-    fldr: {
-      name: 'fldr',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0000036966911
-    }, // 3.696691 mL
-    floz: {
-      name: 'floz',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.00002957353
-    }, // 29.57353 mL
-    gi: {
-      name: 'gi',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0001182941
-    }, // 118.2941 mL
-    cp: {
-      name: 'cp',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0002365882
-    }, // 236.5882 mL
-    pt: {
-      name: 'pt',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0004731765
-    }, // 473.1765 mL
-    qt: {
-      name: 'qt',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.0009463529
-    }, // 946.3529 mL
-    gal: {
-      name: 'gal',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.003785412
-    }, // 3.785412 L
-    bbl: {
-      name: 'bbl',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.1173478
-    }, // 117.3478 L
-    obl: {
-      name: 'obl',
-      base: DIMENSIONS.VOLUME,
-      prefixes: PREFIXES.NONE,
-      value: 0.1589873
-    }, // 158.9873 L
-    // {name: 'hogshead', base: BASE_UNITS.VOLUME, prefixes: PREFIXES.NONE, value: 0.2384810, offset: 0}, // 238.4810 L // TODO: hh?
 
     // Mass
     g: {
-      name: 'g',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', '', 'k'],
       value: 0.001
     },
     gram: {
-      name: 'gram',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', '', 'kilo'],
       value: 0.001
     },
 
     ton: {
-      name: 'ton',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
       value: 907.18474
     },
     tonne: {
-      name: 'tonne',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['', 'kilo', 'mega', 'giga'],
       value: 1000
     },
 
     grain: {
-      name: 'grain',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 64.79891e-6
+      value: 64.79891e-6,
+      aliases: ['gr']
     },
     dram: {
-      name: 'dram',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 1.7718451953125e-3
+      value: 1.7718451953125e-3,
+      aliases: ['dr']
     },
     ounce: {
-      name: 'ounce',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 28.349523125e-3
+      value: 28.349523125e-3,
+      aliases: ['oz', 'ounces']
     },
     poundmass: {
-      name: 'poundmass',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 453.59237e-3
+      value: 453.59237e-3,
+      aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
     },
     hundredweight: {
-      name: 'hundredweight',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 45.359237
+      value: 45.359237,
+      aliases: ['cwt', 'hundredweights']
     },
     stick: {
-      name: 'stick',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 115e-3
+      value: 115e-3,
+      alises: ['sticks']
     },
     stone: {
-      name: 'stone',
       base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
       value: 6.35029318
-    },
-
-    gr: {
-      name: 'gr',
-      base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 64.79891e-6
-    },
-    dr: {
-      name: 'dr',
-      base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 1.7718451953125e-3
-    },
-    oz: {
-      name: 'oz',
-      base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 28.349523125e-3
-    },
-    lbm: {
-      name: 'lbm',
-      base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 453.59237e-3
-    },
-    cwt: {
-      name: 'cwt',
-      base: DIMENSIONS.MASS,
-      prefixes: PREFIXES.NONE,
-      value: 45.359237
     },
 
     // Time
     s: {
-      name: 's',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['f', 'p', 'n', 'u', 'm', ''],
-      value: 1
+      value: 1,
+      aliases: ['sec']
     },
     min: {
-      name: 'min',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 60
+      value: 60,
+      aliases: ['minute', 'minutes']
     },
     h: {
-      name: 'h',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 3600
+      value: 3600,
+      aliases: ['hr', 'hrs', 'hour', 'hours']
     },
     second: {
-      name: 'second',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['femto', 'pico', 'nano', 'micro', 'milli', ''],
-      value: 1
-    },
-    sec: {
-      name: 'sec',
-      base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.LONG,
-      commonPrefixes: ['femto', 'pico', 'nano', 'micro', 'milli', ''],
-      value: 1
-    },
-    minute: {
-      name: 'minute',
-      base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 60
-    },
-    hour: {
-      name: 'hour',
-      base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 3600
+      value: 1,
+      aliases: ['seconds']
     },
     day: {
-      name: 'day',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 86400
+      value: 86400,
+      aliases: ['days']
     },
     week: {
-      name: 'week',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 7 * 86400
+      value: 7 * 86400,
+      alises: ['weeks']
     },
     month: {
-      name: 'month',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 2629800 // 1/12th of Julian year
+      value: 2629800, // 1/12th of Julian year
+      aliases: ['months']
     },
     year: {
-      name: 'year',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 31557600 // Julian year
+      value: 31557600, // Julian year
+      aliases: ['year']
     },
     decade: {
-      name: 'decade',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 315576000 // Julian decade
+      value: 315576000, // Julian decade
+      aliases: ['decades']
     },
     century: {
-      name: 'century',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 3155760000 // Julian century
+      value: 3155760000, // Julian century
+      aliases: ['centuries']
     },
     millennium: {
-      name: 'millennium',
       base: DIMENSIONS.TIME,
-      prefixes: PREFIXES.NONE,
-      value: 31557600000 // Julian millennium
+      value: 31557600000, // Julian millennium
+      aliases: ['millennia']
     },
 
     // Frequency
     hertz: {
-      name: 'Hertz',
       base: DIMENSIONS.FREQUENCY,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['', 'kilo', 'mega', 'giga', 'tera'],
       value: 1,
       offset: 0,
       reciprocal: true
     },
     Hz: {
-      name: 'Hz',
       base: DIMENSIONS.FREQUENCY,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['', 'k', 'M', 'G', 'T'],
       value: 1,
       offset: 0,
@@ -857,96 +621,82 @@ export default function createUnitStore (options) {
 
     // Angle
     rad: {
-      name: 'rad',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['m', ''],
       value: 1
     },
     radian: {
-      name: 'radian',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['milli', ''],
-      value: 1
+      value: 1,
+      aliases: ['radians']
     },
     sr: {
-      name: 'sr',
       base: DIMENSIONS.SOLID_ANGLE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', ''],
       value: 1,
       offset: 0
     },
     steradian: {
-      name: 'steradian',
       base: DIMENSIONS.SOLID_ANGLE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', ''],
       value: 1,
-      offset: 0
+      offset: 0,
+      aliases: ['steradians']
     },
     deg: {
-      name: 'deg',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.NONE, // Prefer arcminutes and arcseconds
-      value: Math.PI / 180
-    },
-    degree: {
-      name: 'degree',
-      base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.NONE,
-      value: Math.PI / 180
+      value: Math.PI / 180,
+      aliases: ['degree', 'degrees']
     },
     grad: {
-      name: 'grad',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['c'],
       value: Math.PI / 200
     },
     gradian: {
-      name: 'gradian',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['centi', ''],
-      value: Math.PI / 200
+      value: Math.PI / 200,
+      aliases: ['gradians']
     },
     cycle: {
-      name: 'cycle',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.NONE,
-      value: 2 * Math.pi
+      value: 2 * Math.pi,
+      aliases: ['cycles']
     },
     // arcsec = rad / (3600 * (360 / 2 * pi)) = rad / 0.0000048481368110953599358991410235795
     arcsec: {
-      name: 'arcsec',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.NONE,
-      value: 0.05 / Math.pi
+      value: 0.05 / Math.pi,
+      aliases: ['arcsecond', 'arcseconds']
     },
     // arcmin = rad / (60 * (360 / 2 * pi)) = rad / 0.00029088820866572159615394846141477
     arcmin: {
-      name: 'arcmin',
       base: DIMENSIONS.ANGLE,
-      prefixes: PREFIXES.NONE,
-      value: 3 / Math.pi
+      value: 3 / Math.pi,
+      aliases: ['arcminute', 'arcminutes']
     },
 
     // Electric current
     A: {
-      name: 'A',
       base: DIMENSIONS.CURRENT,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', '', 'k'],
       value: 1
     },
     ampere: {
-      name: 'ampere',
       base: DIMENSIONS.CURRENT,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', '', 'kilo'],
-      value: 1
+      value: 1,
+      aliases: ['amperes']
     },
 
     // Temperature
@@ -954,428 +704,370 @@ export default function createUnitStore (options) {
     // K(F) = (°F + 459.67) / 1.8
     // K(R) = °R / 1.8
     K: {
-      name: 'K',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', ''],
       value: 1
     },
     degC: {
-      name: 'degC',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
       value: 1,
       offset: 273.15
     },
     degF: {
-      name: 'degF',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
       value: 1 / 1.8,
       offset: 459.67
     },
     degR: {
-      name: 'degR',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
       value: 1 / 1.8
     },
     kelvin: {
-      name: 'kelvin',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
       value: 1
     },
     celsius: {
-      name: 'celsius',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
       value: 1,
       offset: 273.15
     },
     fahrenheit: {
-      name: 'fahrenheit',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
       value: 1 / 1.8,
       offset: 459.67
     },
     rankine: {
-      name: 'rankine',
       base: DIMENSIONS.TEMPERATURE,
-      prefixes: PREFIXES.NONE,
       value: 1 / 1.8
     },
 
     // amount of substance
     mol: {
-      name: 'mol',
       base: DIMENSIONS.AMOUNT_OF_SUBSTANCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['', 'k'],
       value: 1
     },
     mole: {
-      name: 'mole',
       base: DIMENSIONS.AMOUNT_OF_SUBSTANCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['', 'kilo'],
-      value: 1
+      value: 1,
+      aliases: ['moles']
     },
 
     // luminous intensity
     cd: {
-      name: 'cd',
       base: DIMENSIONS.LUMINOUS_INTENSITY,
-      prefixes: PREFIXES.NONE,
       value: 1
     },
     candela: {
-      name: 'candela',
       base: DIMENSIONS.LUMINOUS_INTENSITY,
-      prefixes: PREFIXES.NONE,
       value: 1
     },
 
     // luminous flux
     lumen: {
-      name: 'lumen',
       base: DIMENSIONS.LUMINOUS_FLUX,
-      prefixes: PREFIXES.LONG,
-      value: 1
+      prefixes: 'LONG',
+      value: 1,
+      aliases: ['lumens']
     },
     lm: {
-      name: 'lm',
       base: DIMENSIONS.LUMINOUS_FLUX,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       value: 1
     },
 
     // illuminance
     lux: {
-      name: 'lux',
       base: DIMENSIONS.ILLUMINANCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       value: 1
     },
     lx: {
-      name: 'lx',
       base: DIMENSIONS.ILLUMINANCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       value: 1
     },
 
     // Force
     N: {
-      name: 'N',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', '', 'k', 'M'], // These could be debatable
       value: 1
 
     },
     newton: {
-      name: 'newton',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', '', 'kilo', 'mega'],
-      value: 1
+      value: 1,
+      aliases: ['newtons']
     },
     dyn: {
-      name: 'dyn',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['m', 'k', 'M'],
       value: 0.00001
     },
     dyne: {
-      name: 'dyne',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['milli', 'kilo', 'mega'],
       value: 0.00001
     },
     lbf: {
-      name: 'lbf',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.NONE,
       value: 4.4482216152605
     },
     poundforce: {
-      name: 'poundforce',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.NONE,
       value: 4.4482216152605
     },
     kip: {
-      name: 'kip',
       base: DIMENSIONS.FORCE,
-      prefixes: PREFIXES.NONE,
-      value: 4448.2216
+      value: 4448.2216,
+      aliases: ['kips']
     },
 
     // Energy
     J: {
-      name: 'J',
       base: DIMENSIONS.ENERGY,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['m', '', 'k', 'M', 'G'],
       value: 1
     },
     joule: {
-      name: 'joule',
       base: DIMENSIONS.ENERGY,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['milli', '', 'kilo', 'mega', 'giga'],
-      value: 1
+      value: 1,
+      aliases: ['joules']
     },
     erg: {
-      name: 'erg',
       base: DIMENSIONS.ENERGY,
-      prefixes: PREFIXES.NONE,
       value: 1e-7
     },
     Wh: {
-      name: 'Wh',
       base: DIMENSIONS.ENERGY,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['k', 'M', 'G', 'T'],
       value: 3600
     },
     BTU: {
-      name: 'BTU',
       base: DIMENSIONS.ENERGY,
-      prefixes: PREFIXES.BTU,
+      prefixes: 'BTU',
       commonPrefixes: ['', 'MM'],
-      value: 1055.05585262
+      value: 1055.05585262,
+      aliases: ['BTUs']
     },
     eV: {
-      name: 'eV',
       base: DIMENSIONS.ENERGY,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', '', 'k', 'M', 'G'],
       value: 1.602176565e-19
     },
     electronvolt: {
-      name: 'electronvolt',
       base: DIMENSIONS.ENERGY,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', '', 'kilo', 'mega', 'giga'],
-      value: 1.602176565e-19
+      value: 1.602176565e-19,
+      aliases: ['electronvolts']
     },
 
     // Power
     W: {
-      name: 'W',
       base: DIMENSIONS.POWER,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['p', 'n', 'u', 'm', '', 'k', 'M', 'G', 'T', 'P'],
       value: 1
     },
     watt: {
-      name: 'watt',
       base: DIMENSIONS.POWER,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['pico', 'nano', 'micro', 'milli', '', 'kilo', 'mega', 'tera', 'peta'],
-      value: 1
+      value: 1,
+      aliases: ['watts']
     },
     hp: {
-      name: 'hp',
       base: DIMENSIONS.POWER,
-      prefixes: PREFIXES.NONE,
       value: 745.6998715386
     },
 
     // Electrical power units
     VA: {
-      name: 'VA',
       base: DIMENSIONS.POWER,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['', 'k'],
       value: 1
     },
 
     // Pressure
     Pa: {
-      name: 'Pa',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['', 'k', 'M', 'G'], // 'h' is sometimes used but not often
       value: 1
     },
     psi: {
-      name: 'psi',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE, // kpsi is sometimes used
       value: 6894.757293168361
+      // kpsi is sometimes used
     },
     atm: {
-      name: 'atm',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE,
       value: 101325
     },
     bar: {
-      name: 'bar',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.SHORTLONG,
+      prefixes: 'SHORT_LONG',
       commonPrefixes: ['m', ''],
       value: 100000
     },
     torr: {
-      name: 'torr',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['milli', ''],
       value: 133.322
     },
     Torr: {
-      name: 'Torr',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['m', ''],
       value: 133.322
     },
     mmHg: {
-      name: 'mmHg',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE,
-      value: 133.322
+      value: 133.322,
+      aliases: ['mmhg']
     },
     mmH2O: {
-      name: 'mmH2O',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE,
-      value: 9.80665
+      value: 9.80665,
+      aliases: ['mmh2o']
     },
     cmH2O: {
-      name: 'cmH2O',
       base: DIMENSIONS.PRESSURE,
-      prefixes: PREFIXES.NONE,
-      value: 98.0665
+      value: 98.0665,
+      aliases: ['cmh2o']
     },
 
     // Electric charge
     coulomb: {
-      name: 'coulomb',
       base: DIMENSIONS.ELECTRIC_CHARGE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
-      value: 1
+      value: 1,
+      aliases: ['coulombs']
     },
     C: {
-      name: 'C',
       base: DIMENSIONS.ELECTRIC_CHARGE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['p', 'n', 'u', 'm', ''],
       value: 1
     },
     // Electric capacitance
     farad: {
-      name: 'farad',
       base: DIMENSIONS.CAPACITANCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
-      value: 1
+      value: 1,
+      aliases: ['farads']
     },
     F: {
-      name: 'F',
       base: DIMENSIONS.CAPACITANCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['p', 'n', 'u', 'm', ''],
       value: 1
     },
     // Electric potential
     volt: {
-      name: 'volt',
       base: DIMENSIONS.ELECTRIC_POTENTIAL,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['milli', '', 'kilo', 'mega'],
-      value: 1
+      value: 1,
+      aliases: ['volts']
     },
     V: {
-      name: 'V',
       base: DIMENSIONS.ELECTRIC_POTENTIAL,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['m', '', 'k', 'M'],
       value: 1
     },
     // Electric resistance
     ohm: {
-      name: 'ohm',
       base: DIMENSIONS.RESISTANCE,
-      prefixes: PREFIXES.SHORTLONG, // Both Mohm and megaohm are acceptable
+      prefixes: 'SHORT_LONG', // Both Mohm and megaohm are acceptable
       commonPrefixes: ['', 'k', 'M'],
-      value: 1
+      value: 1,
+      aliases: ['ohms']
     },
     /*
      * Unicode breaks in browsers if charset is not specified
      * TODO: Allow with config option?
     Ω: {
-      name: 'Ω',
       base: BASE_UNITS.ELECTRIC_RESISTANCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       value: 1,
           },
     */
     // Electric inductance
     henry: {
-      name: 'henry',
       base: DIMENSIONS.INDUCTANCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', ''], // Just guessing here
-      value: 1
+      value: 1,
+      aliases: ['henries']
     },
     H: {
-      name: 'H',
       base: DIMENSIONS.INDUCTANCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', ''],
       value: 1
     },
     // Electric conductance
     siemens: {
-      name: 'siemens',
       base: DIMENSIONS.ELECTRICAL_CONDUCTANCE,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', ''],
       value: 1
     },
     S: {
-      name: 'S',
       base: DIMENSIONS.ELECTRICAL_CONDUCTANCE,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', ''],
       value: 1
     },
     // Magnetic flux
     weber: {
-      name: 'weber',
       base: DIMENSIONS.MAGNETIC_FLUX,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
-      value: 1
+      value: 1,
+      aliases: ['webers']
     },
     Wb: {
-      name: 'Wb',
       base: DIMENSIONS.MAGNETIC_FLUX,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', ''],
       value: 1
     },
     // Magnetic flux density
     tesla: {
-      name: 'tesla',
       base: DIMENSIONS.MAGNETIC_FLUX_DENSITY,
-      prefixes: PREFIXES.LONG,
+      prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
-      value: 1
+      value: 1,
+      aliases: ['teslas']
     },
     T: {
-      name: 'T',
       base: DIMENSIONS.MAGNETIC_FLUX_DENSITY,
-      prefixes: PREFIXES.SHORT,
+      prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', ''],
       value: 1
     },
@@ -1383,130 +1075,30 @@ export default function createUnitStore (options) {
     // Binary
     // TODO: Figure out how to do SI vs. IEC while formatting
     b: {
-      name: 'b',
       base: DIMENSIONS.BIT,
-      prefixes: PREFIXES.BINARY_SHORT,
+      prefixes: 'BINARY_SHORT',
       value: 1
     },
     bits: {
-      name: 'bits',
       base: DIMENSIONS.BIT,
-      prefixes: PREFIXES.BINARY_LONG,
-      value: 1
+      prefixes: 'BINARY_LONG',
+      value: 1,
+      aliases: ['bit']
     },
     B: {
-      name: 'B',
       base: DIMENSIONS.BIT,
-      prefixes: PREFIXES.BINARY_SHORT,
+      prefixes: 'BINARY_SHORT',
       value: 8
     },
     bytes: {
-      name: 'bytes',
       base: DIMENSIONS.BIT,
-      prefixes: PREFIXES.BINARY_LONG,
-      value: 8
+      prefixes: 'BINARY_LONG',
+      value: 8,
+      aliases: ['byte']
     }
   }
 
   // Add additional units here.
-
-  // aliases (formerly plurals)
-  const ALIASES = {
-    meters: 'meter',
-    inches: 'inch',
-    feet: 'foot',
-    yards: 'yard',
-    miles: 'mile',
-    links: 'link',
-    rods: 'rod',
-    chains: 'chain',
-    angstroms: 'angstrom',
-
-    lt: 'l',
-    litres: 'litre',
-    liter: 'litre',
-    liters: 'litre',
-    teaspoons: 'teaspoon',
-    tablespoons: 'tablespoon',
-    minims: 'minim',
-    fluiddrams: 'fluiddram',
-    fluidounces: 'fluidounce',
-    gills: 'gill',
-    cups: 'cup',
-    pints: 'pint',
-    quarts: 'quart',
-    gallons: 'gallon',
-    beerbarrels: 'beerbarrel',
-    oilbarrels: 'oilbarrel',
-    hogsheads: 'hogshead',
-    gtts: 'gtt',
-
-    grams: 'gram',
-    tons: 'ton',
-    tonnes: 'tonne',
-    grains: 'grain',
-    drams: 'dram',
-    ounces: 'ounce',
-    poundmasses: 'poundmass',
-    hundredweights: 'hundredweight',
-    sticks: 'stick',
-    lb: 'lbm',
-    lbs: 'lbm',
-
-    kips: 'kip',
-
-    acres: 'acre',
-    hectares: 'hectare',
-    sqfeet: 'sqft',
-    sqyard: 'sqyd',
-    sqmile: 'sqmi',
-    sqmiles: 'sqmi',
-
-    mmhg: 'mmHg',
-    mmh2o: 'mmH2O',
-    cmh2o: 'cmH2O',
-
-    seconds: 'second',
-    secs: 'second',
-    minutes: 'minute',
-    mins: 'minute',
-    hours: 'hour',
-    hr: 'hour',
-    hrs: 'hour',
-    days: 'day',
-    weeks: 'week',
-    months: 'month',
-    years: 'year',
-    decades: 'decade',
-    centuries: 'century',
-    millennia: 'millennium',
-
-    hertz: 'hertz',
-
-    radians: 'radian',
-    degrees: 'degree',
-    gradians: 'gradian',
-    cycles: 'cycle',
-    arcsecond: 'arcsec',
-    arcseconds: 'arcsec',
-    arcminute: 'arcmin',
-    arcminutes: 'arcmin',
-
-    BTUs: 'BTU',
-    watts: 'watt',
-    joules: 'joule',
-
-    amperes: 'ampere',
-    coulombs: 'coulomb',
-    volts: 'volt',
-    ohms: 'ohm',
-    farads: 'farad',
-    webers: 'weber',
-    teslas: 'tesla',
-    electronvolts: 'electronvolt',
-    moles: 'mole'
-
-  }
 
   // Add additional aliases here.
 
@@ -1572,6 +1164,43 @@ export default function createUnitStore (options) {
       throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(UNIT_SYSTEMS).join(', ')} `)
     }
   }
+  
+  // Create aliases
+  let keyArr = Object.keys(UNITS)
+  for(let i=0; i<keyArr.length; i++) {
+    const unit = UNITS[keyArr[i]]
+    const aliases = unit.aliases
+    if(aliases) {
+      if(aliases.forEach) {
+      delete unit.aliases
+      aliases.forEach(alias => {
+        UNITS[alias] = Object.assign({}, unit)
+        // TODO: clone systems and other objects?
+      })
+    }
+    else {
+      throw new Error(`aliases property for unit '${keyArr[i]}' must be an array`)
+    }}
+  }
+
+  // Add unit's name to object
+  for (let key in UNITS) {
+    UNITS[key].name = key
+  }
+
+  // Convert prefixes from string to object
+  for (let key in UNITS) {
+    const unit = UNITS[key]
+    if (unit.prefixes) {
+      if (PREFIXES.hasOwnProperty(unit.prefixes)) {
+        unit.prefixes = PREFIXES[unit.prefixes]
+      } else {
+        throw new Error(`Unknown prefixes ${unit.prefixes} for unit ${key}`)
+      }
+    } else {
+      unit.prefixes = PREFIXES['NONE']
+    }
+  }
 
   // Convert unit systems from strings to unit/prefix pairs
   for (let sysKey in UNIT_SYSTEMS) {
@@ -1600,14 +1229,14 @@ export default function createUnitStore (options) {
     const unit = UNITS[key]
     // Convert commonPrefix from string array to prefix array and sort the array
     if (unit.commonPrefixes) {
-      for (let i = 0; i < unit.commonPrefixes.length; i++) {
-        let s = unit.commonPrefixes[i]
-        if (!unit.prefixes.hasOwnProperty(s)) {
-          throw new Error(`In unit ${unit.name}, common prefix ${s} was not found among the allowable prefixes`)
-        }
-        unit.commonPrefixes[i] = unit.prefixes[s]
-      }
-      unit.commonPrefixes.sort((a, b) => a.value < b.value ? -1 : 1)
+      // for (let i = 0; i < unit.commonPrefixes.length; i++) {
+      //   let s = unit.commonPrefixes[i]
+      //   if (!unit.prefixes.hasOwnProperty(s)) {
+      //     throw new Error(`In unit ${unit.name}, common prefix ${s} was not found among the allowable prefixes`)
+      //   }
+      //   unit.commonPrefixes[i] = unit.prefixes[s]
+      // }
+      // unit.commonPrefixes.sort((a, b) => a.value < b.value ? -1 : 1)
     }
 
     // Add dimensions to each built-in unit
@@ -1622,20 +1251,6 @@ export default function createUnitStore (options) {
     }
   }
 
-  // Create aliases
-  for (const name in ALIASES) {
-    if (ALIASES.hasOwnProperty(name)) {
-      const unit = UNITS[ALIASES[name]]
-      const alias = {}
-      for (let key in unit) {
-        if (unit.hasOwnProperty(key)) {
-          alias[key] = unit[key]
-        }
-      }
-      alias.name = name
-      UNITS[name] = alias
-    }
-  }
 
   /**
    * Tests whether the given string exists as a known unit. The unit may have a prefix.
@@ -1656,10 +1271,9 @@ export default function createUnitStore (options) {
     // First, match units names exactly. For example, a user could define 'mm' as 10^-4 m, which is silly, but then we would want 'mm' to match the user-defined unit.
     if (UNITS.hasOwnProperty(unitString)) {
       const unit = UNITS[unitString]
-      const prefix = unit.prefixes['']
       return {
         unit,
-        prefix
+        prefix: ''
       }
     }
 
@@ -1668,12 +1282,10 @@ export default function createUnitStore (options) {
         if (unitString.substring(unitString.length - name.length, unitString.length) === name) {
           const unit = UNITS[name]
           const prefixLen = (unitString.length - name.length)
-          const prefixName = unitString.substring(0, prefixLen)
-          const prefix = unit.prefixes.hasOwnProperty(prefixName)
-            ? unit.prefixes[prefixName]
-            : undefined
-          if (prefix !== undefined) {
+          const prefix = unitString.substring(0, prefixLen)
+          if (unit.prefixes.hasOwnProperty(prefix)) {
             // store unit, prefix, and value
+            // console.log(`findUnit(${unitString}): { unit.name: ${unit.name}, prefix: ${prefix} }`)
             return {
               unit,
               prefix

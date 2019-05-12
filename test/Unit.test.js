@@ -1,6 +1,7 @@
 import assert from 'assert'
 import approx from './approx'
 import unit from '../src/Unit'
+import util from 'util'
 
 // TODO: Bring in any other tests that use units from math.js
 
@@ -299,122 +300,122 @@ describe('unitmath', () => {
       const u1 = unit(5000, 'in')
       assert.strictEqual(u1.value, 5000)
       assert.strictEqual(u1.units[0].unit.name, 'in')
-      assert.strictEqual(u1.units[0].prefix.name, '')
+      assert.strictEqual(u1.units[0].prefix, '')
 
       const u2 = u1.to('cm')
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 12700)
       assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix.name, 'c')
+      assert.strictEqual(u2.units[0].prefix, 'c')
 
       const u3 = unit(299792.458, 'km/s')
       assert.strictEqual(u3.value, 299792.458)
       assert.strictEqual(u3.units[0].unit.name, 'm')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, 'k')
+      assert.strictEqual(u3.units[0].prefix, 'k')
 
       const u4 = u3.to('m/s')
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 299792458)
       assert.strictEqual(u4.units[0].unit.name, 'm')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, '')
+      assert.strictEqual(u4.units[0].prefix, '')
     })
 
     it('should convert a unit using a target unit', function () {
       const u1 = unit(5000, 'in')
       assert.strictEqual(u1.value, 5000)
       assert.strictEqual(u1.units[0].unit.name, 'in')
-      assert.strictEqual(u1.units[0].prefix.name, '')
+      assert.strictEqual(u1.units[0].prefix, '')
 
       const u2 = u1.to(unit('cm'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 12700)
       assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix.name, 'c')
+      assert.strictEqual(u2.units[0].prefix, 'c')
 
       const u3 = unit(299792.458, 'km/s')
       assert.strictEqual(u3.value, 299792.458)
       assert.strictEqual(u3.units[0].unit.name, 'm')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, 'k')
+      assert.strictEqual(u3.units[0].prefix, 'k')
 
       const u4 = u3.to(unit('m/s'))
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 299792458)
       assert.strictEqual(u4.units[0].unit.name, 'm')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, '')
+      assert.strictEqual(u4.units[0].prefix, '')
     })
 
     it('should convert a valueless unit', function () {
       const u1 = unit(null, 'm')
       assert.strictEqual(u1.value, null)
       assert.strictEqual(u1.units[0].unit.name, 'm')
-      assert.strictEqual(u1.units[0].prefix.name, '')
+      assert.strictEqual(u1.units[0].prefix, '')
 
       const u2 = u1.to(unit(null, 'cm'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 100) // u2 must have a value
       assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix.name, 'c')
+      assert.strictEqual(u2.units[0].prefix, 'c')
 
       const u3 = unit(null, 'm/s')
       assert.strictEqual(u3.value, null)
       assert.strictEqual(u3.units[0].unit.name, 'm')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, '')
+      assert.strictEqual(u3.units[0].prefix, '')
 
       const u4 = u3.to(unit(null, 'cm/s'))
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 100) // u4 must have a value
       assert.strictEqual(u4.units[0].unit.name, 'm')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, 'c')
+      assert.strictEqual(u4.units[0].prefix, 'c')
 
       const u5 = unit(null, 'km').to('cm')
       assert.strictEqual(u5.value, 100000)
       assert.strictEqual(u5.units[0].unit.name, 'm')
-      assert.strictEqual(u5.units[0].prefix.name, 'c')
+      assert.strictEqual(u5.units[0].prefix, 'c')
     })
 
     it('should convert a binary prefixes (1)', function () {
       const u1 = unit(1, 'Kib')
       assert.strictEqual(u1.value, 1)
       assert.strictEqual(u1.units[0].unit.name, 'b')
-      assert.strictEqual(u1.units[0].prefix.name, 'Ki')
+      assert.strictEqual(u1.units[0].prefix, 'Ki')
 
       const u2 = u1.to(unit(null, 'b'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 1024) // u2 must have a value
       assert.strictEqual(u2.units[0].unit.name, 'b')
-      assert.strictEqual(u2.units[0].prefix.name, '')
+      assert.strictEqual(u2.units[0].prefix, '')
 
       const u3 = unit(1, 'Kib/s')
       assert.strictEqual(u3.value, 1)
       assert.strictEqual(u3.units[0].unit.name, 'b')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, 'Ki')
+      assert.strictEqual(u3.units[0].prefix, 'Ki')
 
       const u4 = u3.to(unit(null, 'b/s'))
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 1024) // u4 must have a value
       assert.strictEqual(u4.units[0].unit.name, 'b')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, '')
+      assert.strictEqual(u4.units[0].prefix, '')
     })
 
     it('should convert a binary prefixes (2)', function () {
       const u1 = unit(1, 'kb')
       assert.strictEqual(u1.value, 1)
       assert.strictEqual(u1.units[0].unit.name, 'b')
-      assert.strictEqual(u1.units[0].prefix.name, 'k')
+      assert.strictEqual(u1.units[0].prefix, 'k')
 
       const u2 = u1.to(unit(null, 'b'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 1000) // u2 must have a value
       assert.strictEqual(u2.units[0].unit.name, 'b')
-      assert.strictEqual(u2.units[0].prefix.name, '')
+      assert.strictEqual(u2.units[0].prefix, '')
     })
 
     it('should throw an error when converting to an incompatible unit', function () {
@@ -632,77 +633,77 @@ describe('unitmath', () => {
       unit1 = unit('5kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5 kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit(' 5 kg ')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5e-3kg')
       assert.strictEqual(unit1.value, 0.005)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5e+3kg')
       assert.strictEqual(unit1.value, 5000)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5e3kg')
       assert.strictEqual(unit1.value, 5000)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('-5kg')
       assert.strictEqual(unit1.value, -5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('+5kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('.5kg')
       assert.strictEqual(unit1.value, 0.5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('-5mg')
       approx.equal(unit1.value, -5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'm')
+      assert.strictEqual(unit1.units[0].prefix, 'm')
 
       unit1 = unit('5.2mg')
       approx.equal(unit1.value, 5.2)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'm')
+      assert.strictEqual(unit1.units[0].prefix, 'm')
 
       unit1 = unit('300 kg/minute')
       approx.equal(unit1.value, 300)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'minute')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('981 cm/s^2')
       approx.equal(unit1.value, 981)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
       assert.strictEqual(unit1.units[1].unit.name, 's')
       assert.strictEqual(unit1.units[1].power, -2)
-      assert.strictEqual(unit1.units[0].prefix.name, 'c')
+      assert.strictEqual(unit1.units[0].prefix, 'c')
 
       unit1 = unit('981 cm*s^-2')
       approx.equal(unit1.value, 981)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
       assert.strictEqual(unit1.units[1].unit.name, 's')
       assert.strictEqual(unit1.units[1].power, -2)
-      assert.strictEqual(unit1.units[0].prefix.name, 'c')
+      assert.strictEqual(unit1.units[0].prefix, 'c')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
       approx.equal(unit1.value, 8.314)
@@ -716,7 +717,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].power, -2)
       assert.strictEqual(unit1.units[3].power, -1)
       assert.strictEqual(unit1.units[4].power, -1)
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
       approx.equal(unit1.value, 8.314)
@@ -730,7 +731,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].power, -2)
       assert.strictEqual(unit1.units[3].power, -1)
       assert.strictEqual(unit1.units[4].power, -1)
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5exabytes')
       approx.equal(unit1.value, 5)
@@ -767,7 +768,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[0].power, 3)
       assert.strictEqual(unit1.units[1].power, -1)
       assert.strictEqual(unit1.units[2].power, -2)
-      assert.strictEqual(unit1.units[0].prefix.name, '')
+      assert.strictEqual(unit1.units[0].prefix, '')
     })
 
     it('should throw an exception when parsing an invalid unit', function () {
@@ -951,22 +952,22 @@ describe('unitmath', () => {
       const unit1 = unit(5, 'meters')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'meters')
-      assert.strictEqual(unit1.units[0].prefix.name, '')
+      assert.strictEqual(unit1.units[0].prefix, '')
 
       const unit2 = unit(5, 'kilometers')
       assert.strictEqual(unit2.value, 5)
       assert.strictEqual(unit2.units[0].unit.name, 'meters')
-      assert.strictEqual(unit2.units[0].prefix.name, 'kilo')
+      assert.strictEqual(unit2.units[0].prefix, 'kilo')
 
       const unit3 = unit(5, 'inches')
       approx.equal(unit3.value, 5)
       assert.strictEqual(unit3.units[0].unit.name, 'inches')
-      assert.strictEqual(unit3.units[0].prefix.name, '')
+      assert.strictEqual(unit3.units[0].prefix, '')
 
       const unit4 = unit(9.81, 'meters/second^2')
       approx.equal(unit4.value, 9.81)
       assert.strictEqual(unit4.units[0].unit.name, 'meters')
-      assert.strictEqual(unit4.units[0].prefix.name, '')
+      assert.strictEqual(unit4.units[0].prefix, '')
     })
   })
 
@@ -975,12 +976,12 @@ describe('unitmath', () => {
       const unit1 = unit(5, 'lt')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'lt')
-      assert.strictEqual(unit1.units[0].prefix.name, '')
+      assert.strictEqual(unit1.units[0].prefix, '')
 
       const unit2 = unit(1, 'lb')
       assert.strictEqual(unit2.value, 1)
       assert.strictEqual(unit2.units[0].unit.name, 'lb')
-      assert.strictEqual(unit2.units[0].prefix.name, '')
+      assert.strictEqual(unit2.units[0].prefix, '')
     })
   })
 

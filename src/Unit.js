@@ -245,7 +245,7 @@ let _config = function _config (options) {
 
       let ok = true
       if (matchingDim) {
-        // console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix.name}${system[matchingDim].unit.name}`)
+        // console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix}${system[matchingDim].unit.name}`)
         proposedUnitList.push({
           unit: system[matchingDim].unit,
           prefix: system[matchingDim].prefix,
@@ -677,7 +677,7 @@ let _config = function _config (options) {
 
       for (let i = 0; i < unitPieces.length; i++) {
         unitValue = options.type.conv(unitPieces[i].unit.value)
-        unitPrefixValue = options.type.conv(unitPieces[i].prefix.value)
+        unitPrefixValue = options.type.conv(unitPieces[i].unit.prefixes[unitPieces[i].prefix])
         unitPower = options.type.conv(unitPieces[i].power)
         result = options.type.mul(result, options.type.pow(options.type.mul(unitValue, unitPrefixValue), unitPower))
       }
@@ -687,7 +687,7 @@ let _config = function _config (options) {
       // units is a single unit of power 1, like kg or degC
       unitValue = options.type.conv(unitPieces[0].unit.value)
       unitOffset = options.type.conv(unitPieces[0].unit.offset)
-      unitPrefixValue = options.type.conv(unitPieces[0].prefix.value)
+      unitPrefixValue = options.type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix])
 
       return options.type.mul(options.type.add(value, unitOffset), options.type.mul(unitValue, unitPrefixValue))
     }
@@ -714,7 +714,7 @@ let _config = function _config (options) {
 
       for (let i = 0; i < unitPieces.length; i++) {
         unitValue = options.type.conv(unitPieces[i].unit.value)
-        unitPrefixValue = options.type.conv(unitPieces[i].prefix.value)
+        unitPrefixValue = options.type.conv(unitPieces[i].unit.prefixes[unitPieces[i].prefix])
         unitPower = options.type.conv(unitPieces[i].power)
         result = options.type.div(result, options.type.pow(options.type.mul(unitValue, unitPrefixValue), unitPower))
       }
@@ -724,7 +724,7 @@ let _config = function _config (options) {
       // unit is a single unit of power 1, like kg or degC
 
       unitValue = options.type.conv(unitPieces[0].unit.value)
-      unitPrefixValue = options.type.conv(unitPieces[0].prefix.value)
+      unitPrefixValue = options.type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix])
       unitOffset = options.type.conv(unitPieces[0].unit.offset)
 
       if (prefixValue === undefined || prefixValue === null) {
@@ -797,7 +797,7 @@ let _config = function _config (options) {
     }
 
     function calcValue (prefix) {
-      return options.type.div(unit.value, options.type.pow(prefix.value / piece.prefix.value, piece.power))
+      return options.type.div(unit.value, options.type.pow(piece.unit.prefixes[prefix] / piece.unit.prefixes[piece.prefix], piece.power))
     }
 
     function calcScore (prefix) {
@@ -901,7 +901,7 @@ let _config = function _config (options) {
     for (let i = 0; i < unit.units.length; i++) {
       if (unit.units[i].power > 0) {
         nNum++
-        strNum += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+        strNum += ' ' + unit.units[i].prefix + unit.units[i].unit.name
         if (Math.abs(unit.units[i].power - 1.0) > 1e-15) {
           strNum += '^' + unit.units[i].power
         }
@@ -914,12 +914,12 @@ let _config = function _config (options) {
       for (let i = 0; i < unit.units.length; i++) {
         if (unit.units[i].power < 0) {
           if (nNum > 0) {
-            strDen += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+            strDen += ' ' + unit.units[i].prefix + unit.units[i].unit.name
             if (Math.abs(unit.units[i].power + 1.0) > 1e-15) {
               strDen += '^' + (-unit.units[i].power)
             }
           } else {
-            strDen += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+            strDen += ' ' + unit.units[i].prefix + unit.units[i].unit.name
             strDen += '^' + (unit.units[i].power)
           }
         }
