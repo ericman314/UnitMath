@@ -1,5 +1,5 @@
 import createParser from './Parser.js'
-import { normalize, denormalize } from './utils.js'
+import { normalize } from './utils.js'
 
 /**
  * Creates a new unit store.
@@ -1091,7 +1091,6 @@ export default function createUnitStore (options) {
   for (const dim in DIMENSIONS) { Object.freeze(DIMENSIONS[dim]) }
   // console.log(DIMENSIONS)
 
- 
   // console.log(UNITS_DEFINITIONS)
 
   // Initialize an empty set of units.
@@ -1104,8 +1103,7 @@ export default function createUnitStore (options) {
 
   // Loop through the units. If the unit has a `base` property, initialize that unit with base's dimension, and the given value property, making sure no other units have the same base. If the unit does not, then parse the unit's value property (which is either a string or an two-element array) using the parser, and create the dimensions and value from the resulting Unit. Create the unit with the name, dimensions, value, offset, prefixes, and commonPrefixes properties. Convert the prefixes from a string to the associate object from the PREFIXES object.
 
-  while(true) {
-
+  while (true) {
     let unitsAdded = 0
     let unitsSkipped = []
     for (const unitDefKey in UNITS_DEFINITIONS) {
@@ -1152,11 +1150,9 @@ export default function createUnitStore (options) {
               parsed = parser(unitDef.value[1])
               parsed.value = unitDef.value[0]
             }
-          }
-          else if (typeof unitDef === 'string') {
+          } else if (typeof unitDef === 'string') {
             parsed = parser(unitDef)
-          }
-          else {
+          } else {
             throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
           }
 
@@ -1190,7 +1186,7 @@ export default function createUnitStore (options) {
     else if (unitsAdded === 0) {
       throw new Error(`Could not create the following units: ${unitsSkipped.join(', ')}. There is possibly a problem with the unit's definition.`)
     }
-  } 
+  }
 
   // Check to make sure config options has selected a unit system that exists.
   if (options.system !== 'auto') {
@@ -1200,8 +1196,6 @@ export default function createUnitStore (options) {
   }
 
   // TODO: Check to make sure consistent units were chosen for each dimension in the unit systems
-
-  
 
   // Convert unit systems from strings to unit/prefix pairs
   for (let sysKey in UNIT_SYSTEMS) {
@@ -1237,17 +1231,6 @@ export default function createUnitStore (options) {
         }
       }
     }
-
-    // // Add dimensions to each built-in unit
-    // if (!unit.base) {
-    //   throw new Error(`Cannot find dimension for unit ${unit.name}`)
-    // }
-    // unit.dimensions = unit.base.dimensions
-
-    // // Set other defaults for units
-    // if (typeof unit.offset === 'undefined') {
-    //   unit.offset = 0
-    // }
   }
 
   /**

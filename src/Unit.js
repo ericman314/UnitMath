@@ -598,7 +598,7 @@ let _config = function _config (options) {
    */
   function _div (unit1, unit2) {
     const result = _clone(unit1)
-    
+
     for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
       result.dimensions[i] = unit1.dimensions[i] - unit2.dimensions[i]
     }
