@@ -8,6 +8,8 @@ import unit from '../src/Unit'
 //       are imported.
 /* global math, Unit */
 
+// TODO: Test to make sure all DIMENSIONS were converted correctly (use old hardcoded arrays from UnitStore.js)
+
 describe('unitmath', () => {
   describe('unitmath namespace', () => {
     it('should be a function', () => {
@@ -819,7 +821,7 @@ describe('unitmath', () => {
   describe('add', function () {
     it('should add two units', () => {
       assert.deepStrictEqual(unit(300, 'm').add(unit(3, 'km')), unit(3300, 'm'))
-      assert.deepStrictEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
+      approx.deepEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
     })
 
     it('should convert parameter to unit', () => {
@@ -840,7 +842,7 @@ describe('unitmath', () => {
   describe('sub', function () {
     it('should subtract two units', () => {
       assert.deepStrictEqual(unit(300, 'm').sub(unit(3, 'km')), unit(-2700, 'm'))
-      assert.deepStrictEqual(unit('2m').sub(unit('3ft')), unit('1.0856 m'))
+      approx.deepEqual(unit('2m').sub(unit('3ft')), unit('1.0856 m'))
     })
 
     it('should convert parameter to unit', () => {
@@ -918,7 +920,7 @@ describe('unitmath', () => {
     it('should calculate the power of a unit', () => {
       assert(unit('4 N').pow(2).equals(unit('16 N^2')))
       assert(unit('0.25 m/s').pow(-0.5).equals(unit('2 m^-0.5 s^0.5')))
-      assert(unit('123 hogshead').pow(0).equals(unit('1')))
+      assert(unit('123 chain').pow(0).equals(unit('1')))
     })
   })
 
@@ -1177,8 +1179,8 @@ describe('unitmath', () => {
     })
 
     it('should return the unit in SI units', function () {
-      assert.deepStrictEqual(unit('4 ft').toSI(), unit('1.2192 m').to())
-      assert.deepStrictEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2').to())
+      approx.deepEqual(unit('4 ft').toSI(), unit('1.2192 m').to())
+      approx.deepEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2').to())
     })
 
     it('should return SI units for valueless units', function () {
@@ -1186,8 +1188,8 @@ describe('unitmath', () => {
     })
 
     it('alterate api syntax should work too', () => {
-      assert.deepStrictEqual(unit.toSI(unit('4 ft')), unit('1.2192 m').to())
-      assert.deepStrictEqual(unit.toSI('4 ft'), unit('1.2192 m').to())
+      approx.deepEqual(unit.toSI(unit('4 ft')), unit('1.2192 m').to())
+      approx.deepEqual(unit.toSI('4 ft'), unit('1.2192 m').to())
     })
 
     it.skip('should return SI units for custom units defined from other units', function () {

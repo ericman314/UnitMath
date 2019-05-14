@@ -1,8 +1,19 @@
+import createParser from './Parser.js'
+import { normalize, denormalize } from './utils.js'
+
 /**
  * Creates a new unit store.
  * @param {Object} options
  */
 export default function createUnitStore (options) {
+  /* Units are defined by these objects:
+   * PREFIXES
+   * BASE_DIMENSIONS
+   * DIMENSIONS
+   * UNITS
+   * UNIT_SYSTEMS
+   */
+
   const PREFIXES = {
     NONE: {
       '': 1
@@ -179,523 +190,461 @@ export default function createUnitStore (options) {
 
   const BASE_DIMENSIONS = ['MASS', 'LENGTH', 'TIME', 'CURRENT', 'TEMPERATURE', 'LUMINOUS_INTENSITY', 'AMOUNT_OF_SUBSTANCE', 'ANGLE', 'BIT', 'SOLID_ANGLE']
 
-  /* eslint-disable no-multi-spaces, key-spacing, standard/array-bracket-even-spacing */
   const DIMENSIONS = {
-    UNITLESS:                { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0] },
-    MASS:                    { dimensions: [ 1,  0,  0,  0,  0,  0,  0,  0,  0,  0] },
-    LENGTH:                  { dimensions: [ 0,  1,  0,  0,  0,  0,  0,  0,  0,  0] },
-    TIME:                    { dimensions: [ 0,  0,  1,  0,  0,  0,  0,  0,  0,  0] },
-    CURRENT:                 { dimensions: [ 0,  0,  0,  1,  0,  0,  0,  0,  0,  0] },
-    TEMPERATURE:             { dimensions: [ 0,  0,  0,  0,  1,  0,  0,  0,  0,  0] },
-    LUMINOUS_INTENSITY:      { dimensions: [ 0,  0,  0,  0,  0,  1,  0,  0,  0,  0] },
-    AMOUNT_OF_SUBSTANCE:     { dimensions: [ 0,  0,  0,  0,  0,  0,  1,  0,  0,  0] },
-    ANGLE:                   { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  1,  0,  0] },
-    BIT:                     { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  1,  0] },
-    SOLID_ANGLE:             { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  1] },
-
-    // Derived
-    ABSEMENT:                { dimensions: [ 0,  1,  1,  0,  0,  0,  0,  0,  0,  0] },
-    ACCELERATION:            { dimensions: [ 0,  1, -2,  0,  0,  0,  0,  0,  0,  0] },
-    ANGULAR_ACCELERATION:    { dimensions: [ 0,  0, -2,  0,  0,  0,  0,  1,  0,  0] },
-    ANGULAR_MOMENTUM:        { dimensions: [ 1,  2, -1,  0,  0,  0,  0,  1,  0,  0] },
-    ANGULAR_VELOCITY:        { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  1,  0,  0] },
-    AREA:                    { dimensions: [ 0,  2,  0,  0,  0,  0,  0,  0,  0,  0] },
-    AREA_DENSITY:            { dimensions: [ 1, -2,  0,  0,  0,  0,  0,  0,  0,  0] },
-    BIT_RATE:                { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  0,  1,  0] },
-    CAPACITANCE:             { dimensions: [-1, -2,  4,  2,  0,  0,  0,  0,  0,  0] },
-    CURRENT_DENSITY:         { dimensions: [ 0, -2,  0,  1,  0,  0,  0,  0,  0,  0] },
-    DYNAMIC_VISCOSITY:       { dimensions: [ 1, -1, -1,  0,  0,  0,  0,  0,  0,  0] },
-    ELECTRIC_CHARGE:         { dimensions: [ 0,  0,  1,  1,  0,  0,  0,  0,  0,  0] },
-    ELECTRIC_CHARGE_DENSITY: { dimensions: [ 0, -3,  1,  1,  0,  0,  0,  0,  0,  0] },
-    ELECTRIC_DISPLACEMENT:   { dimensions: [ 0, -2,  1,  1,  0,  0,  0,  0,  0,  0] },
-    ELECTRIC_FIELD_STRENGTH: { dimensions: [ 1,  1, -3, -1,  0,  0,  0,  0,  0,  0] },
-    ELECTRICAL_CONDUCTANCE:  { dimensions: [-1, -2,  3,  2,  0,  0,  0,  0,  0,  0] },
-    ELECTRICAL_CONDUCTIVITY: { dimensions: [-1, -3,  3,  2,  0,  0,  0,  0,  0,  0] },
-    ELECTRIC_POTENTIAL:      { dimensions: [ 1,  2, -3, -1,  0,  0,  0,  0,  0,  0] },
-    RESISTANCE:              { dimensions: [ 1,  2, -3, -2,  0,  0,  0,  0,  0,  0] },
-    ELECTRICAL_RESISTIVITY:  { dimensions: [ 1,  3, -3, -2,  0,  0,  0,  0,  0,  0] },
-    ENERGY:                  { dimensions: [ 1,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
-    ENTROPY:                 { dimensions: [ 1,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
-    FORCE:                   { dimensions: [ 1,  1, -2,  0,  0,  0,  0,  0,  0,  0] },
-    FREQUENCY:               { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  0,  0,  0] },
-    HEAT_CAPACITY:           { dimensions: [ 1,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
-    HEAT_FLUX_DENSITY:       { dimensions: [ 1,  0, -3,  0,  0,  0,  0,  0,  0,  0] },
-    ILLUMINANCE:             { dimensions: [ 0, -2,  0,  0,  0,  1,  0,  0,  0,  0] },
-    IMPEDANCE:               { dimensions: [ 1,  2, -3, -2,  0,  0,  0,  0,  0,  0] },
-    IMPULSE:                 { dimensions: [ 1,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
-    INDUCTANCE:              { dimensions: [ 1,  2, -2, -2,  0,  0,  0,  0,  0,  0] },
-    IRRADIANCE:              { dimensions: [ 1,  0, -3,  0,  0,  0,  0,  0,  0,  0] },
-    JERK:                    { dimensions: [ 0,  1, -3,  0,  0,  0,  0,  0,  0,  0] },
-    KINEMATIC_VISCOSITY:     { dimensions: [ 0,  2, -1,  0,  0,  0,  0,  0,  0,  0] },
-    LINEAR_DENSITY:          { dimensions: [ 1, -1,  0,  0,  0,  0,  0,  0,  0,  0] },
-    LUMINOUS_FLUX:           { dimensions: [ 0,  0,  0,  0,  0,  1,  0,  0,  0,  1] },
-    MAGNETIC_FIELD_STRENGTH: { dimensions: [ 0, -1,  0,  1,  0,  0,  0,  0,  0,  0] },
-    MAGNETIC_FLUX:           { dimensions: [ 1,  2, -2, -1,  0,  0,  0,  0,  0,  0] },
-    MAGNETIC_FLUX_DENSITY:   { dimensions: [ 1,  0, -2, -1,  0,  0,  0,  0,  0,  0] },
-    MOLAR_CONCENTRATION:     { dimensions: [ 0, -3,  0,  0,  0,  0,  1,  0,  0,  0] },
-    MOLAR_ENERGY:            { dimensions: [ 1,  2, -2,  0,  0,  0, -1,  0,  0,  0] },
-    MOLAR_ENTROPY:           { dimensions: [ 1,  2, -2,  0, -1,  0, -1,  0,  0,  0] },
-    MOLAR_HEAT_CAPACITY:     { dimensions: [ 1,  2, -2,  0, -1,  0, -1,  0,  0,  0] },
-    MOMENT_OF_INERTIA:       { dimensions: [ 1,  2,  0,  0,  0,  0,  0,  0,  0,  0] },
-    MOMENTUM:                { dimensions: [ 1,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
-    PERMEABILITY:            { dimensions: [ 1,  1, -2, -2,  0,  0,  0,  0,  0,  0] },
-    PERMITTIVITY:            { dimensions: [-1, -3,  4,  2,  0,  0,  0,  0,  0,  0] },
-    POWER:                   { dimensions: [ 1,  2, -3,  0,  0,  0,  0,  0,  0,  0] },
-    PRESSURE:                { dimensions: [ 1, -1, -2,  0,  0,  0,  0,  0,  0,  0] },
-    RELUCTANCE:              { dimensions: [-1, -2,  2,  2,  0,  0,  0,  0,  0,  0] },
-    SPECIFIC_ENERGY:         { dimensions: [ 0,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
-    SPECIFIC_HEAT_CAPACITY:  { dimensions: [ 0,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
-    SPECIFIC_VOLUME:         { dimensions: [-1,  3,  0,  0,  0,  0,  0,  0,  0,  0] },
-    SPIN:                    { dimensions: [ 1,  2, -1,  0,  0,  0,  0,  0,  0,  0] },
-    SURFACE_TENSION:         { dimensions: [ 1,  0, -2,  0,  0,  0,  0,  0,  0,  0] },
-    TEMPERATURE_GRADIENT:    { dimensions: [ 0, -1,  0,  0,  1,  0,  0,  0,  0,  0] },
-    THERMAL_CONDUCTIVITY:    { dimensions: [ 1,  1, -3,  0, -1,  0,  0,  0,  0,  0] },
-    TORQUE:                  { dimensions: [ 1,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
-    VELOCITY:                { dimensions: [ 0,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
-    VOLUME:                  { dimensions: [ 0,  3,  0,  0,  0,  0,  0,  0,  0,  0] },
-    VOLUMETRIC_FLOW_RATE:    { dimensions: [ 0,  3, -1,  0,  0,  0,  0,  0,  0,  0] }
+    UNITLESS: '',
+    ABSEMENT: 'LENGTH TIME',
+    ACCELERATION: 'LENGTH TIME^-2',
+    ANGULAR_ACCELERATION: 'TIME^-2 ANGLE',
+    ANGULAR_MOMENTUM: 'MASS LENGTH^2 TIME^-1 ANGLE',
+    ANGULAR_VELOCITY: 'TIME^-1 ANGLE',
+    AREA: 'LENGTH^2',
+    AREA_DENSITY: 'MASS LENGTH^-2',
+    BIT_RATE: 'TIME^-1 BIT',
+    CAPACITANCE: 'MASS^-1 LENGTH^-2 TIME^4 CURRENT^2',
+    CURRENT_DENSITY: 'LENGTH^-2 CURRENT',
+    DYNAMIC_VISCOSITY: 'MASS LENGTH^-1 TIME^-1',
+    ELECTRIC_CHARGE: 'TIME CURRENT',
+    ELECTRIC_CHARGE_DENSITY: 'LENGTH^-3 TIME CURRENT',
+    ELECTRIC_DISPLACEMENT: 'LENGTH^-2 TIME CURRENT',
+    ELECTRIC_FIELD_STRENGTH: 'MASS LENGTH TIME^-3 CURRENT^-1',
+    ELECTRICAL_CONDUCTANCE: 'MASS^-1 LENGTH^-2 TIME^3 CURRENT^2',
+    ELECTRICAL_CONDUCTIVITY: 'MASS^-1 LENGTH^-3 TIME^3 CURRENT^2',
+    ELECTRIC_POTENTIAL: 'MASS LENGTH^2 TIME^-3 CURRENT^-1',
+    RESISTANCE: 'MASS LENGTH^2 TIME^-3 CURRENT^-2',
+    ELECTRICAL_RESISTIVITY: 'MASS LENGTH^3 TIME^-3 CURRENT^-2',
+    ENERGY: 'MASS LENGTH^2 TIME^-2',
+    ENTROPY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1',
+    FORCE: 'MASS LENGTH TIME^-2',
+    FREQUENCY: 'TIME^-1',
+    HEAT_CAPACITY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1',
+    HEAT_FLUX_DENSITY: 'MASS TIME^-3',
+    ILLUMINANCE: 'LENGTH^-2 LUMINOUS_INTENSITY',
+    IMPEDANCE: 'MASS LENGTH^2 TIME^-3 CURRENT^-2',
+    IMPULSE: 'MASS LENGTH TIME^-1',
+    INDUCTANCE: 'MASS LENGTH^2 TIME^-2 CURRENT^-2',
+    IRRADIANCE: 'MASS TIME^-3',
+    JERK: 'LENGTH TIME^-3',
+    KINEMATIC_VISCOSITY: 'LENGTH^2 TIME^-1',
+    LINEAR_DENSITY: 'MASS LENGTH^-1',
+    LUMINOUS_FLUX: 'LUMINOUS_INTENSITY SOLID_ANGLE^-1',
+    MAGNETIC_FIELD_STRENGTH: 'LENGTH^-1 CURRENT',
+    MAGNETIC_FLUX: 'MASS LENGTH^2 TIME^-2 CURRENT^-1',
+    MAGNETIC_FLUX_DENSITY: 'MASS TIME^-2 CURRENT^-1',
+    MOLAR_CONCENTRATION: 'LENGTH^-3 AMOUNT_OF_SUBSTANCE',
+    MOLAR_ENERGY: 'MASS LENGTH^2 TIME^-2 AMOUNT_OF_SUBSTANCE^-1',
+    MOLAR_ENTROPY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1 AMOUNT_OF_SUBSTANCE^-1',
+    MOLAR_HEAT_CAPACITY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1 AMOUNT_OF_SUBSTANCE^-1',
+    MOMENT_OF_INERTIA: 'MASS LENGTH^2',
+    MOMENTUM: 'MASS LENGTH TIME^-1',
+    PERMEABILITY: 'MASS LENGTH TIME^-2 CURRENT^-2',
+    PERMITTIVITY: 'MASS^-1 LENGTH^-3 TIME^4 CURRENT^2 ',
+    POWER: 'MASS LENGTH^2 TIME^-3',
+    PRESSURE: 'MASS LENGTH^-1 TIME^-2',
+    RELUCTANCE: 'MASS^-1 LENGTH^-2 TIME^2 CURRENT^2',
+    SPECIFIC_ENERGY: 'LENGTH^2 TIME^-2',
+    SPECIFIC_HEAT_CAPACITY: 'LENGTH^2 TIME^-2 TEMPERATURE^-1',
+    SPECIFIC_VOLUME: 'MASS^-1 LENGTH^3',
+    SPIN: 'MASS LENGTH^2 TIME^-1',
+    SURFACE_TENSION: 'MASS TIME^-2',
+    TEMPERATURE_GRADIENT: 'LENGTH^-1 TEMPERATURE',
+    THERMAL_CONDUCTIVITY: 'MASS LENGTH TIME^-3 TEMPERATURE^-1',
+    TORQUE: 'MASS LENGTH^2 TIME^-2', // TODO: Should this have a radian in it somewhere?
+    VELOCITY: 'LENGTH TIME^-1',
+    VOLUME: 'LENGTH^3',
+    VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
   }
+
+  /* eslint-disable no-multi-spaces, key-spacing, standard/array-bracket-even-spacing */
+  // const DIMENSIONS = {
+  //   UNITLESS:                { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   MASS:                    { dimensions: [ 1,  0,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   LENGTH:                  { dimensions: [ 0,  1,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   TIME:                    { dimensions: [ 0,  0,  1,  0,  0,  0,  0,  0,  0,  0] },
+  //   CURRENT:                 { dimensions: [ 0,  0,  0,  1,  0,  0,  0,  0,  0,  0] },
+  //   TEMPERATURE:             { dimensions: [ 0,  0,  0,  0,  1,  0,  0,  0,  0,  0] },
+  //   LUMINOUS_INTENSITY:      { dimensions: [ 0,  0,  0,  0,  0,  1,  0,  0,  0,  0] },
+  //   AMOUNT_OF_SUBSTANCE:     { dimensions: [ 0,  0,  0,  0,  0,  0,  1,  0,  0,  0] },
+  //   ANGLE:                   { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  1,  0,  0] },
+  //   BIT:                     { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  1,  0] },
+  //   SOLID_ANGLE:             { dimensions: [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  1] },
+
+  //   // Derived
+  //   ABSEMENT:                { dimensions: [ 0,  1,  1,  0,  0,  0,  0,  0,  0,  0] },
+  //   ACCELERATION:            { dimensions: [ 0,  1, -2,  0,  0,  0,  0,  0,  0,  0] },
+  //   ANGULAR_ACCELERATION:    { dimensions: [ 0,  0, -2,  0,  0,  0,  0,  1,  0,  0] },
+  //   ANGULAR_MOMENTUM:        { dimensions: [ 1,  2, -1,  0,  0,  0,  0,  1,  0,  0] },
+  //   ANGULAR_VELOCITY:        { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  1,  0,  0] },
+  //   AREA:                    { dimensions: [ 0,  2,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   AREA_DENSITY:            { dimensions: [ 1, -2,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   BIT_RATE:                { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  0,  1,  0] },
+  //   CAPACITANCE:             { dimensions: [-1, -2,  4,  2,  0,  0,  0,  0,  0,  0] },
+  //   CURRENT_DENSITY:         { dimensions: [ 0, -2,  0,  1,  0,  0,  0,  0,  0,  0] },
+  //   DYNAMIC_VISCOSITY:       { dimensions: [ 1, -1, -1,  0,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRIC_CHARGE:         { dimensions: [ 0,  0,  1,  1,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRIC_CHARGE_DENSITY: { dimensions: [ 0, -3,  1,  1,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRIC_DISPLACEMENT:   { dimensions: [ 0, -2,  1,  1,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRIC_FIELD_STRENGTH: { dimensions: [ 1,  1, -3, -1,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRICAL_CONDUCTANCE:  { dimensions: [-1, -2,  3,  2,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRICAL_CONDUCTIVITY: { dimensions: [-1, -3,  3,  2,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRIC_POTENTIAL:      { dimensions: [ 1,  2, -3, -1,  0,  0,  0,  0,  0,  0] },
+  //   RESISTANCE:              { dimensions: [ 1,  2, -3, -2,  0,  0,  0,  0,  0,  0] },
+  //   ELECTRICAL_RESISTIVITY:  { dimensions: [ 1,  3, -3, -2,  0,  0,  0,  0,  0,  0] },
+  //   ENERGY:                  { dimensions: [ 1,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
+  //   ENTROPY:                 { dimensions: [ 1,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
+  //   FORCE:                   { dimensions: [ 1,  1, -2,  0,  0,  0,  0,  0,  0,  0] },
+  //   FREQUENCY:               { dimensions: [ 0,  0, -1,  0,  0,  0,  0,  0,  0,  0] },
+  //   HEAT_CAPACITY:           { dimensions: [ 1,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
+  //   HEAT_FLUX_DENSITY:       { dimensions: [ 1,  0, -3,  0,  0,  0,  0,  0,  0,  0] },
+  //   ILLUMINANCE:             { dimensions: [ 0, -2,  0,  0,  0,  1,  0,  0,  0,  0] },
+  //   IMPEDANCE:               { dimensions: [ 1,  2, -3, -2,  0,  0,  0,  0,  0,  0] },
+  //   IMPULSE:                 { dimensions: [ 1,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
+  //   INDUCTANCE:              { dimensions: [ 1,  2, -2, -2,  0,  0,  0,  0,  0,  0] },
+  //   IRRADIANCE:              { dimensions: [ 1,  0, -3,  0,  0,  0,  0,  0,  0,  0] },
+  //   JERK:                    { dimensions: [ 0,  1, -3,  0,  0,  0,  0,  0,  0,  0] },
+  //   KINEMATIC_VISCOSITY:     { dimensions: [ 0,  2, -1,  0,  0,  0,  0,  0,  0,  0] },
+  //   LINEAR_DENSITY:          { dimensions: [ 1, -1,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   LUMINOUS_FLUX:           { dimensions: [ 0,  0,  0,  0,  0,  1,  0,  0,  0,  1] },
+  //   MAGNETIC_FIELD_STRENGTH: { dimensions: [ 0, -1,  0,  1,  0,  0,  0,  0,  0,  0] },
+  //   MAGNETIC_FLUX:           { dimensions: [ 1,  2, -2, -1,  0,  0,  0,  0,  0,  0] },
+  //   MAGNETIC_FLUX_DENSITY:   { dimensions: [ 1,  0, -2, -1,  0,  0,  0,  0,  0,  0] },
+  //   MOLAR_CONCENTRATION:     { dimensions: [ 0, -3,  0,  0,  0,  0,  1,  0,  0,  0] },
+  //   MOLAR_ENERGY:            { dimensions: [ 1,  2, -2,  0,  0,  0, -1,  0,  0,  0] },
+  //   MOLAR_ENTROPY:           { dimensions: [ 1,  2, -2,  0, -1,  0, -1,  0,  0,  0] },
+  //   MOLAR_HEAT_CAPACITY:     { dimensions: [ 1,  2, -2,  0, -1,  0, -1,  0,  0,  0] },
+  //   MOMENT_OF_INERTIA:       { dimensions: [ 1,  2,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   MOMENTUM:                { dimensions: [ 1,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
+  //   PERMEABILITY:            { dimensions: [ 1,  1, -2, -2,  0,  0,  0,  0,  0,  0] },
+  //   PERMITTIVITY:            { dimensions: [-1, -3,  4,  2,  0,  0,  0,  0,  0,  0] },
+  //   POWER:                   { dimensions: [ 1,  2, -3,  0,  0,  0,  0,  0,  0,  0] },
+  //   PRESSURE:                { dimensions: [ 1, -1, -2,  0,  0,  0,  0,  0,  0,  0] },
+  //   RELUCTANCE:              { dimensions: [-1, -2,  2,  2,  0,  0,  0,  0,  0,  0] },
+  //   SPECIFIC_ENERGY:         { dimensions: [ 0,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
+  //   SPECIFIC_HEAT_CAPACITY:  { dimensions: [ 0,  2, -2,  0, -1,  0,  0,  0,  0,  0] },
+  //   SPECIFIC_VOLUME:         { dimensions: [-1,  3,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   SPIN:                    { dimensions: [ 1,  2, -1,  0,  0,  0,  0,  0,  0,  0] },
+  //   SURFACE_TENSION:         { dimensions: [ 1,  0, -2,  0,  0,  0,  0,  0,  0,  0] },
+  //   TEMPERATURE_GRADIENT:    { dimensions: [ 0, -1,  0,  0,  1,  0,  0,  0,  0,  0] },
+  //   THERMAL_CONDUCTIVITY:    { dimensions: [ 1,  1, -3,  0, -1,  0,  0,  0,  0,  0] },
+  //   TORQUE:                  { dimensions: [ 1,  2, -2,  0,  0,  0,  0,  0,  0,  0] },
+  //   VELOCITY:                { dimensions: [ 0,  1, -1,  0,  0,  0,  0,  0,  0,  0] },
+  //   VOLUME:                  { dimensions: [ 0,  3,  0,  0,  0,  0,  0,  0,  0,  0] },
+  //   VOLUMETRIC_FLOW_RATE:    { dimensions: [ 0,  3, -1,  0,  0,  0,  0,  0,  0,  0] }
+  // }
+
   /* eslint-enable no-multi-spaces, key-spacing, standard/array-bracket-even-spacing */
 
-  for (let key in DIMENSIONS) {
-    DIMENSIONS[key].key = key
-  }
+  const UNITS_DEFINITIONS = {
+    '': {
+      dimension: 'UNITLESS',
+      value: 1
+    },
 
-  const UNITS = {
     // length
     meter: {
-      base: DIMENSIONS.LENGTH,
+      dimension: 'LENGTH',
       prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', 'centi', '', 'kilo'],
       value: 1,
       aliases: ['meters']
     },
     inch: {
-      base: DIMENSIONS.LENGTH,
-      value: 0.0254,
+      value: '0.0254 meter',
       aliases: ['inches', 'in']
     },
     foot: {
-      base: DIMENSIONS.LENGTH,
-      value: 0.3048,
+      value: '12 inch',
       aliases: ['ft']
     },
     yard: {
-      base: DIMENSIONS.LENGTH,
-      value: 0.9144,
+      value: '3 foot',
       aliases: ['yd', 'yards']
     },
     mile: {
-      base: DIMENSIONS.LENGTH,
-      value: 1609.344,
+      value: '5280 ft',
       aliases: ['mi', 'miles']
     },
     link: {
-      base: DIMENSIONS.LENGTH,
-      value: 0.201168,
+      value: '7.92 in',
       aliases: ['li', 'links']
     },
     rod: {
-      base: DIMENSIONS.LENGTH,
-      value: 5.0292,
+      value: '25 link',
       aliases: ['rd', 'rods']
     },
     chain: {
-      base: DIMENSIONS.LENGTH,
-      value: 20.1168,
+      value: '100 link',
       aliases: ['ch', 'chains']
     },
+    m: {
+      prefixes: 'SHORT',
+      commonPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
+      value: '1 meter'
+    },
     angstrom: {
-      base: DIMENSIONS.LENGTH,
-      value: 1e-10,
+      value: '1e-10 m',
       aliases: ['angstroms']
     },
 
-    m: {
-      base: DIMENSIONS.LENGTH,
-      prefixes: 'SHORT',
-      commonPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
-      value: 1
-    },
     mil: {
-      base: DIMENSIONS.LENGTH,
-      value: 0.0000254
-    }, // 1/1000 inch
+      value: '1e-3 inch'
+    },
 
     // Area
     m2: {
-      base: DIMENSIONS.AREA,
       prefixes: 'SQUARED',
       commonPrefixes: ['m', 'c', '', 'k'],
-      value: 1
+      value: '1 m^2'
     },
-    sqin: {
-      base: DIMENSIONS.AREA,
-      value: 0.00064516
-    }, // 645.16 mm2
-    sqft: {
-      base: DIMENSIONS.AREA,
-      value: 0.09290304
-    }, // 0.09290304 m2
-    sqyd: {
-      base: DIMENSIONS.AREA,
-      value: 0.83612736
-    }, // 0.83612736 m2
-    sqmi: {
-      base: DIMENSIONS.AREA,
-      value: 2589988.110336
-    }, // 2.589988110336 km2
-    sqrd: {
-      base: DIMENSIONS.AREA,
-      value: 25.29295
-    }, // 25.29295 m2
-    sqch: {
-      base: DIMENSIONS.AREA,
-      value: 404.6873
-    }, // 404.6873 m2
-    sqmil: {
-      base: DIMENSIONS.AREA,
-      value: 6.4516e-10
-    }, // 6.4516 * 10^-10 m2
-    acre: {
-      base: DIMENSIONS.AREA,
-      value: 4046.86
-    }, // 4046.86 m2
-    hectare: {
-      base: DIMENSIONS.AREA,
-      value: 10000
-    }, // 10000 m2
+    sqin: '1 in^2',
+    sqft: '1 ft^2',
+    sqyd: '1 yd^2',
+    sqmi: '1 mi^2',
+    sqrd: '1 rod^2',
+    sqch: '1 chain^2',
+    sqmil: '1 mil^2',
+    acre: '10 chain^2',
+    hectare: '1e4 m^2',
 
     // Volume
     m3: {
-      base: DIMENSIONS.VOLUME,
       prefixes: 'CUBIC',
       commonPrefixes: ['m', 'c', '', 'k'],
-      value: 1
+      value: '1 m^3'
     },
     L: {
-      base: DIMENSIONS.VOLUME,
       prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', ''],
-      value: 0.001,
+      value: '1e-3 m^3',
       aliases: ['l', 'lt']
     }, // litre
     litre: {
-      base: DIMENSIONS.VOLUME,
       prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
-      value: 0.001,
+      value: '1 L',
       aliases: ['liter', 'liters', 'litres']
     },
-    cuin: {
-      base: DIMENSIONS.VOLUME,
-      value: 1.6387064e-5
-    }, // 1.6387064e-5 m3
-    cuft: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.028316846592
-    }, // 28.316 846 592 L
-    cuyd: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.764554857984
-    }, // 764.554 857 984 L
+    cuin: '1 in^3',
+    cuft: '1 ft^3',
+    cuyd: '1 yd^3',
     teaspoon: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.000005,
-      aliases: ['teaspoons']
-    }, // 5 mL
+      value: '5 mL',
+      aliases: ['teaspoons', 'tsp']
+    },
     tablespoon: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.000015,
-      aliases: ['tablespoons']
-    }, // 15 mL
-    // {name: 'cup', base: BASE_UNITS.VOLUME, prefixes: PREFIXES.NONE, value: 0.000240, offset: 0}, // 240 mL  // not possible, we have already another cup
-    drop: {
-      base: DIMENSIONS.VOLUME,
-      value: 5e-8
-    }, // 0.05 mL = 5e-8 m3
-    gtt: {
-      base: DIMENSIONS.VOLUME,
-      value: 5e-8
-    }, // 0.05 mL = 5e-8 m3
+      value: '3 teaspoon',
+      aliases: ['tablespoons', 'tbsp']
+    },
+    // {name: 'cup', dimension: BASE_UNITS.VOLUME, prefixes: PREFIXES.NONE, value: 0.000240, offset: 0}, // 240 mL  // not possible, we have already another cup
+    drop: '0.05 mL',
+    gtt: '0.05 mL',
 
     // Liquid volume
     minim: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.00000006161152,
+      value: '0.0125 teaspoon',
       aliases: ['minims']
-    }, // 0.06161152 mL
-    fluiddram: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.0000036966911,
-      aliases: ['fldr', 'fluiddrams']
-    }, // 3.696691 mL
+    },
     fluidounce: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.00002957353,
+      value: '0.00002957353 mL',
       aliases: ['floz', 'fluidounces']
-    }, // 29.57353 mL
-    gill: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.0001182941,
-      aliases: ['gi', 'gills']
-    }, // 118.2941 mL
-    cc: {
-      base: DIMENSIONS.VOLUME,
-      value: 1e-6
-    }, // 1e-6 L
+    },
+    fluiddram: {
+      value: '0.125 floz',
+      aliases: ['fldr', 'fluiddrams']
+    },
+    cc: '1 cm^3',
     cup: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.0002365882,
+      value: '236.5882365 mL',
       aliases: ['cp', 'cups']
-    }, // 236.5882 mL
+    },
     pint: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.0004731765,
+      value: '2 cup',
       aliases: ['pt', 'pints']
-    }, // 473.1765 mL
+    },
     quart: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.0009463529,
+      value: '4 cup',
       aliases: ['qt', 'quarts']
-    }, // 946.3529 mL
+    },
     gallon: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.003785412,
+      value: '16 cup',
       aliases: ['gal', 'gallons']
-    }, // 3.785412 L
-    beerbarrel: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.1173478,
-      aliases: ['bbl', 'beerbarrels']
-    }, // 117.3478 L
+    },
     oilbarrel: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.1589873,
+      value: '42 gal',
       aliases: ['obl', 'oilbarrels']
-    }, // 158.9873 L
-    hogshead: {
-      base: DIMENSIONS.VOLUME,
-      value: 0.2384810,
-      aliases: ['hogsheads']
-    }, // 238.4810 L
+    },
 
     // Mass
     g: {
-      base: DIMENSIONS.MASS,
+      dimension: 'MASS',
       prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', '', 'k'],
       value: 0.001
     },
     gram: {
-      base: DIMENSIONS.MASS,
       prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', '', 'kilo'],
-      value: 0.001
+      value: '1 g'
     },
 
-    ton: {
-      base: DIMENSIONS.MASS,
-      value: 907.18474
-    },
-    tonne: {
-      base: DIMENSIONS.MASS,
-      prefixes: 'LONG',
-      commonPrefixes: ['', 'kilo', 'mega', 'giga'],
-      value: 1000
-    },
-
-    grain: {
-      base: DIMENSIONS.MASS,
-      value: 64.79891e-6,
-      aliases: ['gr']
-    },
-    dram: {
-      base: DIMENSIONS.MASS,
-      value: 1.7718451953125e-3,
-      aliases: ['dr']
-    },
-    ounce: {
-      base: DIMENSIONS.MASS,
-      value: 28.349523125e-3,
-      aliases: ['oz', 'ounces']
-    },
     poundmass: {
-      base: DIMENSIONS.MASS,
-      value: 453.59237e-3,
+      value: '0.45359237 kg',
       aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
     },
+    ton: '2000 lbm',
+    tonne: {
+      prefixes: 'LONG',
+      commonPrefixes: ['', 'kilo', 'mega', 'giga'],
+      value: '1000 kg'
+    },
+    grain: {
+      value: '64.79891 mg',
+      aliases: ['gr']
+    },
+    ounce: {
+      value: '0.0625 lbm',
+      aliases: ['oz', 'ounces']
+    },
+    dram: {
+      value: '0.0625 oz',
+      aliases: ['dr']
+    },
     hundredweight: {
-      base: DIMENSIONS.MASS,
-      value: 45.359237,
+      value: '100 lbm',
       aliases: ['cwt', 'hundredweights']
     },
     stick: {
-      base: DIMENSIONS.MASS,
-      value: 115e-3,
+      value: '4 oz',
       alises: ['sticks']
     },
-    stone: {
-      base: DIMENSIONS.MASS,
-      value: 6.35029318
-    },
+    stone: '14 lbm',
 
     // Time
     s: {
-      base: DIMENSIONS.TIME,
+      dimension: 'TIME',
       prefixes: 'SHORT',
       commonPrefixes: ['f', 'p', 'n', 'u', 'm', ''],
       value: 1,
       aliases: ['sec']
     },
     min: {
-      base: DIMENSIONS.TIME,
-      value: 60,
+      value: '60 s',
       aliases: ['minute', 'minutes']
     },
     h: {
-      base: DIMENSIONS.TIME,
-      value: 3600,
+      value: '60 min',
       aliases: ['hr', 'hrs', 'hour', 'hours']
     },
     second: {
-      base: DIMENSIONS.TIME,
       prefixes: 'LONG',
       commonPrefixes: ['femto', 'pico', 'nano', 'micro', 'milli', ''],
-      value: 1,
+      value: '1 s',
       aliases: ['seconds']
     },
     day: {
-      base: DIMENSIONS.TIME,
-      value: 86400,
+      value: '24 hr',
       aliases: ['days']
     },
     week: {
-      base: DIMENSIONS.TIME,
-      value: 7 * 86400,
+      value: '7 day',
       alises: ['weeks']
     },
     month: {
-      base: DIMENSIONS.TIME,
-      value: 2629800, // 1/12th of Julian year
+      value: '30.4375 day', // 1/12th of Julian year
       aliases: ['months']
     },
     year: {
-      base: DIMENSIONS.TIME,
-      value: 31557600, // Julian year
+      value: '365.25 day', // Julian year
       aliases: ['year']
     },
     decade: {
-      base: DIMENSIONS.TIME,
-      value: 315576000, // Julian decade
+      value: '10 year', // Julian decade
       aliases: ['decades']
     },
     century: {
-      base: DIMENSIONS.TIME,
-      value: 3155760000, // Julian century
+      value: '100 year', // Julian century
       aliases: ['centuries']
     },
     millennium: {
-      base: DIMENSIONS.TIME,
-      value: 31557600000, // Julian millennium
+      value: '1000 year', // Julian millennium
       aliases: ['millennia']
     },
 
     // Frequency
     hertz: {
-      base: DIMENSIONS.FREQUENCY,
       prefixes: 'LONG',
       commonPrefixes: ['', 'kilo', 'mega', 'giga', 'tera'],
-      value: 1,
-      offset: 0,
-      reciprocal: true
+      value: '1/s'
     },
     Hz: {
-      base: DIMENSIONS.FREQUENCY,
       prefixes: 'SHORT',
       commonPrefixes: ['', 'k', 'M', 'G', 'T'],
-      value: 1,
-      offset: 0,
-      reciprocal: true
+      value: '1 hertz'
     },
 
     // Angle
     rad: {
-      base: DIMENSIONS.ANGLE,
+      dimension: 'ANGLE',
       prefixes: 'SHORT',
       commonPrefixes: ['m', ''],
       value: 1
     },
     radian: {
-      base: DIMENSIONS.ANGLE,
       prefixes: 'LONG',
       commonPrefixes: ['milli', ''],
-      value: 1,
+      value: '1 rad',
       aliases: ['radians']
     },
     sr: {
-      base: DIMENSIONS.SOLID_ANGLE,
+      dimension: 'SOLID_ANGLE',
       prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', ''],
-      value: 1,
-      offset: 0
+      value: 1
     },
     steradian: {
-      base: DIMENSIONS.SOLID_ANGLE,
       prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', ''],
-      value: 1,
-      offset: 0,
+      value: '1 sr',
       aliases: ['steradians']
     },
     deg: {
-      base: DIMENSIONS.ANGLE,
-      value: Math.PI / 180,
+      value: [Math.PI / 180, 'rad'],
       aliases: ['degree', 'degrees']
     },
     grad: {
-      base: DIMENSIONS.ANGLE,
       prefixes: 'SHORT',
       commonPrefixes: ['c'],
-      value: Math.PI / 200
+      value: [Math.PI / 200, 'rad']
     },
     gradian: {
-      base: DIMENSIONS.ANGLE,
       prefixes: 'LONG',
       commonPrefixes: ['centi', ''],
-      value: Math.PI / 200,
+      value: [Math.PI / 200, 'rad'],
       aliases: ['gradians']
     },
     cycle: {
-      base: DIMENSIONS.ANGLE,
-      value: 2 * Math.pi,
+      value: [2 * Math.pi, 'rad'],
       aliases: ['cycles']
     },
-    // arcsec = rad / (3600 * (360 / 2 * pi)) = rad / 0.0000048481368110953599358991410235795
-    arcsec: {
-      base: DIMENSIONS.ANGLE,
-      value: 0.05 / Math.pi,
-      aliases: ['arcsecond', 'arcseconds']
-    },
-    // arcmin = rad / (60 * (360 / 2 * pi)) = rad / 0.00029088820866572159615394846141477
     arcmin: {
-      base: DIMENSIONS.ANGLE,
-      value: 3 / Math.pi,
+      value: '0.016666666666666666 deg',
       aliases: ['arcminute', 'arcminutes']
+    },
+    arcsec: {
+      value: '0.016666666666666666 arcmin',
+      aliases: ['arcsecond', 'arcseconds']
     },
 
     // Electric current
     A: {
-      base: DIMENSIONS.CURRENT,
+      dimension: 'CURRENT',
       prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', '', 'k'],
       value: 1
     },
     ampere: {
-      base: DIMENSIONS.CURRENT,
       prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', '', 'kilo'],
-      value: 1,
+      value: '1 A',
       aliases: ['amperes']
     },
 
@@ -704,396 +653,319 @@ export default function createUnitStore (options) {
     // K(F) = (°F + 459.67) / 1.8
     // K(R) = °R / 1.8
     K: {
-      base: DIMENSIONS.TEMPERATURE,
+      dimension: 'TEMPERATURE',
       prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', ''],
       value: 1
     },
-    degC: {
-      base: DIMENSIONS.TEMPERATURE,
-      value: 1,
-      offset: 273.15
-    },
-    degF: {
-      base: DIMENSIONS.TEMPERATURE,
-      value: 1 / 1.8,
-      offset: 459.67
-    },
-    degR: {
-      base: DIMENSIONS.TEMPERATURE,
-      value: 1 / 1.8
-    },
     kelvin: {
-      base: DIMENSIONS.TEMPERATURE,
       prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
-      value: 1
+      value: '1 K'
     },
-    celsius: {
-      base: DIMENSIONS.TEMPERATURE,
-      value: 1,
-      offset: 273.15
+    degC: {
+      value: '1 K',
+      offset: 273.15,
+      aliases: ['celsius']
     },
-    fahrenheit: {
-      base: DIMENSIONS.TEMPERATURE,
-      value: 1 / 1.8,
-      offset: 459.67
+    degR: {
+      value: [1 / 1.8, 'K'],
+      aliases: ['rankine', 'R']
     },
-    rankine: {
-      base: DIMENSIONS.TEMPERATURE,
-      value: 1 / 1.8
+    degF: {
+      value: '1 R',
+      offset: 459.67,
+      aliases: ['fahrenheit']
     },
 
     // amount of substance
     mol: {
-      base: DIMENSIONS.AMOUNT_OF_SUBSTANCE,
+      dimension: 'AMOUNT_OF_SUBSTANCE',
       prefixes: 'SHORT',
       commonPrefixes: ['', 'k'],
       value: 1
     },
     mole: {
-      base: DIMENSIONS.AMOUNT_OF_SUBSTANCE,
       prefixes: 'LONG',
       commonPrefixes: ['', 'kilo'],
-      value: 1,
+      value: '1 mol',
       aliases: ['moles']
     },
 
     // luminous intensity
     cd: {
-      base: DIMENSIONS.LUMINOUS_INTENSITY,
-      value: 1
-    },
-    candela: {
-      base: DIMENSIONS.LUMINOUS_INTENSITY,
-      value: 1
+      dimension: 'LUMINOUS_INTENSITY',
+      value: 1,
+      aliases: ['candela']
     },
 
     // luminous flux
     lumen: {
-      base: DIMENSIONS.LUMINOUS_FLUX,
       prefixes: 'LONG',
-      value: 1,
+      value: '1 cd/sr',
       aliases: ['lumens']
     },
     lm: {
-      base: DIMENSIONS.LUMINOUS_FLUX,
       prefixes: 'SHORT',
-      value: 1
+      value: '1 lumen'
     },
 
     // illuminance
     lux: {
-      base: DIMENSIONS.ILLUMINANCE,
       prefixes: 'LONG',
-      value: 1
+      value: '1 cd/m^2'
     },
     lx: {
-      base: DIMENSIONS.ILLUMINANCE,
       prefixes: 'SHORT',
-      value: 1
+      value: '1 lux'
     },
 
     // Force
     N: {
-      base: DIMENSIONS.FORCE,
       prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', '', 'k', 'M'], // These could be debatable
-      value: 1
-
+      value: '1 kg m/s^2'
     },
     newton: {
-      base: DIMENSIONS.FORCE,
       prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', '', 'kilo', 'mega'],
-      value: 1,
+      value: '1 N',
       aliases: ['newtons']
     },
     dyn: {
-      base: DIMENSIONS.FORCE,
       prefixes: 'SHORT',
       commonPrefixes: ['m', 'k', 'M'],
-      value: 0.00001
+      value: '1 g cm/s^2'
     },
     dyne: {
-      base: DIMENSIONS.FORCE,
       prefixes: 'LONG',
       commonPrefixes: ['milli', 'kilo', 'mega'],
-      value: 0.00001
+      value: '1 dyn'
     },
     lbf: {
-      base: DIMENSIONS.FORCE,
-      value: 4.4482216152605
-    },
-    poundforce: {
-      base: DIMENSIONS.FORCE,
-      value: 4.4482216152605
+      value: '4.4482216152605 N',
+      aliases: ['poundforce']
     },
     kip: {
-      base: DIMENSIONS.FORCE,
-      value: 4448.2216,
+      value: '1000 lbf',
       aliases: ['kips']
     },
 
     // Energy
     J: {
-      base: DIMENSIONS.ENERGY,
       prefixes: 'SHORT',
       commonPrefixes: ['m', '', 'k', 'M', 'G'],
-      value: 1
+      value: '1 N m'
     },
     joule: {
-      base: DIMENSIONS.ENERGY,
-      prefixes: 'SHORT',
+      prefixes: 'LONG',
       commonPrefixes: ['milli', '', 'kilo', 'mega', 'giga'],
-      value: 1,
+      value: '1 J',
       aliases: ['joules']
     },
     erg: {
-      base: DIMENSIONS.ENERGY,
-      value: 1e-7
+      value: '1 dyn cm'
     },
     Wh: {
-      base: DIMENSIONS.ENERGY,
       prefixes: 'SHORT',
       commonPrefixes: ['k', 'M', 'G', 'T'],
-      value: 3600
+      value: '1 W hr'
     },
     BTU: {
-      base: DIMENSIONS.ENERGY,
       prefixes: 'BTU',
       commonPrefixes: ['', 'MM'],
-      value: 1055.05585262,
+      value: '1055.05585262 J',
       aliases: ['BTUs']
     },
     eV: {
-      base: DIMENSIONS.ENERGY,
       prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', '', 'k', 'M', 'G'],
-      value: 1.602176565e-19
+      value: '1.602176565e-19 J'
     },
     electronvolt: {
-      base: DIMENSIONS.ENERGY,
       prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', '', 'kilo', 'mega', 'giga'],
-      value: 1.602176565e-19,
+      value: '1 eV',
       aliases: ['electronvolts']
     },
 
     // Power
     W: {
-      base: DIMENSIONS.POWER,
       prefixes: 'SHORT',
       commonPrefixes: ['p', 'n', 'u', 'm', '', 'k', 'M', 'G', 'T', 'P'],
-      value: 1
+      value: '1 J/s'
     },
     watt: {
-      base: DIMENSIONS.POWER,
       prefixes: 'LONG',
       commonPrefixes: ['pico', 'nano', 'micro', 'milli', '', 'kilo', 'mega', 'tera', 'peta'],
-      value: 1,
+      value: '1 W',
       aliases: ['watts']
     },
-    hp: {
-      base: DIMENSIONS.POWER,
-      value: 745.6998715386
-    },
+    hp: '550 ft lbf / s',
 
     // Electrical power units
     VA: {
-      base: DIMENSIONS.POWER,
       prefixes: 'SHORT',
       commonPrefixes: ['', 'k'],
-      value: 1
+      value: '1 W'
     },
 
     // Pressure
     Pa: {
-      base: DIMENSIONS.PRESSURE,
       prefixes: 'SHORT',
       commonPrefixes: ['', 'k', 'M', 'G'], // 'h' is sometimes used but not often
-      value: 1
+      value: '1 N / m^2'
     },
     psi: {
-      base: DIMENSIONS.PRESSURE,
-      value: 6894.757293168361
+      value: '1 lbf/in^2'
       // kpsi is sometimes used
     },
-    atm: {
-      base: DIMENSIONS.PRESSURE,
-      value: 101325
-    },
+    atm: '101325 Pa',
     bar: {
-      base: DIMENSIONS.PRESSURE,
       prefixes: 'SHORT_LONG',
       commonPrefixes: ['m', ''],
-      value: 100000
+      value: '1e5 Pa'
     },
     torr: {
-      base: DIMENSIONS.PRESSURE,
       prefixes: 'LONG',
       commonPrefixes: ['milli', ''],
-      value: 133.322
+      value: '133.32236842105263 Pa'
     },
     Torr: {
-      base: DIMENSIONS.PRESSURE,
       prefixes: 'SHORT',
       commonPrefixes: ['m', ''],
-      value: 133.322
+      value: '1 torr'
     },
     mmHg: {
-      base: DIMENSIONS.PRESSURE,
-      value: 133.322,
+      value: '133.322387415 Pa',
       aliases: ['mmhg']
     },
-    mmH2O: {
-      base: DIMENSIONS.PRESSURE,
-      value: 9.80665,
-      aliases: ['mmh2o']
-    },
-    cmH2O: {
-      base: DIMENSIONS.PRESSURE,
-      value: 98.0665,
-      aliases: ['cmh2o']
+    inH2O: {
+      value: '249.082 Pa',
+      aliases: ['inh2o', 'inAq']
     },
 
     // Electric charge
+    C: {
+      prefixes: 'SHORT',
+      commonPrefixes: ['p', 'n', 'u', 'm', ''],
+      value: '1 A s'
+    },
     coulomb: {
-      base: DIMENSIONS.ELECTRIC_CHARGE,
       prefixes: 'LONG',
       commonPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
-      value: 1,
+      value: '1 C',
       aliases: ['coulombs']
     },
-    C: {
-      base: DIMENSIONS.ELECTRIC_CHARGE,
-      prefixes: 'SHORT',
-      commonPrefixes: ['p', 'n', 'u', 'm', ''],
-      value: 1
-    },
-    // Electric capacitance
-    farad: {
-      base: DIMENSIONS.CAPACITANCE,
-      prefixes: 'LONG',
-      commonPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
-      value: 1,
-      aliases: ['farads']
-    },
-    F: {
-      base: DIMENSIONS.CAPACITANCE,
-      prefixes: 'SHORT',
-      commonPrefixes: ['p', 'n', 'u', 'm', ''],
-      value: 1
-    },
+
     // Electric potential
-    volt: {
-      base: DIMENSIONS.ELECTRIC_POTENTIAL,
-      prefixes: 'LONG',
-      commonPrefixes: ['milli', '', 'kilo', 'mega'],
-      value: 1,
-      aliases: ['volts']
-    },
     V: {
-      base: DIMENSIONS.ELECTRIC_POTENTIAL,
       prefixes: 'SHORT',
       commonPrefixes: ['m', '', 'k', 'M'],
-      value: 1
+      value: '1 W/A'
     },
+    volt: {
+      prefixes: 'LONG',
+      commonPrefixes: ['milli', '', 'kilo', 'mega'],
+      value: '1 V',
+      aliases: ['volts']
+    },
+    // Electric capacitance
+    F: {
+      prefixes: 'SHORT',
+      commonPrefixes: ['p', 'n', 'u', 'm', ''],
+      value: '1 C/V'
+    },
+    farad: {
+      prefixes: 'LONG',
+      commonPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
+      value: '1 F',
+      aliases: ['farads']
+    },
+
     // Electric resistance
     ohm: {
-      base: DIMENSIONS.RESISTANCE,
       prefixes: 'SHORT_LONG', // Both Mohm and megaohm are acceptable
       commonPrefixes: ['', 'k', 'M'],
-      value: 1,
+      value: '1 V/A',
       aliases: ['ohms']
     },
     /*
      * Unicode breaks in browsers if charset is not specified
      * TODO: Allow with config option?
     Ω: {
-      base: BASE_UNITS.ELECTRIC_RESISTANCE,
       prefixes: 'SHORT',
-      value: 1,
-          },
+      commonPrefixes: ['', 'k', 'M'],
+      value: '1 ohm',
+    },
     */
     // Electric inductance
+    H: {
+      prefixes: 'SHORT',
+      commonPrefixes: ['u', 'm', ''],
+      value: '1 V s / A'
+    },
     henry: {
-      base: DIMENSIONS.INDUCTANCE,
       prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', ''], // Just guessing here
-      value: 1,
+      value: '1 H',
       aliases: ['henries']
     },
-    H: {
-      base: DIMENSIONS.INDUCTANCE,
+    // Electric conductance
+    S: {
       prefixes: 'SHORT',
       commonPrefixes: ['u', 'm', ''],
-      value: 1
+      value: '1 / ohm'
     },
-    // Electric conductance
     siemens: {
-      base: DIMENSIONS.ELECTRICAL_CONDUCTANCE,
       prefixes: 'LONG',
       commonPrefixes: ['micro', 'milli', ''],
-      value: 1
-    },
-    S: {
-      base: DIMENSIONS.ELECTRICAL_CONDUCTANCE,
-      prefixes: 'SHORT',
-      commonPrefixes: ['u', 'm', ''],
-      value: 1
+      value: '1 S'
     },
     // Magnetic flux
+    Wb: {
+      prefixes: 'SHORT',
+      commonPrefixes: ['n', 'u', 'm', ''],
+      value: '1 V s'
+    },
     weber: {
-      base: DIMENSIONS.MAGNETIC_FLUX,
       prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
-      value: 1,
+      value: '1 Wb',
       aliases: ['webers']
     },
-    Wb: {
-      base: DIMENSIONS.MAGNETIC_FLUX,
+    // Magnetic flux density
+    T: {
       prefixes: 'SHORT',
       commonPrefixes: ['n', 'u', 'm', ''],
-      value: 1
+      value: '1 N s / C m'
     },
-    // Magnetic flux density
     tesla: {
-      base: DIMENSIONS.MAGNETIC_FLUX_DENSITY,
       prefixes: 'LONG',
       commonPrefixes: ['nano', 'micro', 'milli', ''],
-      value: 1,
+      value: '1 T',
       aliases: ['teslas']
-    },
-    T: {
-      base: DIMENSIONS.MAGNETIC_FLUX_DENSITY,
-      prefixes: 'SHORT',
-      commonPrefixes: ['n', 'u', 'm', ''],
-      value: 1
     },
 
     // Binary
     // TODO: Figure out how to do SI vs. IEC while formatting
     b: {
-      base: DIMENSIONS.BIT,
+      dimension: 'BIT',
       prefixes: 'BINARY_SHORT',
       value: 1
     },
     bits: {
-      base: DIMENSIONS.BIT,
       prefixes: 'BINARY_LONG',
-      value: 1,
+      value: '1 b',
       aliases: ['bit']
     },
     B: {
-      base: DIMENSIONS.BIT,
       prefixes: 'BINARY_SHORT',
-      value: 8
+      value: '8 b'
     },
     bytes: {
-      base: DIMENSIONS.BIT,
       prefixes: 'BINARY_LONG',
-      value: 8,
+      value: '1 B',
       aliases: ['byte']
     }
   }
@@ -1158,6 +1030,168 @@ export default function createUnitStore (options) {
 
   // Add additional unit systems here.
 
+  /* All of the prefixes, bases, dimensions, units, and unit systems have now been defined.
+   *
+   * We will perform the following processing steps to prepare the UnitStore for use:
+   *
+   * - For each DIMENSION, parse its value and replace it with an object of form { key: String, dimension: array }, where `key` is the name of the dimension and each index of `dimension` corresponds to the base dimensions index in BASE_DIMENSIONS, and the value of each element is the power (exponent) of that base in the dimension.
+   *
+   * - Initialize the parser with an empty set of units.
+   *
+   * - Loop through the units. If the unit has a `base` property, initialize that unit with base's dimension, and the given value property, making sure no other units have the same base. If the unit does not, then parse the unit's value property (which is either a string or an two-element array) using the parser, and create the dimensions and value from the resulting Unit. Create the unit with the name, dimensions, value, offset, prefixes, and commonPrefixes properties. Convert the prefixes from a string to the associate object from the PREFIXES object.
+   *
+   * - Some units will fail to be parsed if the UNITS object keys are not enumerated in the optimal order. Repeat the loop until all units have been converted.
+   *
+   * - Verify that each unit's commonPrefixes are contained in prefixes.
+   *
+   * - Loop through the UNIT_SYSTEMS and converts the strings into unit/prefix pairs.
+   *
+   * - Add the unit system names to each unit (as an array) for reverse lookup.
+   *
+   * - Clone units that have aliases. Shallow copies are acceptable since the resulting UNITS object will be deep-immutable.
+   *
+*/
+
+  // For each key in DIMENSION, replace the string value with an array, where each index of the array corresponds to the base dimension's index in BASE_DIMENSIONS, and the value of each element is the power (exponent) of that base in the dimension.
+  // The dimension string must be a space-delimited list of base dimensions, optionally raised to a power.
+  // Example:
+  // Before: VELOCITY: 'LENGTH TIME^-1'
+  // After: VELOCITY: [1, 0, -1, 0, 0, 0, 0, 0, 0, 0]
+
+  for (let dim in DIMENSIONS) {
+    const dimArr = BASE_DIMENSIONS.map(() => 0)
+    let bases = DIMENSIONS[dim].split(' ')
+    bases.forEach(base => {
+      if (base === '') return
+      let parts = base.split('^')
+      let power = 1
+      let idx = BASE_DIMENSIONS.indexOf(parts[0])
+      if (idx < 0) {
+        throw new Error(`Error processing dimension ${dim}: base dimension ${parts[0]} not found`)
+      }
+      if (parts[1]) {
+        power = parseFloat(parts[1])
+        if (isNaN(power)) {
+          throw new Error(`Error processing dimension ${dim}: could not determine value of the exponent in string ${base}`)
+        }
+      }
+      dimArr[idx] = power
+    })
+    DIMENSIONS[dim] = dimArr
+  }
+
+  // Also add the base dimensions into DIMENSIONS, for completeness
+  BASE_DIMENSIONS.forEach((base, idx) => {
+    const dimArr = BASE_DIMENSIONS.map(() => 0)
+    dimArr[idx] = 1
+    DIMENSIONS[base] = dimArr
+  })
+
+  // Prevent modification of the dimensions
+  for (const dim in DIMENSIONS) { Object.freeze(DIMENSIONS[dim]) }
+  // console.log(DIMENSIONS)
+
+ 
+  // console.log(UNITS_DEFINITIONS)
+
+  // Initialize an empty set of units.
+  const UNITS = {}
+
+  // Create a parser configured for these options, and also supply it with the findUnit function.
+  const parser = createParser(options, findUnit)
+
+  // console.log(parser)
+
+  // Loop through the units. If the unit has a `base` property, initialize that unit with base's dimension, and the given value property, making sure no other units have the same base. If the unit does not, then parse the unit's value property (which is either a string or an two-element array) using the parser, and create the dimensions and value from the resulting Unit. Create the unit with the name, dimensions, value, offset, prefixes, and commonPrefixes properties. Convert the prefixes from a string to the associate object from the PREFIXES object.
+
+  while(true) {
+
+    let unitsAdded = 0
+    let unitsSkipped = []
+    for (const unitDefKey in UNITS_DEFINITIONS) {
+      if (UNITS.hasOwnProperty(unitDefKey)) continue
+
+      const unitDef = UNITS_DEFINITIONS[unitDefKey]
+
+      const containsUnknownPrefix = unitDef.prefixes && !PREFIXES.hasOwnProperty(unitDef.prefixes)
+      if (containsUnknownPrefix) {
+        throw new Error(`Unknown prefixes ${unitDef.prefixes} for unit ${unitDefKey}`)
+      }
+
+      let unitAndAliases = [unitDefKey].concat(unitDef.aliases || [])
+
+      if (unitDef.dimension) {
+        // Defining the unit based on a dimension.
+        if (!DIMENSIONS.hasOwnProperty(unitDef.dimension)) {
+          throw new Error(`Unknown dimension specified for unit ${unitDefKey}: ${unitDef.dimension}`)
+        }
+
+        // Add this units and its aliases (they are all the same except for the name)
+        unitAndAliases.forEach(newUnitName => {
+          const newUnit = {
+            name: newUnitName,
+            value: unitDef.value,
+            offset: unitDef.offset || 0,
+            dimensions: DIMENSIONS[unitDef.dimension],
+            prefixes: PREFIXES[unitDef.prefixes || 'NONE'],
+            commonPrefixes: unitDef.commonPrefixes, // Default should be undefined
+            systems: []
+          }
+          Object.freeze(newUnit)
+          UNITS[newUnitName] = newUnit
+          unitsAdded++
+        })
+      } else {
+        // Defining the unit based on other units.
+        let parsed
+        try {
+          if (unitDef.hasOwnProperty('value')) {
+            if (typeof unitDef.value === 'string') {
+              parsed = parser(unitDef.value)
+            } else if (Array.isArray(unitDef.value)) {
+              parsed = parser(unitDef.value[1])
+              parsed.value = unitDef.value[0]
+            }
+          }
+          else if (typeof unitDef === 'string') {
+            parsed = parser(unitDef)
+          }
+          else {
+            throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
+          }
+
+          // Add this units and its aliases (they are all the same except for the name)
+          unitAndAliases.forEach(newUnitName => {
+            const newUnit = {
+              name: newUnitName,
+              value: normalize(parsed.units, parsed.value, options.type),
+              offset: unitDef.offset || 0,
+              dimensions: Object.freeze(parsed.dimensions),
+              prefixes: PREFIXES[unitDef.prefixes || 'NONE'],
+              commonPrefixes: unitDef.commonPrefixes, // Default should be undefined,
+              systems: []
+            }
+            Object.freeze(newUnit)
+            UNITS[newUnitName] = newUnit
+            unitsAdded++
+          })
+        } catch (ex) {
+          if (/Unit.*not found/.test(ex.toString())) {
+            unitsSkipped.push(unitDefKey)
+          } else {
+            throw new Error(`Could not parse value '${unitDef.value}' of unit ${unitDefKey}: ${ex}`)
+          }
+        }
+      }
+    }
+
+    // console.log(`Added ${unitsAdded} units and skipped: ${unitsSkipped.join(', ')}`)
+    if (unitsSkipped.length === 0) break
+    else if (unitsAdded === 0) {
+      throw new Error(`Could not create the following units: ${unitsSkipped.join(', ')}. There is possibly a problem with the unit's definition.`)
+    }
+  } 
+
   // Check to make sure config options has selected a unit system that exists.
   if (options.system !== 'auto') {
     if (!UNIT_SYSTEMS.hasOwnProperty(options.system)) {
@@ -1165,42 +1199,9 @@ export default function createUnitStore (options) {
     }
   }
 
-  // Create aliases
-  let keyArr = Object.keys(UNITS)
-  for (let i = 0; i < keyArr.length; i++) {
-    const unit = UNITS[keyArr[i]]
-    const aliases = unit.aliases
-    if (aliases) {
-      if (aliases.forEach) {
-        delete unit.aliases
-        aliases.forEach(alias => {
-          UNITS[alias] = Object.assign({}, unit)
-        // TODO: clone systems and other objects?
-        })
-      } else {
-        throw new Error(`aliases property for unit '${keyArr[i]}' must be an array`)
-      }
-    }
-  }
+  // TODO: Check to make sure consistent units were chosen for each dimension in the unit systems
 
-  // Add unit's name to object
-  for (let key in UNITS) {
-    UNITS[key].name = key
-  }
-
-  // Convert prefixes from string to object
-  for (let key in UNITS) {
-    const unit = UNITS[key]
-    if (unit.prefixes) {
-      if (PREFIXES.hasOwnProperty(unit.prefixes)) {
-        unit.prefixes = PREFIXES[unit.prefixes]
-      } else {
-        throw new Error(`Unknown prefixes ${unit.prefixes} for unit ${key}`)
-      }
-    } else {
-      unit.prefixes = PREFIXES['NONE']
-    }
-  }
+  
 
   // Convert unit systems from strings to unit/prefix pairs
   for (let sysKey in UNIT_SYSTEMS) {
@@ -1227,28 +1228,26 @@ export default function createUnitStore (options) {
   // Final setup for units
   for (let key in UNITS) {
     const unit = UNITS[key]
-    // Convert commonPrefix from string array to prefix array and sort the array
+    // Check that each commonPrefix is in prefixes
     if (unit.commonPrefixes) {
-      // for (let i = 0; i < unit.commonPrefixes.length; i++) {
-      //   let s = unit.commonPrefixes[i]
-      //   if (!unit.prefixes.hasOwnProperty(s)) {
-      //     throw new Error(`In unit ${unit.name}, common prefix ${s} was not found among the allowable prefixes`)
-      //   }
-      //   unit.commonPrefixes[i] = unit.prefixes[s]
-      // }
-      // unit.commonPrefixes.sort((a, b) => a.value < b.value ? -1 : 1)
+      for (let i = 0; i < unit.commonPrefixes.length; i++) {
+        let s = unit.commonPrefixes[i]
+        if (!unit.prefixes.hasOwnProperty(s)) {
+          throw new Error(`In unit ${unit.name}, common prefix ${s} was not found among the allowable prefixes`)
+        }
+      }
     }
 
-    // Add dimensions to each built-in unit
-    if (!unit.base) {
-      throw new Error(`Cannot find dimension for unit ${unit.name}`)
-    }
-    unit.dimensions = unit.base.dimensions
+    // // Add dimensions to each built-in unit
+    // if (!unit.base) {
+    //   throw new Error(`Cannot find dimension for unit ${unit.name}`)
+    // }
+    // unit.dimensions = unit.base.dimensions
 
-    // Set other defaults for units
-    if (typeof unit.offset === 'undefined') {
-      unit.offset = 0
-    }
+    // // Set other defaults for units
+    // if (typeof unit.offset === 'undefined') {
+    //   unit.offset = 0
+    // }
   }
 
   /**
@@ -1304,5 +1303,5 @@ export default function createUnitStore (options) {
   Object.freeze(UNITS)
 
   // expose arrays with prefixes, dimensions, units, systems
-  return { PREFIXES, BASE_DIMENSIONS, DIMENSIONS, UNIT_SYSTEMS, UNITS, exists, findUnit }
+  return { PREFIXES, BASE_DIMENSIONS, DIMENSIONS, UNIT_SYSTEMS, UNITS, exists, findUnit, parser }
 }
