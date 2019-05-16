@@ -892,6 +892,10 @@ let _config = function _config (options) {
     return _config(retOptions)
   }
 
+  unitmath.definitions = function definitions () {
+    return unitStore.originalDefinitions
+  }
+
   /* Alternate API syntax */
 
   /**

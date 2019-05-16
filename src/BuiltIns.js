@@ -295,7 +295,7 @@ export const units = {
   },
   foot: {
     value: '12 inch',
-    aliases: ['ft']
+    aliases: ['ft', 'feet']
   },
   yard: {
     value: '3 foot',

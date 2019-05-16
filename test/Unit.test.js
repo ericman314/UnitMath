@@ -96,6 +96,33 @@ describe('unitmath', () => {
     })
   })
 
+  describe('definitions', () => {
+    it('should return the original built-in unit definitions', () => {
+      let defs = unit.definitions()
+
+      assert.strictEqual(defs.units.inch.value, '0.0254 meter')
+      assert.deepStrictEqual(defs.units.foot.aliases, ['ft', 'feet'])
+      assert.strictEqual(defs.units.kelvin.prefixes, 'LONG')
+      assert.strictEqual(defs.prefixes.LONG.giga, 1e9)
+      assert.strictEqual(defs.prefixes.SHORT_LONG.giga, 1e9)
+      assert.strictEqual(defs.unitSystems.si.FORCE, 'N')
+      assert.strictEqual(defs.baseQuantities[0], 'MASS')
+      assert.strictEqual(defs.quantities.AREA, 'LENGTH^2')
+
+      // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
+      let defs2 = unit.config({}).definitions()
+
+      assert.strictEqual(defs2.units.inch.value, '0.0254 meter')
+      assert.deepStrictEqual(defs2.units.foot.aliases, ['ft', 'feet'])
+      assert.strictEqual(defs2.units.kelvin.prefixes, 'LONG')
+      assert.strictEqual(defs2.prefixes.LONG.giga, 1e9)
+      assert.strictEqual(defs2.prefixes.SHORT_LONG.giga, 1e9)
+      assert.strictEqual(defs2.unitSystems.si.FORCE, 'N')
+      assert.strictEqual(defs2.baseQuantities[0], 'MASS')
+      assert.strictEqual(defs2.quantities.AREA, 'LENGTH^2')
+    })
+  })
+
   describe('unit instance', () => {
     it('should have prototype methods add, mul, etc.', () => {
       let u1 = unit(1, 'm')
