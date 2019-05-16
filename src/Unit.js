@@ -76,7 +76,7 @@ let _config = function _config (options) {
         throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
       }
       this.type = 'Unit'
-      this.dimensions = parseResult.dimensions
+      this.dimension = parseResult.dimension
       this.units = _combineDuplicateUnits(parseResult.units)
       // TODO: All the denormalizing/normalizing creates round-off error. See if we can reduce the number of floating point operations somehow.
       this.value = (parseResult.value === undefined || parseResult.value === null) ? null : denormalize(this.units, normalize(parseResult.units, parseResult.value, options.type), options.type)
@@ -229,14 +229,14 @@ let _config = function _config (options) {
         systemStr = ids[0]
       }
 
-      let system = unitStore.UNIT_SYSTEMS[systemStr]
+      let system = unitStore.defs.unitSystems[systemStr]
 
       const proposedUnitList = []
 
       // Search for a matching dimension in the given unit system
       let matchingDim
       for (const key in system) {
-        if (result._hasDimension(key)) {
+        if (result._hasQuantity(key)) {
           // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
           matchingDim = key
           break
@@ -255,14 +255,14 @@ let _config = function _config (options) {
         // Multiple units or units with powers are formatted like this:
         // 5 kg m^2 / s^3 mol
         // Build a representation from the base units of the current unit system
-        for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-          const baseDim = unitStore.BASE_DIMENSIONS[i]
-          if (Math.abs(result.dimensions[i] || 0) > 1e-12) {
+        for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+          const baseDim = unitStore.defs.baseQuantities[i]
+          if (Math.abs(result.dimension[i] || 0) > 1e-12) {
             if (system.hasOwnProperty(baseDim)) {
               proposedUnitList.push({
                 unit: system[baseDim].unit,
                 prefix: system[baseDim].prefix,
-                power: result.dimensions[i] || 0
+                power: result.dimension[i] || 0
               })
             } else {
               ok = false
@@ -311,20 +311,20 @@ let _config = function _config (options) {
     }
 
     /**
-     * check if this unit has given base unit
+     * check if this unit matches the given quantity
      * @memberof Unit
-     * @param {DIMENSION | string | undefined} dim
+     * @param {QUANTITY | string | undefined} quantity
      */
-    _hasDimension (dimension) {
-      if (typeof (dimension) === 'string') {
-        dimension = unitStore.DIMENSIONS[dimension]
+    _hasQuantity (quantity) {
+      if (typeof (quantity) === 'string') {
+        quantity = unitStore.defs.quantities[quantity]
       }
-      if (!dimension) {
+      if (!quantity) {
         return false
       }
-      // All dimensions must be the same
-      for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-        if (Math.abs((this.dimensions[i] || 0) - (dimension[i] || 0)) > 1e-12) {
+      // Dimensions must be the same
+      for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+        if (Math.abs((this.dimension[i] || 0) - (quantity[i] || 0)) > 1e-12) {
           return false
         }
       }
@@ -336,10 +336,10 @@ let _config = function _config (options) {
      * @param {Unit} other
      * @return {boolean} true if equal dimensions
      */
-    _equalDimension (other) {
+    _equalQuantity (other) {
       // All dimensions must be the same
-      for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-        if (Math.abs(this.dimensions[i] - other.dimensions[i]) > 1e-12) {
+      for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+        if (Math.abs(this.dimension[i] - other.dimension[i]) > 1e-12) {
           return false
         }
       }
@@ -347,13 +347,13 @@ let _config = function _config (options) {
     }
 
     /**
-     * Returns a string array of all the dimensions that match this unit.
-     * @return {string[]} The matching dimensions, or an empty array if there are no matching dimensions.
+     * Returns a string array of all the quantities that match this unit.
+     * @return {string[]} The matching quantities, or an empty array if there are no matching quantities.
      */
-    _getDimension () {
+    _getQuantities () {
       const result = []
-      for (let d in unitStore.DIMENSIONS) {
-        if (this._hasDimension(d)) {
+      for (let d in unitStore.defs.quantities) {
+        if (this._hasQuantity(d)) {
           result.push(d)
         }
       }
@@ -368,7 +368,7 @@ let _config = function _config (options) {
      */
     equals (other) {
       other = _convertParamToUnit(other)
-      return this._equalDimension(other) && options.type.eq(normalize(this.units, this.value, options.type), normalize(other.units, other.value, options.type))
+      return this._equalQuantity(other) && options.type.eq(normalize(this.units, this.value, options.type), normalize(other.units, other.value, options.type))
     }
 
     /**
@@ -461,7 +461,7 @@ let _config = function _config (options) {
   function _clone (unit) {
     const result = new Unit()
     result.value = unit.value === null ? null : options.type.clone(unit.value)
-    result.dimensions = unit.dimensions.slice(0)
+    result.dimension = unit.dimension.slice(0)
     result.units = []
     for (let i = 0; i < unit.units.length; i++) {
       result.units[i] = {}
@@ -527,7 +527,7 @@ let _config = function _config (options) {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1._equalDimension(unit2)) {
+    if (!unit1._equalQuantity(unit2)) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
@@ -545,7 +545,7 @@ let _config = function _config (options) {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1._equalDimension(unit2)) {
+    if (!unit1._equalQuantity(unit2)) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
@@ -562,9 +562,9 @@ let _config = function _config (options) {
   function _mul (unit1, unit2) {
     const result = _clone(unit1)
 
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      // Dimensions arrays may be of different lengths. Default to 0.
-      result.dimensions[i] = unit1.dimensions[i] + unit2.dimensions[i]
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      // dimension arrays may be of different lengths. Default to 0.
+      result.dimension[i] = unit1.dimension[i] + unit2.dimension[i]
     }
 
     // Append other's units list onto result
@@ -599,8 +599,8 @@ let _config = function _config (options) {
   function _div (unit1, unit2) {
     const result = _clone(unit1)
 
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      result.dimensions[i] = unit1.dimensions[i] - unit2.dimensions[i]
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      result.dimension[i] = unit1.dimension[i] - unit2.dimension[i]
     }
 
     // Invert and append other's units list onto result
@@ -636,8 +636,8 @@ let _config = function _config (options) {
   function _pow (unit, p) {
     // TODO: combineDuplicateUnits
     const result = _clone(unit)
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      result.dimensions[i] = options.type.mul(unit.dimensions[i], p)
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      result.dimension[i] = options.type.mul(unit.dimension[i], p)
     }
 
     // Adjust the power of each unit in the list
@@ -667,7 +667,7 @@ let _config = function _config (options) {
     let result
     const value = unit.value === null ? 1 : unit.value
 
-    if (!unit._equalDimension(valuelessUnit)) {
+    if (!unit._equalQuantity(valuelessUnit)) {
       throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
     }
     if (valuelessUnit.value !== null) {
@@ -777,14 +777,14 @@ let _config = function _config (options) {
     // Multiple units or units with powers are formatted like this:
     // 5 (kg m^2) / (s^3 mol)
     // Build an representation from the base units of the SI unit system
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      const baseDim = unitStore.BASE_DIMENSIONS[i]
-      if (Math.abs(result.dimensions[i] || 0) > 1e-12) {
-        if (unitStore.UNIT_SYSTEMS['si'].hasOwnProperty(baseDim)) {
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      const baseDim = unitStore.defs.baseQuantities[i]
+      if (Math.abs(result.dimension[i] || 0) > 1e-12) {
+        if (unitStore.defs.unitSystems['si'].hasOwnProperty(baseDim)) {
           proposedUnitList.push({
-            unit: unitStore.UNIT_SYSTEMS['si'][baseDim].unit,
-            prefix: unitStore.UNIT_SYSTEMS['si'][baseDim].prefix,
-            power: result.dimensions[i] || 0
+            unit: unitStore.defs.unitSystems['si'][baseDim].unit,
+            prefix: unitStore.defs.unitSystems['si'][baseDim].prefix,
+            power: result.dimension[i] || 0
           })
         } else {
           throw new Error('Cannot express custom unit ' + baseDim + ' in SI units')
@@ -887,7 +887,7 @@ let _config = function _config (options) {
     }
 
     // Shallow copy unit and type
-    retOptions.unit = Object.assign({}, options.unit, newOptions.unit)
+    retOptions.definitions = Object.assign({}, options.definitions, newOptions.definitions)
     retOptions.type = Object.assign({}, options.type, newOptions.type)
     return _config(retOptions)
   }
@@ -1013,7 +1013,14 @@ let defaultOptions = {
   simplifyThreshold: 2,
   system: 'auto',
   subsystem: 'auto',
-  unit: { /* No extra units */ },
+  definitions: {
+    skipBuiltIns: false,
+    units: {},
+    prefixes: {},
+    base_quantities: {},
+    quantities: {},
+    unit_systems: {}
+  },
   type: {
     add: defaultAdd,
     sub: defaultSub,

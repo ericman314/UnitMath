@@ -160,8 +160,8 @@ export default function createParser (options, findUnit) {
 
     unit.units = []
 
-    // Initialize this unit's dimensions array
-    unit.dimensions = findUnit('').unit.dimensions.map(() => 0)
+    // Initialize this unit's dimension array
+    unit.dimension = findUnit('').unit.dimension.map(() => 0)
 
     let powerMultiplierCurrent = 1
     let expectingUnit = false
@@ -249,8 +249,8 @@ export default function createParser (options, findUnit) {
         power: power
       })
 
-      for (let i = 0; i < unit.dimensions.length; i++) {
-        unit.dimensions[i] += (found.unit.dimensions[i] || 0) * power
+      for (let i = 0; i < unit.dimension.length; i++) {
+        unit.dimension[i] += (found.unit.dimension[i] || 0) * power
       }
 
       skipWhitespace()

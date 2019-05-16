@@ -199,11 +199,18 @@ Output:
   prefix: 'auto',
   prefixMin: 0.1,
   prefixMax: 1000,
-  simplify: true,
+  simplify: 'auto',
   simplifyThreshold: 2,
   system: 'auto',
   subsystem: 'auto',
-  unit: {},
+  extraDefinitions: {
+    skipBuiltIns: false,
+    units: 
+    prefixes:
+    unitSystems:
+    baseQuantities:
+    quantities:
+  },
   type:
    { add: [Function: defaultAdd],
      sub: [Function: defaultSub],
@@ -286,8 +293,10 @@ When using custom types, UnitMath cannot implicitly convert strings to units. Th
 
 ### Namespace Functions
 
+- `unit.config()` -- Return the current configuration
 - `unit.config(options:object)` -- Configure a new unit namespace with the given options (see TODO: link)
 - `unit.exists(singleUnitString:string)` -- Tests if the given unit, optionally with a prefix, exists.
+- `unit.definitions()` -- Return current unit definitions (user's own definitions can be queried through unit.config().definitions)
 
 ## Contributing
 
