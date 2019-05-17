@@ -119,6 +119,7 @@ export default function createUnitStore (options) {
   while (true) {
     let unitsAdded = 0
     let unitsSkipped = []
+    let reasonsSkipped = []
     for (const unitDefKey in originalDefinitions.units) {
       if (defs.units.hasOwnProperty(unitDefKey)) continue
 
@@ -187,6 +188,7 @@ export default function createUnitStore (options) {
         } catch (ex) {
           if (/Unit.*not found/.test(ex.toString())) {
             unitsSkipped.push(unitDefKey)
+            reasonsSkipped.push(ex.toString())
           } else {
             throw new Error(`Could not parse value '${unitDef.value || unitDef}' of unit '${unitDefKey}': ${ex}`)
           }
@@ -194,10 +196,10 @@ export default function createUnitStore (options) {
       }
     }
 
-    // console.log(`Added ${unitsAdded} units and skipped: ${unitsSkipped.join(', ')}`)
+    console.log(`Added ${unitsAdded} units and skipped: ${unitsSkipped.join(', ')}`)
     if (unitsSkipped.length === 0) break
     else if (unitsAdded === 0) {
-      throw new Error(`Could not create the following units: ${unitsSkipped.join(', ')}. There is possibly a problem with the unit's definition.`)
+      throw new Error(`Could not create the following units: ${unitsSkipped.join(', ')}. Reasons follow: ${reasonsSkipped.join(' ')}`)
     }
   }
 

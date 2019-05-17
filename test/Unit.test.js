@@ -80,6 +80,34 @@ describe('unitmath', () => {
       assert.strictEqual(newUnit.config().simplify, 'auto')
     })
 
+    describe('custom definitions', () => {
+      it('should create new units', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              furlongsPerFortnight: { value: '1 furlong/fortnight' },
+              furlong: '220 yards',
+              fortnight: { value: [2, 'weeks'] }
+            }
+          }
+        })
+
+        assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
+      })
+
+      it.skip('should only allow valid names for units', () => {
+
+      })
+
+      it.skip('should override existing units', () => {
+
+      })
+
+      it.skip('should remove existing units if value is falsey', () => {
+
+      })
+    })
+
     describe('newly returned namespace', () => {
       it('should be a new unitmath namespace', () => {
         let newUnit = unit.config({})
@@ -1125,6 +1153,10 @@ describe('unitmath', () => {
           }
         }
       })
+    })
+
+    it.skip('should not reprocess units if only the formatting options have changed', () => {
+
     })
   })
 

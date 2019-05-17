@@ -455,7 +455,7 @@ export const units = {
   },
   stick: {
     value: '4 oz',
-    alises: ['sticks']
+    aliases: ['sticks']
   },
   stone: '14 lbm',
 
@@ -487,7 +487,7 @@ export const units = {
   },
   week: {
     value: '7 day',
-    alises: ['weeks']
+    aliases: ['weeks']
   },
   month: {
     value: '30.4375 day', // 1/12th of Julian year

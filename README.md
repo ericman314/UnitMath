@@ -157,7 +157,24 @@ These are the available options and their defaults:
   unit('4000 kg').mul('9.8 m/s^2').mul('100 m').toString()  // "3.92 MJ"
   ```
 
-- `unit`. An object that allows you to add to or modify the built-in units.
+- `definitions`. An object that allows you to add to or modify the built-in units:
+
+  Example:
+
+  ```js
+  unit = unit.config({
+    definitions: {
+      units: {
+        furlong: '220 yards',
+        fortnight: '2 weeks'
+      }
+    }
+  })
+
+  unit('6 furlongs/fortnight').to('m/s') // 9.97857142857143e-4 m / s
+  ```
+
+  See the section below on extending UnitMath for more information.
   
   TODO
 
@@ -203,7 +220,7 @@ Output:
   simplifyThreshold: 2,
   system: 'auto',
   subsystem: 'auto',
-  extraDefinitions: {
+  definitions: {
     skipBuiltIns: false,
     units: 
     prefixes:
