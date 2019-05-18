@@ -8,6 +8,8 @@ import unit from '../src/Unit'
 //       are imported.
 /* global math, Unit */
 
+// TODO: Test to make sure all DIMENSIONS were converted correctly (use old hardcoded arrays from UnitStore.js)
+
 describe('unitmath', () => {
   describe('unitmath namespace', () => {
     it('should be a function', () => {
@@ -37,11 +39,19 @@ describe('unitmath', () => {
         simplify: 'auto',
         simplifyThreshold: 2,
         system: 'auto',
-        subsystem: 'auto'
+        subsystem: 'auto',
+        definitions: {
+          skipBuiltIns: false,
+          units: {},
+          prefixes: {},
+          baseQuantities: [],
+          quantities: {},
+          unitSystems: {}
+        }
       }
       let actualOptions = unit.config()
       for (let key in optionsToCheckEquality) {
-        assert.strictEqual(optionsToCheckEquality[key], actualOptions[key], `config option ${key} has the wrong default value`)
+        assert.deepStrictEqual(optionsToCheckEquality[key], actualOptions[key], `config option ${key} has the wrong default value`)
       }
     })
   })
@@ -70,6 +80,124 @@ describe('unitmath', () => {
       assert.strictEqual(newUnit.config().simplify, 'auto')
     })
 
+    describe('custom definitions', () => {
+      it('should create new units', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              furlongsPerFortnight: { value: '1 furlong/fortnight' },
+              furlong: '220 yards',
+              fortnight: { value: [2, 'weeks'] }
+            }
+          }
+        })
+
+        assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
+      })
+
+      it('should only allow valid names for units', () => {
+        assert.throws(() => { unit.config({ definitions: { units: { 'not_a_valid_unit': '3.14 kg' } } }) }, /Unit name contains non-alpha/)
+        assert.throws(() => { unit.config({ definitions: { units: { '5tartsWithNumber': '42 ft' } } }) }, /Unit name contains non-alpha/)
+        assert.throws(() => { unit.config({ definitions: { units: { 5: '5 day' } } }) }, /Unit name contains non-alpha/)
+      })
+
+      it('should override existing units', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              poundmass: {
+                value: '0.5 kg',
+                aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
+              }
+            }
+          }
+        })
+        assert.strictEqual(unit('1 lb').to('kg').toString(), '0.45359237 kg')
+        assert.strictEqual(newUnit('1 lb').to('kg').toString(), '0.5 kg')
+      })
+
+      it('should remove existing units if value is falsey', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              henry: null
+            }
+          }
+        })
+        assert.doesNotThrow(() => unit('henry'))
+        assert.throws(() => newUnit('henry'), /Unit "henry" not found/)
+      })
+
+      it('should create new prefixes', () => {
+        // TODO: Mutating individual units in the definitions can have bad side effects!
+        let meter = Object.assign({}, unit.definitions().units.meter)
+        meter.prefixes = 'FUNNY'
+        meter.commonPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
+        let newUnit = unit.config({
+          prefixMin: 1,
+          prefixMax: 2,
+          definitions: {
+            units: {
+              meter
+            },
+            prefixes: {
+              FUNNY: { '': 1, 'A': 2, 'B': 4, 'C': 8, 'D': 16, 'E': 32, 'F': 64, 'G': 128 }
+            }
+          }
+        })
+
+        assert.strictEqual(newUnit('6 meter').toString(), '1.5 Bmeter')
+        assert.strictEqual(newUnit('10 Cmeter').toString(), '1.25 Fmeter')
+      })
+
+      it('should create new base quantities and derived quantities', () => {
+        let newUnit = unit.config({
+          definitions: {
+            baseQuantities: [ 'ESSENCE_OF_FOO' ],
+            quantities: {
+              'FOOLUME': 'ESSENCE_OF_FOO^3',
+              'FOOLOCITY': 'ESSENCE_OF_FOO TIME^-1'
+            },
+            units: {
+              foo: {
+                quantity: 'ESSENCE_OF_FOO',
+                value: 1,
+                prefixes: 'LONG'
+              },
+              fib: '5 foo/hr',
+              flab: '1 foo^3'
+            },
+            unitSystems: {
+              si: {
+                ESSENCE_OF_FOO: 'foo',
+                FOOLUME: 'flab',
+                FOOLOCITY: 'fib'
+              }
+            }
+          }
+        })
+
+        assert.deepStrictEqual(newUnit('fib')._getQuantities(), [ 'FOOLOCITY' ])
+        assert.deepStrictEqual(newUnit('flab')._getQuantities(), [ 'FOOLUME' ])
+        assert.strictEqual(newUnit('1 megafoo/s').to('fib').toString(), '720000000 fib')
+        assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
+      })
+
+      it('should extend, but not replace, individual unit systems', () => {
+        // TODO: Still no good way to say that mi/hr should be replaced by mph unless mi is explicitly designated as a part of the unit system
+        let newUnit = unit.config({
+          definitions: {
+            units: { mph: '1 mi/hr' },
+            unitSystems: {
+              us: { VELOCITY: 'mph', LENGTH: 'mi' }
+            }
+          }
+        })
+        assert.deepStrictEqual(newUnit('70 mi').div('60 min').toString(), '70 mph')
+        assert.deepStrictEqual(newUnit.definitions().unitSystems.us.MASS, 'lbm')
+      })
+    })
+
     describe('newly returned namespace', () => {
       it('should be a new unitmath namespace', () => {
         let newUnit = unit.config({})
@@ -83,6 +211,33 @@ describe('unitmath', () => {
         let newUnit = unit.config({})
         assert.notStrictEqual(unit.config(), newUnit.config())
       })
+    })
+  })
+
+  describe('definitions', () => {
+    it('should return the original built-in unit definitions', () => {
+      let defs = unit.definitions()
+
+      assert.strictEqual(defs.units.inch.value, '0.0254 meter')
+      assert.deepStrictEqual(defs.units.foot.aliases, ['ft', 'feet'])
+      assert.strictEqual(defs.units.kelvin.prefixes, 'LONG')
+      assert.strictEqual(defs.prefixes.LONG.giga, 1e9)
+      assert.strictEqual(defs.prefixes.SHORT_LONG.giga, 1e9)
+      assert.strictEqual(defs.unitSystems.si.FORCE, 'N')
+      assert.strictEqual(defs.baseQuantities[0], 'MASS')
+      assert.strictEqual(defs.quantities.AREA, 'LENGTH^2')
+
+      // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
+      let defs2 = unit.config({}).definitions()
+
+      assert.strictEqual(defs2.units.inch.value, '0.0254 meter')
+      assert.deepStrictEqual(defs2.units.foot.aliases, ['ft', 'feet'])
+      assert.strictEqual(defs2.units.kelvin.prefixes, 'LONG')
+      assert.strictEqual(defs2.prefixes.LONG.giga, 1e9)
+      assert.strictEqual(defs2.prefixes.SHORT_LONG.giga, 1e9)
+      assert.strictEqual(defs2.unitSystems.si.FORCE, 'N')
+      assert.strictEqual(defs2.baseQuantities[0], 'MASS')
+      assert.strictEqual(defs2.quantities.AREA, 'LENGTH^2')
     })
   })
 
@@ -146,7 +301,7 @@ describe('unitmath', () => {
     })
 
     it('should ignore properties on Object.prototype', function () {
-      Object.prototype.foo = unit._unitStore.UNITS['meter'] // eslint-disable-line no-extend-native
+      Object.prototype.foo = unit._unitStore.defs.units['meter'] // eslint-disable-line no-extend-native
 
       assert.throws(function () { console.log(unit(1, 'foo')) }, /Unit "foo" not found/)
 
@@ -169,88 +324,88 @@ describe('unitmath', () => {
     })
   })
 
-  describe('getDimension', function () {
-    it('should return the DIMENSION matching this unit', () => {
-      assert.deepStrictEqual(unit(5, 'kg m s K A rad bits')._getDimension(), [])
-      assert.deepStrictEqual(unit(5)._getDimension(), ['UNITLESS'])
-      assert.deepStrictEqual(unit(5, 'm s')._getDimension(), ['ABSEMENT'])
-      assert.deepStrictEqual(unit(5, 'm/s^2')._getDimension(), ['ACCELERATION'])
-      assert.deepStrictEqual(unit(5, 'deg')._getDimension(), ['ANGLE'])
-      assert.deepStrictEqual(unit(5, 'rad/s^2')._getDimension(), ['ANGULAR_ACCELERATION'])
-      assert.deepStrictEqual(unit(5, '5 kg m^2 rad/s')._getDimension(), ['ANGULAR_MOMENTUM'])
-      assert.deepStrictEqual(unit(5, '5 rad/s')._getDimension(), ['ANGULAR_VELOCITY'])
-      assert.deepStrictEqual(unit(5, 'mol')._getDimension(), ['AMOUNT_OF_SUBSTANCE'])
-      assert.deepStrictEqual(unit(5, 'm^2')._getDimension(), ['AREA'])
-      assert.deepStrictEqual(unit(5, 'kg/m^2')._getDimension(), ['AREA_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'kb')._getDimension(), ['BIT'])
-      assert.deepStrictEqual(unit(5, 'Gb/s')._getDimension(), ['BIT_RATE'])
-      assert.deepStrictEqual(unit(5, 'C/V')._getDimension(), ['CAPACITANCE'])
-      assert.deepStrictEqual(unit(5, 'A/m^2')._getDimension(), ['CURRENT_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'A')._getDimension(), ['CURRENT'])
-      assert.deepStrictEqual(unit(5, 'Pa s')._getDimension(), ['DYNAMIC_VISCOSITY'])
-      assert.deepStrictEqual(unit(5, 'C')._getDimension(), ['ELECTRIC_CHARGE'])
-      assert.deepStrictEqual(unit(5, 'C/m^3')._getDimension(), ['ELECTRIC_CHARGE_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'C/m^2')._getDimension(), ['ELECTRIC_DISPLACEMENT'])
-      assert.deepStrictEqual(unit(5, 'V/m')._getDimension(), ['ELECTRIC_FIELD_STRENGTH'])
-      assert.deepStrictEqual(unit(5, 'siemens')._getDimension(), ['ELECTRICAL_CONDUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'siemens/m')._getDimension(), ['ELECTRICAL_CONDUCTIVITY'])
-      assert.deepStrictEqual(unit(5, 'V')._getDimension(), ['ELECTRIC_POTENTIAL'])
-      assert.deepStrictEqual(unit(5, 'ohm')._getDimension(), ['RESISTANCE', 'IMPEDANCE'])
-      assert.deepStrictEqual(unit(5, 'ohm m')._getDimension(), ['ELECTRICAL_RESISTIVITY'])
-      assert.deepStrictEqual(unit(5, 'kg m^2 / s^2')._getDimension(), ['ENERGY', 'TORQUE'])
-      assert.deepStrictEqual(unit(5, 'J / K')._getDimension(), ['ENTROPY', 'HEAT_CAPACITY'])
-      assert.deepStrictEqual(unit(5, 'kg m / s^2')._getDimension(), ['FORCE'])
-      assert.deepStrictEqual(unit(5, 's^-1')._getDimension(), ['FREQUENCY'])
-      assert.deepStrictEqual(unit(5, 'W/m^2')._getDimension(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE'])
-      assert.deepStrictEqual(unit(5, 'N s')._getDimension(), ['IMPULSE', 'MOMENTUM'])
-      assert.deepStrictEqual(unit(5, 'henry')._getDimension(), ['INDUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'm/s^3')._getDimension(), ['JERK'])
-      assert.deepStrictEqual(unit(5, 'm^2/s')._getDimension(), ['KINEMATIC_VISCOSITY'])
-      assert.deepStrictEqual(unit(5, 'cm')._getDimension(), ['LENGTH'])
-      assert.deepStrictEqual(unit(5, 'kg/m')._getDimension(), ['LINEAR_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'candela')._getDimension(), ['LUMINOUS_INTENSITY'])
-      assert.deepStrictEqual(unit(5, 'A/m')._getDimension(), ['MAGNETIC_FIELD_STRENGTH'])
-      assert.deepStrictEqual(unit(5, 'tesla m^2')._getDimension(), ['MAGNETIC_FLUX'])
-      assert.deepStrictEqual(unit(5, 'tesla')._getDimension(), ['MAGNETIC_FLUX_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'lbm')._getDimension(), ['MASS'])
-      assert.deepStrictEqual(unit(5, 'mol/m^3')._getDimension(), ['MOLAR_CONCENTRATION'])
-      assert.deepStrictEqual(unit(5, 'J/mol')._getDimension(), ['MOLAR_ENERGY'])
-      assert.deepStrictEqual(unit(5, 'J/mol K')._getDimension(), ['MOLAR_ENTROPY', 'MOLAR_HEAT_CAPACITY'])
-      assert.deepStrictEqual(unit(5, 'H/m')._getDimension(), ['PERMEABILITY'])
-      assert.deepStrictEqual(unit(5, 'F/m')._getDimension(), ['PERMITTIVITY'])
-      assert.deepStrictEqual(unit(5, 'kg m^2 / s^3')._getDimension(), ['POWER'])
-      assert.deepStrictEqual(unit(5, 'kg / m s^2')._getDimension(), ['PRESSURE'])
-      assert.deepStrictEqual(unit(5, 'H^-1')._getDimension(), ['RELUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'H^-1')._getDimension(), ['RELUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'J/kg')._getDimension(), ['SPECIFIC_ENERGY'])
-      assert.deepStrictEqual(unit(5, 'J/kg K')._getDimension(), ['SPECIFIC_HEAT_CAPACITY'])
-      assert.deepStrictEqual(unit(5, 'm^3/kg')._getDimension(), ['SPECIFIC_VOLUME'])
-      assert.deepStrictEqual(unit(5, 'kg m^2/s')._getDimension(), ['SPIN'])
-      assert.deepStrictEqual(unit(5, 'J/m^2')._getDimension(), ['SURFACE_TENSION'])
-      assert.deepStrictEqual(unit(5, 'K')._getDimension(), ['TEMPERATURE'])
-      assert.deepStrictEqual(unit(5, 'K/m')._getDimension(), ['TEMPERATURE_GRADIENT'])
-      assert.deepStrictEqual(unit(5, 'W/m K')._getDimension(), ['THERMAL_CONDUCTIVITY'])
-      assert.deepStrictEqual(unit(5, 'day')._getDimension(), ['TIME'])
-      assert.deepStrictEqual(unit(5, 'm/s')._getDimension(), ['VELOCITY'])
-      assert.deepStrictEqual(unit(5, 'm^3')._getDimension(), ['VOLUME'])
-      assert.deepStrictEqual(unit(5, 'm^3/s')._getDimension(), ['VOLUMETRIC_FLOW_RATE'])
+  describe('getQuantity', function () {
+    it('should return the QUANTITY matching this unit', () => {
+      assert.deepStrictEqual(unit(5, 'kg m s K A rad bits')._getQuantities(), [])
+      assert.deepStrictEqual(unit(5)._getQuantities(), ['UNITLESS'])
+      assert.deepStrictEqual(unit(5, 'm s')._getQuantities(), ['ABSEMENT'])
+      assert.deepStrictEqual(unit(5, 'm/s^2')._getQuantities(), ['ACCELERATION'])
+      assert.deepStrictEqual(unit(5, 'deg')._getQuantities(), ['ANGLE'])
+      assert.deepStrictEqual(unit(5, 'rad/s^2')._getQuantities(), ['ANGULAR_ACCELERATION'])
+      assert.deepStrictEqual(unit(5, '5 kg m^2 rad/s')._getQuantities(), ['ANGULAR_MOMENTUM'])
+      assert.deepStrictEqual(unit(5, '5 rad/s')._getQuantities(), ['ANGULAR_VELOCITY'])
+      assert.deepStrictEqual(unit(5, 'mol')._getQuantities(), ['AMOUNT_OF_SUBSTANCE'])
+      assert.deepStrictEqual(unit(5, 'm^2')._getQuantities(), ['AREA'])
+      assert.deepStrictEqual(unit(5, 'kg/m^2')._getQuantities(), ['AREA_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'kb')._getQuantities(), ['BIT'])
+      assert.deepStrictEqual(unit(5, 'Gb/s')._getQuantities(), ['BIT_RATE'])
+      assert.deepStrictEqual(unit(5, 'C/V')._getQuantities(), ['CAPACITANCE'])
+      assert.deepStrictEqual(unit(5, 'A/m^2')._getQuantities(), ['CURRENT_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'A')._getQuantities(), ['CURRENT'])
+      assert.deepStrictEqual(unit(5, 'Pa s')._getQuantities(), ['DYNAMIC_VISCOSITY'])
+      assert.deepStrictEqual(unit(5, 'C')._getQuantities(), ['ELECTRIC_CHARGE'])
+      assert.deepStrictEqual(unit(5, 'C/m^3')._getQuantities(), ['ELECTRIC_CHARGE_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'C/m^2')._getQuantities(), ['ELECTRIC_DISPLACEMENT'])
+      assert.deepStrictEqual(unit(5, 'V/m')._getQuantities(), ['ELECTRIC_FIELD_STRENGTH'])
+      assert.deepStrictEqual(unit(5, 'siemens')._getQuantities(), ['ELECTRICAL_CONDUCTANCE'])
+      assert.deepStrictEqual(unit(5, 'siemens/m')._getQuantities(), ['ELECTRICAL_CONDUCTIVITY'])
+      assert.deepStrictEqual(unit(5, 'V')._getQuantities(), ['ELECTRIC_POTENTIAL'])
+      assert.deepStrictEqual(unit(5, 'ohm')._getQuantities(), ['RESISTANCE', 'IMPEDANCE'])
+      assert.deepStrictEqual(unit(5, 'ohm m')._getQuantities(), ['ELECTRICAL_RESISTIVITY'])
+      assert.deepStrictEqual(unit(5, 'kg m^2 / s^2')._getQuantities(), ['ENERGY', 'TORQUE'])
+      assert.deepStrictEqual(unit(5, 'J / K')._getQuantities(), ['ENTROPY', 'HEAT_CAPACITY'])
+      assert.deepStrictEqual(unit(5, 'kg m / s^2')._getQuantities(), ['FORCE'])
+      assert.deepStrictEqual(unit(5, 's^-1')._getQuantities(), ['FREQUENCY'])
+      assert.deepStrictEqual(unit(5, 'W/m^2')._getQuantities(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE'])
+      assert.deepStrictEqual(unit(5, 'N s')._getQuantities(), ['IMPULSE', 'MOMENTUM'])
+      assert.deepStrictEqual(unit(5, 'henry')._getQuantities(), ['INDUCTANCE'])
+      assert.deepStrictEqual(unit(5, 'm/s^3')._getQuantities(), ['JERK'])
+      assert.deepStrictEqual(unit(5, 'm^2/s')._getQuantities(), ['KINEMATIC_VISCOSITY'])
+      assert.deepStrictEqual(unit(5, 'cm')._getQuantities(), ['LENGTH'])
+      assert.deepStrictEqual(unit(5, 'kg/m')._getQuantities(), ['LINEAR_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'candela')._getQuantities(), ['LUMINOUS_INTENSITY'])
+      assert.deepStrictEqual(unit(5, 'A/m')._getQuantities(), ['MAGNETIC_FIELD_STRENGTH'])
+      assert.deepStrictEqual(unit(5, 'tesla m^2')._getQuantities(), ['MAGNETIC_FLUX'])
+      assert.deepStrictEqual(unit(5, 'tesla')._getQuantities(), ['MAGNETIC_FLUX_DENSITY'])
+      assert.deepStrictEqual(unit(5, 'lbm')._getQuantities(), ['MASS'])
+      assert.deepStrictEqual(unit(5, 'mol/m^3')._getQuantities(), ['MOLAR_CONCENTRATION'])
+      assert.deepStrictEqual(unit(5, 'J/mol')._getQuantities(), ['MOLAR_ENERGY'])
+      assert.deepStrictEqual(unit(5, 'J/mol K')._getQuantities(), ['MOLAR_ENTROPY', 'MOLAR_HEAT_CAPACITY'])
+      assert.deepStrictEqual(unit(5, 'H/m')._getQuantities(), ['PERMEABILITY'])
+      assert.deepStrictEqual(unit(5, 'F/m')._getQuantities(), ['PERMITTIVITY'])
+      assert.deepStrictEqual(unit(5, 'kg m^2 / s^3')._getQuantities(), ['POWER'])
+      assert.deepStrictEqual(unit(5, 'kg / m s^2')._getQuantities(), ['PRESSURE'])
+      assert.deepStrictEqual(unit(5, 'H^-1')._getQuantities(), ['RELUCTANCE'])
+      assert.deepStrictEqual(unit(5, 'H^-1')._getQuantities(), ['RELUCTANCE'])
+      assert.deepStrictEqual(unit(5, 'J/kg')._getQuantities(), ['SPECIFIC_ENERGY'])
+      assert.deepStrictEqual(unit(5, 'J/kg K')._getQuantities(), ['SPECIFIC_HEAT_CAPACITY'])
+      assert.deepStrictEqual(unit(5, 'm^3/kg')._getQuantities(), ['SPECIFIC_VOLUME'])
+      assert.deepStrictEqual(unit(5, 'kg m^2/s')._getQuantities(), ['SPIN'])
+      assert.deepStrictEqual(unit(5, 'J/m^2')._getQuantities(), ['SURFACE_TENSION'])
+      assert.deepStrictEqual(unit(5, 'K')._getQuantities(), ['TEMPERATURE'])
+      assert.deepStrictEqual(unit(5, 'K/m')._getQuantities(), ['TEMPERATURE_GRADIENT'])
+      assert.deepStrictEqual(unit(5, 'W/m K')._getQuantities(), ['THERMAL_CONDUCTIVITY'])
+      assert.deepStrictEqual(unit(5, 'day')._getQuantities(), ['TIME'])
+      assert.deepStrictEqual(unit(5, 'm/s')._getQuantities(), ['VELOCITY'])
+      assert.deepStrictEqual(unit(5, 'm^3')._getQuantities(), ['VOLUME'])
+      assert.deepStrictEqual(unit(5, 'm^3/s')._getQuantities(), ['VOLUMETRIC_FLOW_RATE'])
     })
   })
 
-  describe('hasDimension', function () {
+  describe('hasQuantity', function () {
     it('should test whether a unit has a certain dimension', function () {
-      assert.strictEqual(unit(5, 'cm')._hasDimension('ANGLE'), false)
-      assert.strictEqual(unit(5, 'cm')._hasDimension('LENGTH'), true)
-      assert.strictEqual(unit(5, 'kg m / s ^ 2')._hasDimension('FORCE'), true)
+      assert.strictEqual(unit(5, 'cm')._hasQuantity('ANGLE'), false)
+      assert.strictEqual(unit(5, 'cm')._hasQuantity('LENGTH'), true)
+      assert.strictEqual(unit(5, 'kg m / s ^ 2')._hasQuantity('FORCE'), true)
     })
   })
 
-  describe('equalDimension', function () {
-    it('should test whether two units have the same dimension', function () {
-      assert.strictEqual(unit(5, 'cm')._equalDimension(unit(10, 'm')), true)
-      assert.strictEqual(unit(5, 'cm')._equalDimension(unit(10, 'kg')), false)
-      assert.strictEqual(unit(5, 'N')._equalDimension(unit(10, 'kg m / s ^ 2')), true)
-      assert.strictEqual(unit(8.314, 'J / mol K')._equalDimension(unit(0.02366, 'ft^3 psi / mol degF')), true)
+  describe('equalQuantity', function () {
+    it('should test whether two units are of the same quantity', function () {
+      assert.strictEqual(unit(5, 'cm')._equalQuantity(unit(10, 'm')), true)
+      assert.strictEqual(unit(5, 'cm')._equalQuantity(unit(10, 'kg')), false)
+      assert.strictEqual(unit(5, 'N')._equalQuantity(unit(10, 'kg m / s ^ 2')), true)
+      assert.strictEqual(unit(8.314, 'J / mol K')._equalQuantity(unit(0.02366, 'ft^3 psi / mol degF')), true)
     })
   })
 
@@ -299,122 +454,122 @@ describe('unitmath', () => {
       const u1 = unit(5000, 'in')
       assert.strictEqual(u1.value, 5000)
       assert.strictEqual(u1.units[0].unit.name, 'in')
-      assert.strictEqual(u1.units[0].prefix.name, '')
+      assert.strictEqual(u1.units[0].prefix, '')
 
       const u2 = u1.to('cm')
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 12700)
       assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix.name, 'c')
+      assert.strictEqual(u2.units[0].prefix, 'c')
 
       const u3 = unit(299792.458, 'km/s')
       assert.strictEqual(u3.value, 299792.458)
       assert.strictEqual(u3.units[0].unit.name, 'm')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, 'k')
+      assert.strictEqual(u3.units[0].prefix, 'k')
 
       const u4 = u3.to('m/s')
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 299792458)
       assert.strictEqual(u4.units[0].unit.name, 'm')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, '')
+      assert.strictEqual(u4.units[0].prefix, '')
     })
 
     it('should convert a unit using a target unit', function () {
       const u1 = unit(5000, 'in')
       assert.strictEqual(u1.value, 5000)
       assert.strictEqual(u1.units[0].unit.name, 'in')
-      assert.strictEqual(u1.units[0].prefix.name, '')
+      assert.strictEqual(u1.units[0].prefix, '')
 
       const u2 = u1.to(unit('cm'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 12700)
       assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix.name, 'c')
+      assert.strictEqual(u2.units[0].prefix, 'c')
 
       const u3 = unit(299792.458, 'km/s')
       assert.strictEqual(u3.value, 299792.458)
       assert.strictEqual(u3.units[0].unit.name, 'm')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, 'k')
+      assert.strictEqual(u3.units[0].prefix, 'k')
 
       const u4 = u3.to(unit('m/s'))
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 299792458)
       assert.strictEqual(u4.units[0].unit.name, 'm')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, '')
+      assert.strictEqual(u4.units[0].prefix, '')
     })
 
     it('should convert a valueless unit', function () {
       const u1 = unit(null, 'm')
       assert.strictEqual(u1.value, null)
       assert.strictEqual(u1.units[0].unit.name, 'm')
-      assert.strictEqual(u1.units[0].prefix.name, '')
+      assert.strictEqual(u1.units[0].prefix, '')
 
       const u2 = u1.to(unit(null, 'cm'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 100) // u2 must have a value
       assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix.name, 'c')
+      assert.strictEqual(u2.units[0].prefix, 'c')
 
       const u3 = unit(null, 'm/s')
       assert.strictEqual(u3.value, null)
       assert.strictEqual(u3.units[0].unit.name, 'm')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, '')
+      assert.strictEqual(u3.units[0].prefix, '')
 
       const u4 = u3.to(unit(null, 'cm/s'))
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 100) // u4 must have a value
       assert.strictEqual(u4.units[0].unit.name, 'm')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, 'c')
+      assert.strictEqual(u4.units[0].prefix, 'c')
 
       const u5 = unit(null, 'km').to('cm')
       assert.strictEqual(u5.value, 100000)
       assert.strictEqual(u5.units[0].unit.name, 'm')
-      assert.strictEqual(u5.units[0].prefix.name, 'c')
+      assert.strictEqual(u5.units[0].prefix, 'c')
     })
 
     it('should convert a binary prefixes (1)', function () {
       const u1 = unit(1, 'Kib')
       assert.strictEqual(u1.value, 1)
       assert.strictEqual(u1.units[0].unit.name, 'b')
-      assert.strictEqual(u1.units[0].prefix.name, 'Ki')
+      assert.strictEqual(u1.units[0].prefix, 'Ki')
 
       const u2 = u1.to(unit(null, 'b'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 1024) // u2 must have a value
       assert.strictEqual(u2.units[0].unit.name, 'b')
-      assert.strictEqual(u2.units[0].prefix.name, '')
+      assert.strictEqual(u2.units[0].prefix, '')
 
       const u3 = unit(1, 'Kib/s')
       assert.strictEqual(u3.value, 1)
       assert.strictEqual(u3.units[0].unit.name, 'b')
       assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix.name, 'Ki')
+      assert.strictEqual(u3.units[0].prefix, 'Ki')
 
       const u4 = u3.to(unit(null, 'b/s'))
       assert.notStrictEqual(u3, u4) // u4 must be a clone
       assert.strictEqual(u4.value, 1024) // u4 must have a value
       assert.strictEqual(u4.units[0].unit.name, 'b')
       assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix.name, '')
+      assert.strictEqual(u4.units[0].prefix, '')
     })
 
     it('should convert a binary prefixes (2)', function () {
       const u1 = unit(1, 'kb')
       assert.strictEqual(u1.value, 1)
       assert.strictEqual(u1.units[0].unit.name, 'b')
-      assert.strictEqual(u1.units[0].prefix.name, 'k')
+      assert.strictEqual(u1.units[0].prefix, 'k')
 
       const u2 = u1.to(unit(null, 'b'))
       assert.notStrictEqual(u1, u2) // u2 must be a clone
       assert.strictEqual(u2.value, 1000) // u2 must have a value
       assert.strictEqual(u2.units[0].unit.name, 'b')
-      assert.strictEqual(u2.units[0].prefix.name, '')
+      assert.strictEqual(u2.units[0].prefix, '')
     })
 
     it('should throw an error when converting to an incompatible unit', function () {
@@ -632,77 +787,77 @@ describe('unitmath', () => {
       unit1 = unit('5kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5 kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit(' 5 kg ')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5e-3kg')
       assert.strictEqual(unit1.value, 0.005)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5e+3kg')
       assert.strictEqual(unit1.value, 5000)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5e3kg')
       assert.strictEqual(unit1.value, 5000)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('-5kg')
       assert.strictEqual(unit1.value, -5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('+5kg')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('.5kg')
       assert.strictEqual(unit1.value, 0.5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('-5mg')
       approx.equal(unit1.value, -5)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'm')
+      assert.strictEqual(unit1.units[0].prefix, 'm')
 
       unit1 = unit('5.2mg')
       approx.equal(unit1.value, 5.2)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix.name, 'm')
+      assert.strictEqual(unit1.units[0].prefix, 'm')
 
       unit1 = unit('300 kg/minute')
       approx.equal(unit1.value, 300)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'minute')
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('981 cm/s^2')
       approx.equal(unit1.value, 981)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
       assert.strictEqual(unit1.units[1].unit.name, 's')
       assert.strictEqual(unit1.units[1].power, -2)
-      assert.strictEqual(unit1.units[0].prefix.name, 'c')
+      assert.strictEqual(unit1.units[0].prefix, 'c')
 
       unit1 = unit('981 cm*s^-2')
       approx.equal(unit1.value, 981)
       assert.strictEqual(unit1.units[0].unit.name, 'm')
       assert.strictEqual(unit1.units[1].unit.name, 's')
       assert.strictEqual(unit1.units[1].power, -2)
-      assert.strictEqual(unit1.units[0].prefix.name, 'c')
+      assert.strictEqual(unit1.units[0].prefix, 'c')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
       approx.equal(unit1.value, 8.314)
@@ -716,7 +871,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].power, -2)
       assert.strictEqual(unit1.units[3].power, -1)
       assert.strictEqual(unit1.units[4].power, -1)
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
       approx.equal(unit1.value, 8.314)
@@ -730,7 +885,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].power, -2)
       assert.strictEqual(unit1.units[3].power, -1)
       assert.strictEqual(unit1.units[4].power, -1)
-      assert.strictEqual(unit1.units[0].prefix.name, 'k')
+      assert.strictEqual(unit1.units[0].prefix, 'k')
 
       unit1 = unit('5exabytes')
       approx.equal(unit1.value, 5)
@@ -767,7 +922,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[0].power, 3)
       assert.strictEqual(unit1.units[1].power, -1)
       assert.strictEqual(unit1.units[2].power, -2)
-      assert.strictEqual(unit1.units[0].prefix.name, '')
+      assert.strictEqual(unit1.units[0].prefix, '')
     })
 
     it('should throw an exception when parsing an invalid unit', function () {
@@ -819,7 +974,7 @@ describe('unitmath', () => {
   describe('add', function () {
     it('should add two units', () => {
       assert.deepStrictEqual(unit(300, 'm').add(unit(3, 'km')), unit(3300, 'm'))
-      assert.deepStrictEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
+      approx.deepEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
     })
 
     it('should convert parameter to unit', () => {
@@ -840,7 +995,7 @@ describe('unitmath', () => {
   describe('sub', function () {
     it('should subtract two units', () => {
       assert.deepStrictEqual(unit(300, 'm').sub(unit(3, 'km')), unit(-2700, 'm'))
-      assert.deepStrictEqual(unit('2m').sub(unit('3ft')), unit('1.0856 m'))
+      approx.deepEqual(unit('2m').sub(unit('3ft')), unit('1.0856 m'))
     })
 
     it('should convert parameter to unit', () => {
@@ -918,7 +1073,7 @@ describe('unitmath', () => {
     it('should calculate the power of a unit', () => {
       assert(unit('4 N').pow(2).equals(unit('16 N^2')))
       assert(unit('0.25 m/s').pow(-0.5).equals(unit('2 m^-0.5 s^0.5')))
-      assert(unit('123 hogshead').pow(0).equals(unit('1')))
+      assert(unit('123 chain').pow(0).equals(unit('1')))
     })
   })
 
@@ -951,22 +1106,22 @@ describe('unitmath', () => {
       const unit1 = unit(5, 'meters')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'meters')
-      assert.strictEqual(unit1.units[0].prefix.name, '')
+      assert.strictEqual(unit1.units[0].prefix, '')
 
       const unit2 = unit(5, 'kilometers')
       assert.strictEqual(unit2.value, 5)
       assert.strictEqual(unit2.units[0].unit.name, 'meters')
-      assert.strictEqual(unit2.units[0].prefix.name, 'kilo')
+      assert.strictEqual(unit2.units[0].prefix, 'kilo')
 
       const unit3 = unit(5, 'inches')
       approx.equal(unit3.value, 5)
       assert.strictEqual(unit3.units[0].unit.name, 'inches')
-      assert.strictEqual(unit3.units[0].prefix.name, '')
+      assert.strictEqual(unit3.units[0].prefix, '')
 
       const unit4 = unit(9.81, 'meters/second^2')
       approx.equal(unit4.value, 9.81)
       assert.strictEqual(unit4.units[0].unit.name, 'meters')
-      assert.strictEqual(unit4.units[0].prefix.name, '')
+      assert.strictEqual(unit4.units[0].prefix, '')
     })
   })
 
@@ -975,16 +1130,92 @@ describe('unitmath', () => {
       const unit1 = unit(5, 'lt')
       assert.strictEqual(unit1.value, 5)
       assert.strictEqual(unit1.units[0].unit.name, 'lt')
-      assert.strictEqual(unit1.units[0].prefix.name, '')
+      assert.strictEqual(unit1.units[0].prefix, '')
 
       const unit2 = unit(1, 'lb')
       assert.strictEqual(unit2.value, 1)
       assert.strictEqual(unit2.units[0].unit.name, 'lb')
-      assert.strictEqual(unit2.units[0].prefix.name, '')
+      assert.strictEqual(unit2.units[0].prefix, '')
     })
   })
 
   describe('unitStore', function () {
+    describe('defs.quantities', () => {
+      it('should contain the correct dimension for each quantity', () => {
+        assert.strictEqual(unit._unitStore.defs.baseQuantities.length, 10)
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['UNITLESS'], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['LENGTH'], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['TIME'], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['CURRENT'], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['TEMPERATURE'], [0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['LUMINOUS_INTENSITY'], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['AMOUNT_OF_SUBSTANCE'], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGLE'], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['BIT'], [0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['SOLID_ANGLE'], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ABSEMENT'], [0, 1, 1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ACCELERATION'], [0, 1, -2, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGULAR_ACCELERATION'], [0, 0, -2, 0, 0, 0, 0, 1, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGULAR_MOMENTUM'], [1, 2, -1, 0, 0, 0, 0, 1, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGULAR_VELOCITY'], [0, 0, -1, 0, 0, 0, 0, 1, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['AREA'], [0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['AREA_DENSITY'], [1, -2, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['BIT_RATE'], [0, 0, -1, 0, 0, 0, 0, 0, 1, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['CAPACITANCE'], [-1, -2, 4, 2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['CURRENT_DENSITY'], [0, -2, 0, 1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['DYNAMIC_VISCOSITY'], [1, -1, -1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_CHARGE'], [0, 0, 1, 1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_CHARGE_DENSITY'], [0, -3, 1, 1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_DISPLACEMENT'], [0, -2, 1, 1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_FIELD_STRENGTH'], [1, 1, -3, -1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRICAL_CONDUCTANCE'], [-1, -2, 3, 2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRICAL_CONDUCTIVITY'], [-1, -3, 3, 2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_POTENTIAL'], [1, 2, -3, -1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['RESISTANCE'], [1, 2, -3, -2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRICAL_RESISTIVITY'], [1, 3, -3, -2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ENERGY'], [1, 2, -2, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ENTROPY'], [1, 2, -2, 0, -1, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['FORCE'], [1, 1, -2, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['FREQUENCY'], [0, 0, -1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['HEAT_CAPACITY'], [1, 2, -2, 0, -1, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['HEAT_FLUX_DENSITY'], [1, 0, -3, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['ILLUMINANCE'], [0, -2, 0, 0, 0, 1, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['IMPEDANCE'], [1, 2, -3, -2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['IMPULSE'], [1, 1, -1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['INDUCTANCE'], [1, 2, -2, -2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['IRRADIANCE'], [1, 0, -3, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['JERK'], [0, 1, -3, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['KINEMATIC_VISCOSITY'], [0, 2, -1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['LINEAR_DENSITY'], [1, -1, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['LUMINOUS_FLUX'], [0, 0, 0, 0, 0, 1, 0, 0, 0, 1])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MAGNETIC_FIELD_STRENGTH'], [0, -1, 0, 1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MAGNETIC_FLUX'], [1, 2, -2, -1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MAGNETIC_FLUX_DENSITY'], [1, 0, -2, -1, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_CONCENTRATION'], [0, -3, 0, 0, 0, 0, 1, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_ENERGY'], [1, 2, -2, 0, 0, 0, -1, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_ENTROPY'], [1, 2, -2, 0, -1, 0, -1, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_HEAT_CAPACITY'], [1, 2, -2, 0, -1, 0, -1, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOMENT_OF_INERTIA'], [1, 2, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOMENTUM'], [1, 1, -1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['PERMEABILITY'], [1, 1, -2, -2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['PERMITTIVITY'], [-1, -3, 4, 2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['POWER'], [1, 2, -3, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['PRESSURE'], [1, -1, -2, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['RELUCTANCE'], [-1, -2, 2, 2, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPECIFIC_ENERGY'], [0, 2, -2, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPECIFIC_HEAT_CAPACITY'], [0, 2, -2, 0, -1, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPECIFIC_VOLUME'], [-1, 3, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPIN'], [1, 2, -1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['SURFACE_TENSION'], [1, 0, -2, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['TEMPERATURE_GRADIENT'], [0, -1, 0, 0, 1, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['THERMAL_CONDUCTIVITY'], [1, 1, -3, 0, -1, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['TORQUE'], [1, 2, -2, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['VELOCITY'], [0, 1, -1, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['VOLUME'], [0, 3, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert.deepStrictEqual(unit._unitStore.defs.quantities['VOLUMETRIC_FLOW_RATE'], [0, 3, -1, 0, 0, 0, 0, 0, 0, 0])
+      })
+    })
+
     describe('UNITS', () => {
       it('built-in units should be of the correct value and dimension', function () {
         assert.strictEqual(unit(1, 's A').equals(unit(1, 'C')), true)
@@ -1009,10 +1240,14 @@ describe('unitmath', () => {
       it('should not have any dimensions that are not present in DIMENSIONS', () => {
         for (let sys in unit._unitStore.UNIT_SYSTEMS) {
           for (let dim in unit._unitStore.UNIT_SYSTEMS[sys]) {
-            assert(unit._unitStore.DIMENSIONS.hasOwnProperty(dim), `${dim} not found in DIMESNIONS`)
+            assert(unit._unitStore.defs.quantities.hasOwnProperty(dim), `${dim} not found in defs.quantities`)
           }
         }
       })
+    })
+
+    it.skip('should not reprocess units if only the formatting options have changed', () => {
+
     })
   })
 
@@ -1177,8 +1412,8 @@ describe('unitmath', () => {
     })
 
     it('should return the unit in SI units', function () {
-      assert.deepStrictEqual(unit('4 ft').toSI(), unit('1.2192 m').to())
-      assert.deepStrictEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2').to())
+      approx.deepEqual(unit('4 ft').toSI(), unit('1.2192 m').to())
+      approx.deepEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2').to())
     })
 
     it('should return SI units for valueless units', function () {
@@ -1186,8 +1421,8 @@ describe('unitmath', () => {
     })
 
     it('alterate api syntax should work too', () => {
-      assert.deepStrictEqual(unit.toSI(unit('4 ft')), unit('1.2192 m').to())
-      assert.deepStrictEqual(unit.toSI('4 ft'), unit('1.2192 m').to())
+      approx.deepEqual(unit.toSI(unit('4 ft')), unit('1.2192 m').to())
+      approx.deepEqual(unit.toSI('4 ft'), unit('1.2192 m').to())
     })
 
     it.skip('should return SI units for custom units defined from other units', function () {

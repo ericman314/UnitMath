@@ -1,7 +1,7 @@
 /**
  * Returns a new Parser.
  */
-export default function createParser (options, unitStore) {
+export default function createParser (options, findUnit, nBaseQuantities) {
   // private variables and functions for the Unit parser
   let text, index, c
 
@@ -157,12 +157,14 @@ export default function createParser (options, unitStore) {
     }
 
     const unit = {}
-    unit.dimensions = []
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      unit.dimensions[i] = 0
-    }
 
     unit.units = []
+
+    // Initialize this unit's dimension array
+    unit.dimension = []
+    for (let i = 0; i < nBaseQuantities; i++) {
+      unit.dimension[i] = 0
+    }
 
     let powerMultiplierCurrent = 1
     let expectingUnit = false
@@ -224,8 +226,8 @@ export default function createParser (options, unitStore) {
       }
 
       // Verify the unit exists and get the prefix (if any)
-      const res = unitStore.findUnit(uStr)
-      if (res === null) {
+      const found = findUnit(uStr)
+      if (found === null) {
         // Unit not found.
         throw new SyntaxError('Unit "' + uStr + '" not found.')
       }
@@ -245,12 +247,13 @@ export default function createParser (options, unitStore) {
 
       // Add the unit to the list
       unit.units.push({
-        unit: res.unit,
-        prefix: res.prefix,
+        unit: found.unit,
+        prefix: found.prefix,
         power: power
       })
-      for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-        unit.dimensions[i] += (res.unit.dimensions[i] || 0) * power
+
+      for (let i = 0; i < unit.dimension.length; i++) {
+        unit.dimension[i] += (found.unit.dimension[i] || 0) * power
       }
 
       skipWhitespace()

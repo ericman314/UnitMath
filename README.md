@@ -157,7 +157,24 @@ These are the available options and their defaults:
   unit('4000 kg').mul('9.8 m/s^2').mul('100 m').toString()  // "3.92 MJ"
   ```
 
-- `unit`. An object that allows you to add to or modify the built-in units.
+- `definitions`. An object that allows you to add to or modify the built-in units:
+
+  Example:
+
+  ```js
+  unit = unit.config({
+    definitions: {
+      units: {
+        furlong: '220 yards',
+        fortnight: '2 weeks'
+      }
+    }
+  })
+
+  unit('6 furlongs/fortnight').to('m/s') // 9.97857142857143e-4 m / s
+  ```
+
+  See the section below on extending UnitMath for more information.
   
   TODO
 
@@ -199,11 +216,18 @@ Output:
   prefix: 'auto',
   prefixMin: 0.1,
   prefixMax: 1000,
-  simplify: true,
+  simplify: 'auto',
   simplifyThreshold: 2,
   system: 'auto',
   subsystem: 'auto',
-  unit: {},
+  definitions: {
+    skipBuiltIns: false,
+    units: 
+    prefixes:
+    unitSystems:
+    baseQuantities:
+    quantities:
+  },
   type:
    { add: [Function: defaultAdd],
      sub: [Function: defaultSub],
@@ -286,8 +310,10 @@ When using custom types, UnitMath cannot implicitly convert strings to units. Th
 
 ### Namespace Functions
 
+- `unit.config()` -- Return the current configuration
 - `unit.config(options:object)` -- Configure a new unit namespace with the given options (see TODO: link)
 - `unit.exists(singleUnitString:string)` -- Tests if the given unit, optionally with a prefix, exists.
+- `unit.definitions()` -- Return current unit definitions (user's own definitions can be queried through unit.config().definitions)
 
 ## Contributing
 

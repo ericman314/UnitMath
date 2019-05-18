@@ -1,5 +1,5 @@
-import createParser from './Parser.js'
 import createUnitStore from './UnitStore.js'
+import { normalize, denormalize, isCompound as _isCompound } from './utils.js'
 
 /* The export will be a function named unit.
 
@@ -62,24 +62,24 @@ let _config = function _config (options) {
       // Unit(*, string)
       let parseResult
       if (typeof value === 'undefined' && typeof unitString === 'undefined') {
-        parseResult = parser('')
+        parseResult = unitStore.parser('')
         parseResult.value = null
       } else if (typeof value === 'string' && typeof unitString === 'undefined') {
-        parseResult = parser(value)
+        parseResult = unitStore.parser(value)
       } else if (typeof unitString === 'string') {
-        parseResult = parser(unitString)
+        parseResult = unitStore.parser(unitString)
         parseResult.value = value
       } else if (typeof unitString === 'undefined') {
-        parseResult = parser('')
+        parseResult = unitStore.parser('')
         parseResult.value = value
       } else {
         throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
       }
       this.type = 'Unit'
-      this.dimensions = parseResult.dimensions
+      this.dimension = parseResult.dimension
       this.units = _combineDuplicateUnits(parseResult.units)
       // TODO: All the denormalizing/normalizing creates round-off error. See if we can reduce the number of floating point operations somehow.
-      this.value = (parseResult.value === undefined || parseResult.value === null) ? null : _denormalize(this.units, _normalize(parseResult.units, parseResult.value))
+      this.value = (parseResult.value === undefined || parseResult.value === null) ? null : denormalize(this.units, normalize(parseResult.units, parseResult.value, options.type), options.type)
     }
 
     // These are public methods available to each instance of a Unit. They each should return a frozen Unit.
@@ -229,14 +229,14 @@ let _config = function _config (options) {
         systemStr = ids[0]
       }
 
-      let system = unitStore.UNIT_SYSTEMS[systemStr]
+      let system = unitStore.defs.unitSystems[systemStr]
 
       const proposedUnitList = []
 
       // Search for a matching dimension in the given unit system
       let matchingDim
       for (const key in system) {
-        if (result._hasDimension(key)) {
+        if (result._hasQuantity(key)) {
           // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
           matchingDim = key
           break
@@ -245,7 +245,7 @@ let _config = function _config (options) {
 
       let ok = true
       if (matchingDim) {
-        // console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix.name}${system[matchingDim].unit.name}`)
+        // console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix}${system[matchingDim].unit.name}`)
         proposedUnitList.push({
           unit: system[matchingDim].unit,
           prefix: system[matchingDim].prefix,
@@ -255,14 +255,14 @@ let _config = function _config (options) {
         // Multiple units or units with powers are formatted like this:
         // 5 kg m^2 / s^3 mol
         // Build a representation from the base units of the current unit system
-        for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-          const baseDim = unitStore.BASE_DIMENSIONS[i]
-          if (Math.abs(result.dimensions[i] || 0) > 1e-12) {
+        for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+          const baseDim = unitStore.defs.baseQuantities[i]
+          if (Math.abs(result.dimension[i] || 0) > 1e-12) {
             if (system.hasOwnProperty(baseDim)) {
               proposedUnitList.push({
                 unit: system[baseDim].unit,
                 prefix: system[baseDim].prefix,
-                power: result.dimensions[i] || 0
+                power: result.dimension[i] || 0
               })
             } else {
               ok = false
@@ -279,7 +279,7 @@ let _config = function _config (options) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList
         if (this.value !== null) {
-          result.value = options.type.clone(_denormalize(result.units, _normalize(this.units, this.value)))
+          result.value = options.type.clone(denormalize(result.units, normalize(this.units, this.value, options.type), options.type))
         } else {
           result.value = null
         }
@@ -311,20 +311,20 @@ let _config = function _config (options) {
     }
 
     /**
-     * check if this unit has given base unit
+     * check if this unit matches the given quantity
      * @memberof Unit
-     * @param {DIMENSION | string | undefined} dim
+     * @param {QUANTITY | string | undefined} quantity
      */
-    _hasDimension (dimension) {
-      if (typeof (dimension) === 'string') {
-        dimension = unitStore.DIMENSIONS[dimension]
+    _hasQuantity (quantity) {
+      if (typeof (quantity) === 'string') {
+        quantity = unitStore.defs.quantities[quantity]
       }
-      if (!dimension) {
+      if (!quantity) {
         return false
       }
-      // All dimensions must be the same
-      for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-        if (Math.abs((this.dimensions[i] || 0) - (dimension.dimensions[i] || 0)) > 1e-12) {
+      // Dimensions must be the same
+      for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+        if (Math.abs((this.dimension[i] || 0) - (quantity[i] || 0)) > 1e-12) {
           return false
         }
       }
@@ -336,10 +336,10 @@ let _config = function _config (options) {
      * @param {Unit} other
      * @return {boolean} true if equal dimensions
      */
-    _equalDimension (other) {
+    _equalQuantity (other) {
       // All dimensions must be the same
-      for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-        if (Math.abs(this.dimensions[i] - other.dimensions[i]) > 1e-12) {
+      for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+        if (Math.abs(this.dimension[i] - other.dimension[i]) > 1e-12) {
           return false
         }
       }
@@ -347,13 +347,13 @@ let _config = function _config (options) {
     }
 
     /**
-     * Returns a string array of all the dimensions that match this unit.
-     * @return {string[]} The matching dimensions, or an empty array if there are no matching dimensions.
+     * Returns a string array of all the quantities that match this unit.
+     * @return {string[]} The matching quantities, or an empty array if there are no matching quantities.
      */
-    _getDimension () {
+    _getQuantities () {
       const result = []
-      for (let d in unitStore.DIMENSIONS) {
-        if (this._hasDimension(d)) {
+      for (let d in unitStore.defs.quantities) {
+        if (this._hasQuantity(d)) {
           result.push(d)
         }
       }
@@ -368,7 +368,7 @@ let _config = function _config (options) {
      */
     equals (other) {
       other = _convertParamToUnit(other)
-      return this._equalDimension(other) && options.type.eq(_normalize(this.units, this.value), _normalize(other.units, other.value))
+      return this._equalQuantity(other) && options.type.eq(normalize(this.units, this.value, options.type), normalize(other.units, other.value, options.type))
     }
 
     /**
@@ -402,7 +402,7 @@ let _config = function _config (options) {
           // Number of total units
           let comp = unitList.length
           // Number of units containing powers !== +/-1
-          comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length
+          comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length * 2
           // At least one unit in denominator
           if (unitList.filter(a => a.power < 0).length > 0) {
             comp += 1
@@ -461,7 +461,7 @@ let _config = function _config (options) {
   function _clone (unit) {
     const result = new Unit()
     result.value = unit.value === null ? null : options.type.clone(unit.value)
-    result.dimensions = unit.dimensions.slice(0)
+    result.dimension = unit.dimension.slice(0)
     result.units = []
     for (let i = 0; i < unit.units.length; i++) {
       result.units[i] = {}
@@ -527,11 +527,11 @@ let _config = function _config (options) {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1._equalDimension(unit2)) {
+    if (!unit1._equalQuantity(unit2)) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = _denormalize(unit1.units, options.type.add(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
+    result.value = denormalize(unit1.units, options.type.add(normalize(unit1.units, unit1.value, options.type), normalize(unit2.units, unit2.value, options.type)), options.type)
     return result
   }
 
@@ -545,11 +545,11 @@ let _config = function _config (options) {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1._equalDimension(unit2)) {
+    if (!unit1._equalQuantity(unit2)) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = _denormalize(unit1.units, options.type.sub(_normalize(unit1.units, unit1.value), _normalize(unit2.units, unit2.value)))
+    result.value = denormalize(unit1.units, options.type.sub(normalize(unit1.units, unit1.value, options.type), normalize(unit2.units, unit2.value, options.type)), options.type)
     return result
   }
 
@@ -562,9 +562,9 @@ let _config = function _config (options) {
   function _mul (unit1, unit2) {
     const result = _clone(unit1)
 
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      // Dimensions arrays may be of different lengths. Default to 0.
-      result.dimensions[i] = unit1.dimensions[i] + unit2.dimensions[i]
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      // dimension arrays may be of different lengths. Default to 0.
+      result.dimension[i] = unit1.dimension[i] + unit2.dimension[i]
     }
 
     // Append other's units list onto result
@@ -581,9 +581,9 @@ let _config = function _config (options) {
 
     // If at least one operand has a value, then the result should also have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : _normalize(unit1.units, unit1.value)
-      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : _normalize(unit2.units, unit2.value)
-      result.value = _denormalize(result.units, options.type.mul(val1, val2))
+      const val1 = unit1.value === null ? normalize(unit1.units, 1, options.type) : normalize(unit1.units, unit1.value, options.type)
+      const val2 = unit2.value === null ? normalize(unit2.units, 1, options.type) : normalize(unit2.units, unit2.value, options.type)
+      result.value = denormalize(result.units, options.type.mul(val1, val2), options.type)
     } else {
       result.value = null
     }
@@ -599,8 +599,8 @@ let _config = function _config (options) {
   function _div (unit1, unit2) {
     const result = _clone(unit1)
 
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      result.dimensions[i] = unit1.dimensions[i] - unit2.dimensions[i]
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      result.dimension[i] = unit1.dimension[i] - unit2.dimension[i]
     }
 
     // Invert and append other's units list onto result
@@ -618,9 +618,9 @@ let _config = function _config (options) {
 
     // If at least one operand has a value, the result should have a value
     if (unit1.value !== null || unit2.value !== null) {
-      const val1 = unit1.value === null ? _normalize(unit1.units, 1) : _normalize(unit1.units, unit1.value)
-      const val2 = unit2.value === null ? _normalize(unit2.units, 1) : _normalize(unit2.units, unit2.value)
-      result.value = _denormalize(result.units, options.type.div(val1, val2))
+      const val1 = unit1.value === null ? normalize(unit1.units, 1, options.type) : normalize(unit1.units, unit1.value, options.type)
+      const val2 = unit2.value === null ? normalize(unit2.units, 1, options.type) : normalize(unit2.units, unit2.value, options.type)
+      result.value = denormalize(result.units, options.type.div(val1, val2), options.type)
     } else {
       result.value = null
     }
@@ -636,8 +636,8 @@ let _config = function _config (options) {
   function _pow (unit, p) {
     // TODO: combineDuplicateUnits
     const result = _clone(unit)
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      result.dimensions[i] = options.type.mul(unit.dimensions[i], p)
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      result.dimension[i] = options.type.mul(unit.dimension[i], p)
     }
 
     // Adjust the power of each unit in the list
@@ -659,83 +659,6 @@ let _config = function _config (options) {
   }
 
   /**
-   * Normalize a value, based on an array of unit pieces
-   * @param {unit[]} unitPieces
-   * @param {number | *} value
-   * @return {number | *} normalized value
-   * @private
-   */
-  function _normalize (unitPieces, value) {
-    let unitValue, unitOffset, unitPower, unitPrefixValue
-
-    if (value === null || value === undefined || unitPieces.length === 0) {
-      return value
-    } else if (_isCompound(unitPieces)) {
-      // units is a compound unit, so do not apply offsets.
-      // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
-      let result = value
-
-      for (let i = 0; i < unitPieces.length; i++) {
-        unitValue = options.type.conv(unitPieces[i].unit.value)
-        unitPrefixValue = options.type.conv(unitPieces[i].prefix.value)
-        unitPower = options.type.conv(unitPieces[i].power)
-        result = options.type.mul(result, options.type.pow(options.type.mul(unitValue, unitPrefixValue), unitPower))
-      }
-
-      return result
-    } else {
-      // units is a single unit of power 1, like kg or degC
-      unitValue = options.type.conv(unitPieces[0].unit.value)
-      unitOffset = options.type.conv(unitPieces[0].unit.offset)
-      unitPrefixValue = options.type.conv(unitPieces[0].prefix.value)
-
-      return options.type.mul(options.type.add(value, unitOffset), options.type.mul(unitValue, unitPrefixValue))
-    }
-  }
-
-  /**
-   * Denormalize a value, based on an array of atomic units
-   * @param {unit[]} unitPieces Array of atomic units (as in, Unit.units)
-   * @param {number} value
-   * @param {number} [prefixValue]    Optional prefix value to be used (ignored if this is a derived unit)
-   * @return {number} denormalized value
-   * @private
-   */
-  function _denormalize (unitPieces, value, prefixValue) {
-    let unitValue, unitOffset, unitPower, unitPrefixValue
-
-    if (value === null || value === undefined || unitPieces.length === 0) {
-      return value
-    } else if (_isCompound(unitPieces)) {
-      // unit is a compound unit, so do not apply offsets.
-      // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
-      // Also, prefixValue is ignored--but we will still use the prefix value stored in each unit, since kg is usually preferable to g unless the user decides otherwise.
-      let result = value
-
-      for (let i = 0; i < unitPieces.length; i++) {
-        unitValue = options.type.conv(unitPieces[i].unit.value)
-        unitPrefixValue = options.type.conv(unitPieces[i].prefix.value)
-        unitPower = options.type.conv(unitPieces[i].power)
-        result = options.type.div(result, options.type.pow(options.type.mul(unitValue, unitPrefixValue), unitPower))
-      }
-
-      return result
-    } else {
-      // unit is a single unit of power 1, like kg or degC
-
-      unitValue = options.type.conv(unitPieces[0].unit.value)
-      unitPrefixValue = options.type.conv(unitPieces[0].prefix.value)
-      unitOffset = options.type.conv(unitPieces[0].unit.offset)
-
-      if (prefixValue === undefined || prefixValue === null) {
-        return options.type.sub(options.type.div(options.type.div(value, unitValue), unitPrefixValue), unitOffset)
-      } else {
-        return options.type.sub(options.type.div(options.type.div(value, unitValue), prefixValue), unitOffset)
-      }
-    }
-  }
-
-  /**
    * Private function _to
    * @param {Unit} unit The unit to convert.
    * @param {Unit} valuelessUnit The valueless unit to convert it to.
@@ -744,14 +667,14 @@ let _config = function _config (options) {
     let result
     const value = unit.value === null ? 1 : unit.value
 
-    if (!unit._equalDimension(valuelessUnit)) {
+    if (!unit._equalQuantity(valuelessUnit)) {
       throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
     }
     if (valuelessUnit.value !== null) {
       throw new Error(`Cannot convert ${unit.toString()}: target unit must be valueless`)
     }
     result = _clone(valuelessUnit)
-    result.value = options.type.clone(_denormalize(result.units, _normalize(unit.units, value)))
+    result.value = options.type.clone(denormalize(result.units, normalize(unit.units, value, options.type), options.type))
     result.fixed = true // Don't auto simplify
     return result
   }
@@ -797,7 +720,7 @@ let _config = function _config (options) {
     }
 
     function calcValue (prefix) {
-      return options.type.div(unit.value, options.type.pow(prefix.value / piece.prefix.value, piece.power))
+      return options.type.div(unit.value, options.type.pow(piece.unit.prefixes[prefix] / piece.unit.prefixes[piece.prefix], piece.power))
     }
 
     function calcScore (prefix) {
@@ -836,7 +759,7 @@ let _config = function _config (options) {
     }
 
     piece.prefix = bestPrefix
-    result.value = options.type.clone(_denormalize(result.units, _normalize(unit.units, unit.value)))
+    result.value = options.type.clone(denormalize(result.units, normalize(unit.units, unit.value, options.type), options.type))
 
     Object.freeze(result)
     return result
@@ -854,14 +777,14 @@ let _config = function _config (options) {
     // Multiple units or units with powers are formatted like this:
     // 5 (kg m^2) / (s^3 mol)
     // Build an representation from the base units of the SI unit system
-    for (let i = 0; i < unitStore.BASE_DIMENSIONS.length; i++) {
-      const baseDim = unitStore.BASE_DIMENSIONS[i]
-      if (Math.abs(result.dimensions[i] || 0) > 1e-12) {
-        if (unitStore.UNIT_SYSTEMS['si'].hasOwnProperty(baseDim)) {
+    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+      const baseDim = unitStore.defs.baseQuantities[i]
+      if (Math.abs(result.dimension[i] || 0) > 1e-12) {
+        if (unitStore.defs.unitSystems['si'].hasOwnProperty(baseDim)) {
           proposedUnitList.push({
-            unit: unitStore.UNIT_SYSTEMS['si'][baseDim].unit,
-            prefix: unitStore.UNIT_SYSTEMS['si'][baseDim].prefix,
-            power: result.dimensions[i] || 0
+            unit: unitStore.defs.unitSystems['si'][baseDim].unit,
+            prefix: unitStore.defs.unitSystems['si'][baseDim].prefix,
+            power: result.dimension[i] || 0
           })
         } else {
           throw new Error('Cannot express custom unit ' + baseDim + ' in SI units')
@@ -871,21 +794,9 @@ let _config = function _config (options) {
 
     // Replace this unit list with the proposed list
     result.units = proposedUnitList
-    if (unit.value !== null) { result.value = options.type.clone(_denormalize(result.units, _normalize(unit.units, unit.value))) }
+    if (unit.value !== null) { result.value = options.type.clone(denormalize(result.units, normalize(unit.units, unit.value, options.type), options.type)) }
     result.fixed = true // Don't auto simplify
     return result
-  }
-
-  /**
-   * Return whether the given array of unit pieces is compound (contains multiple units, such as m/s, or cm^2, but not N)
-   * @param {unit[]} units Array of unit pieces
-   * @return {boolean} True if the unit is compound
-   */
-  function _isCompound (units) {
-    if (units.length === 0) {
-      return false
-    }
-    return units.length > 1 || Math.abs(units[0].power - 1.0) > 1e-15
   }
 
   /**
@@ -901,7 +812,7 @@ let _config = function _config (options) {
     for (let i = 0; i < unit.units.length; i++) {
       if (unit.units[i].power > 0) {
         nNum++
-        strNum += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+        strNum += ' ' + unit.units[i].prefix + unit.units[i].unit.name
         if (Math.abs(unit.units[i].power - 1.0) > 1e-15) {
           strNum += '^' + unit.units[i].power
         }
@@ -914,12 +825,12 @@ let _config = function _config (options) {
       for (let i = 0; i < unit.units.length; i++) {
         if (unit.units[i].power < 0) {
           if (nNum > 0) {
-            strDen += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+            strDen += ' ' + unit.units[i].prefix + unit.units[i].unit.name
             if (Math.abs(unit.units[i].power + 1.0) > 1e-15) {
               strDen += '^' + (-unit.units[i].power)
             }
           } else {
-            strDen += ' ' + unit.units[i].prefix.name + unit.units[i].unit.name
+            strDen += ' ' + unit.units[i].prefix + unit.units[i].unit.name
             strDen += '^' + (unit.units[i].power)
           }
         }
@@ -951,9 +862,6 @@ let _config = function _config (options) {
 
   let unitStore = createUnitStore(options)
 
-  // Create a parser configured for these options
-  let parser = createParser(options, unitStore)
-
   // TODO: How to add custom units which are defined based on other units? They will need to be parsed, but the parser depends on the unit store, so the unit store can't use the parser.
 
   // Public functions available on the unitmath namespace
@@ -979,9 +887,13 @@ let _config = function _config (options) {
     }
 
     // Shallow copy unit and type
-    retOptions.unit = Object.assign({}, options.unit, newOptions.unit)
+    retOptions.definitions = Object.assign({}, options.definitions, newOptions.definitions)
     retOptions.type = Object.assign({}, options.type, newOptions.type)
     return _config(retOptions)
+  }
+
+  unitmath.definitions = function definitions () {
+    return unitStore.originalDefinitions
   }
 
   /* Alternate API syntax */
@@ -1080,7 +992,7 @@ let defaultMul = (a, b) => a * b
 let defaultDiv = (a, b) => a / b
 let defaultPow = (a, b) => Math.pow(a, b)
 let defaultAbs = (a) => Math.abs(a)
-let defaultEq = (a, b) => a === b
+let defaultEq = (a, b) => Math.abs(a - b) / Math.abs(a + b) < 1e-15
 let defaultLT = (a, b) => a < b
 let defaultGT = (a, b) => a > b
 let defaultLE = (a, b) => a <= b
@@ -1093,6 +1005,8 @@ let defaultClone = (a) => {
   return a
 }
 
+// TODO: setting to say whether to format using only the common prefixes or all prefixes
+
 let defaultOptions = {
   parentheses: false,
   precision: 15,
@@ -1103,7 +1017,14 @@ let defaultOptions = {
   simplifyThreshold: 2,
   system: 'auto',
   subsystem: 'auto',
-  unit: { /* No extra units */ },
+  definitions: {
+    skipBuiltIns: false,
+    units: {},
+    prefixes: {},
+    baseQuantities: [],
+    quantities: {},
+    unitSystems: {}
+  },
   type: {
     add: defaultAdd,
     sub: defaultSub,
