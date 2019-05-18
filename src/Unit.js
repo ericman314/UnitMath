@@ -402,7 +402,7 @@ let _config = function _config (options) {
           // Number of total units
           let comp = unitList.length
           // Number of units containing powers !== +/-1
-          comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length
+          comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length * 2
           // At least one unit in denominator
           if (unitList.filter(a => a.power < 0).length > 0) {
             comp += 1
@@ -1021,9 +1021,9 @@ let defaultOptions = {
     skipBuiltIns: false,
     units: {},
     prefixes: {},
-    base_quantities: {},
+    baseQuantities: [],
     quantities: {},
-    unit_systems: {}
+    unitSystems: {}
   },
   type: {
     add: defaultAdd,
