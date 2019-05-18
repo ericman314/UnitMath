@@ -1,7 +1,7 @@
 /**
  * Returns a new Parser.
  */
-export default function createParser (options, findUnit) {
+export default function createParser (options, findUnit, nBaseQuantities) {
   // private variables and functions for the Unit parser
   let text, index, c
 
@@ -161,7 +161,10 @@ export default function createParser (options, findUnit) {
     unit.units = []
 
     // Initialize this unit's dimension array
-    unit.dimension = findUnit('').unit.dimension.map(() => 0)
+    unit.dimension = []
+    for (let i = 0; i < nBaseQuantities; i++) {
+      unit.dimension[i] = 0
+    }
 
     let powerMultiplierCurrent = 1
     let expectingUnit = false
