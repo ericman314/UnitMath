@@ -1,6 +1,7 @@
 import assert from 'assert'
 import approx from './approx'
 import unit from '../src/Unit'
+import util from 'util'
 
 // TODO: Bring in any other tests that use units from math.js
 
@@ -44,9 +45,9 @@ describe('unitmath', () => {
           skipBuiltIns: false,
           units: {},
           prefixes: {},
-          base_quantities: {},
+          baseQuantities: [],
           quantities: {},
-          unit_systems: {}
+          unitSystems: {}
         }
       }
       let actualOptions = unit.config()
@@ -95,16 +96,106 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
       })
 
-      it.skip('should only allow valid names for units', () => {
-
+      it('should only allow valid names for units', () => {
+        assert.throws(() => { unit.config({ definitions: { units: { 'not_a_valid_unit': '3.14 kg' } } }) }, /Unit name contains non-alpha/)
+        assert.throws(() => { unit.config({ definitions: { units: { '5tartsWithNumber': '42 ft' } } }) }, /Unit name contains non-alpha/)
+        assert.throws(() => { unit.config({ definitions: { units: { 5: '5 day' } } }) }, /Unit name contains non-alpha/)
       })
 
-      it.skip('should override existing units', () => {
-
+      it('should override existing units', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              poundmass: {
+                value: '0.5 kg',
+                aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
+              }
+            }
+          }
+        })
+        assert.strictEqual(unit('1 lb').to('kg').toString(), '0.45359237 kg')
+        assert.strictEqual(newUnit('1 lb').to('kg').toString(), '0.5 kg')
       })
 
-      it.skip('should remove existing units if value is falsey', () => {
+      it('should remove existing units if value is falsey', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              henry: null
+            }
+          }
+        })
+        assert.doesNotThrow(() => unit('henry'))
+        assert.throws(() => newUnit('henry'), /Unit "henry" not found/)
+      })
 
+      it('should create new prefixes', () => {
+        // TODO: Mutating individual units in the definitions can have bad side effects!
+        let meter = Object.assign({}, unit.definitions().units.meter)
+        meter.prefixes = 'FUNNY'
+        meter.commonPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
+        let newUnit = unit.config({
+          prefixMin: 1,
+          prefixMax: 2,
+          definitions: {
+            units: {
+              meter
+            },
+            prefixes: {
+              FUNNY: { '': 1, 'A': 2, 'B': 4, 'C': 8, 'D': 16, 'E': 32, 'F': 64, 'G': 128 }
+            }
+          }
+        })
+
+        assert.strictEqual(newUnit('6 meter').toString(), '1.5 Bmeter')
+        assert.strictEqual(newUnit('10 Cmeter').toString(), '1.25 Fmeter')
+      })
+
+      it('should create new base quantities and derived quantities', () => {
+        let newUnit = unit.config({
+          definitions: {
+            baseQuantities: [ 'ESSENCE_OF_FOO' ],
+            quantities: {
+              'FOOLUME': 'ESSENCE_OF_FOO^3',
+              'FOOLOCITY': 'ESSENCE_OF_FOO TIME^-1'
+            },
+            units: {
+              foo: {
+                quantity: 'ESSENCE_OF_FOO',
+                value: 1,
+                prefixes: 'LONG'
+              },
+              fib: '5 foo/hr',
+              flab: '1 foo^3'
+            },
+            unitSystems: {
+              si: {
+                ESSENCE_OF_FOO: 'foo',
+                FOOLUME: 'flab',
+                FOOLOCITY: 'fib'
+              }
+            }
+          }
+        })
+
+        assert.deepStrictEqual(newUnit('fib')._getQuantities(), [ 'FOOLOCITY' ])
+        assert.deepStrictEqual(newUnit('flab')._getQuantities(), [ 'FOOLUME' ])
+        assert.strictEqual(newUnit('1 megafoo/s').to('fib').toString(), '720000000 fib')
+        assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
+      })
+
+      it('should extend, but not replace, individual unit systems', () => {
+        // TODO: Still no good way to say that mi/hr should be replaced by mph unless mi is explicitly designated as a part of the unit system
+        let newUnit = unit.config({
+          definitions: {
+            units: { mph: '1 mi/hr' },
+            unitSystems: {
+              us: { VELOCITY: 'mph', LENGTH: 'mi' }
+            }
+          }
+        })
+        assert.deepStrictEqual(newUnit('70 mi').div('60 min').toString(), '70 mph')
+        assert.deepStrictEqual(newUnit.definitions().unitSystems.us.MASS, 'lbm')
       })
     })
 
@@ -1052,6 +1143,8 @@ describe('unitmath', () => {
   describe('unitStore', function () {
     describe('defs.quantities', () => {
       it('should contain the correct dimension for each quantity', () => {
+        console.log(util.inspect(unit._unitStore.defs.baseQuantities))
+        assert.strictEqual(unit._unitStore.defs.baseQuantities.length, 10)
         assert.deepStrictEqual(unit._unitStore.defs.quantities['UNITLESS'], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         assert.deepStrictEqual(unit._unitStore.defs.quantities['LENGTH'], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
         assert.deepStrictEqual(unit._unitStore.defs.quantities['TIME'], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0])
