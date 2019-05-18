@@ -167,7 +167,7 @@ export default function createUnitStore (options) {
               parsed = parser(unitDef.value[1])
               parsed.value = unitDef.value[0]
             } else {
-              throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)  
+              throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
             }
           } else if (typeof unitDef === 'string') {
             parsed = parser(unitDef)

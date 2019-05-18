@@ -10,7 +10,7 @@ import unit from '../src/Unit.js'
 
 // TODO: Test to make sure all DIMENSIONS were converted correctly (use old hardcoded arrays from UnitStore.js)
 
-function configCustomUnits(units) {
+function configCustomUnits (units) {
   return unit.config({
     definitions: {
       units
@@ -148,7 +148,7 @@ describe('unitmath', () => {
         }), /Error: Could not create the following units: myUnit. Reasons follow: SyntaxError: Unit "q038hfqi3hdq0" not found./)
 
         assert.throws(() => configCustomUnits({
-          myUnit: '8 m^',
+          myUnit: '8 m^'
         }), /Error: Could not parse value '8 m\^' of unit 'myUnit'/)
       })
 
@@ -1563,5 +1563,4 @@ describe('unitmath', () => {
       assert.throws(function () { Unit.parse('10 baz').toSI() }, /Cannot express custom unit/)
     })
   })
-
 })
