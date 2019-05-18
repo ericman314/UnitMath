@@ -14,7 +14,7 @@
     "build": "rollup -c",
     "prepublishOnly": "npm test && npm run test:bundle",
     "test": "npm run test:src && npm run lint",
-    "test:src": "mocha --require esm 'test/**/*.test.js'",
+    "test:src": "nyc --require esm mocha 'test/**/*.test.js'",
     "test:bundle": "npm run build && mocha 'test/**/*.test-bundle.js'",
     "lint": "standard --env=mocha --env=worker --verbose",
     "lint:fix": "standard --env=mocha --env=worker --fix --verbose"
@@ -42,6 +42,7 @@
     "@babel/preset-env": "7.4.4",
     "core-js": "3.0.1",
     "mocha": "^6.1.4",
+    "nyc": "^14.1.1",
     "rollup": "1.11.3",
     "rollup-plugin-babel": "4.3.2",
     "rollup-plugin-commonjs": "9.3.4",

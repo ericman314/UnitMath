@@ -47,7 +47,7 @@ export default function createUnitStore (options) {
       } else {
         originalDefinitions[key] = Object.assign({}, skip ? {} : builtIns[key], options.definitions[key] || {})
       }
-  
+
       // Omit units because there is additional processing we need to do before we add them to defs
       if (key !== 'units') {
         defs[key] = Object.assign({}, originalDefinitions[key])

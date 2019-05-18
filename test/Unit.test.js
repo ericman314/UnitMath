@@ -1,7 +1,6 @@
 import assert from 'assert'
 import approx from './approx'
 import unit from '../src/Unit'
-import util from 'util'
 
 // TODO: Bring in any other tests that use units from math.js
 
@@ -1143,7 +1142,6 @@ describe('unitmath', () => {
   describe('unitStore', function () {
     describe('defs.quantities', () => {
       it('should contain the correct dimension for each quantity', () => {
-        console.log(util.inspect(unit._unitStore.defs.baseQuantities))
         assert.strictEqual(unit._unitStore.defs.baseQuantities.length, 10)
         assert.deepStrictEqual(unit._unitStore.defs.quantities['UNITLESS'], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         assert.deepStrictEqual(unit._unitStore.defs.quantities['LENGTH'], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])

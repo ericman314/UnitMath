@@ -3,3 +3,4 @@ dist/
 es/
 HOWTO.md
 .vscode/launch.json
+.nyc_output
