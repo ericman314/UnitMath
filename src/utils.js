@@ -40,11 +40,10 @@ export function normalize (unitPieces, value, type) {
    * @param {unit[]} unitPieces Array of atomic units (as in, Unit.units)
    * @param {number} value
    * @param {object} type
-   * @param {number} [prefixValue]    Optional prefix value to be used (ignored if this is a derived unit)
    * @return {number} denormalized value
    * @private
    */
-export function denormalize (unitPieces, value, type, prefixValue) {
+export function denormalize (unitPieces, value, type) {
   let unitValue, unitOffset, unitPower, unitPrefixValue
 
   if (value === null || value === undefined || unitPieces.length === 0) {
@@ -52,7 +51,6 @@ export function denormalize (unitPieces, value, type, prefixValue) {
   } else if (isCompound(unitPieces)) {
     // unit is a compound unit, so do not apply offsets.
     // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
-    // Also, prefixValue is ignored--but we will still use the prefix value stored in each unit, since kg is usually preferable to g unless the user decides otherwise.
     let result = value
 
     for (let i = 0; i < unitPieces.length; i++) {
@@ -70,11 +68,7 @@ export function denormalize (unitPieces, value, type, prefixValue) {
     unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix])
     unitOffset = type.conv(unitPieces[0].unit.offset)
 
-    if (prefixValue === undefined || prefixValue === null) {
-      return type.sub(type.div(type.div(value, unitValue), unitPrefixValue), unitOffset)
-    } else {
-      return type.sub(type.div(type.div(value, unitValue), prefixValue), unitOffset)
-    }
+    return type.sub(type.div(type.div(value, unitValue), unitPrefixValue), unitOffset)
   }
 }
 

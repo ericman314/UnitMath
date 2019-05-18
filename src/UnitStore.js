@@ -144,7 +144,7 @@ export default function createUnitStore (options) {
 
       const containsUnknownPrefix = unitDef.prefixes && !defs.prefixes.hasOwnProperty(unitDef.prefixes)
       if (containsUnknownPrefix) {
-        throw new Error(`Unknown prefixes ${unitDef.prefixes} for unit ${unitDefKey}`)
+        throw new Error(`Unknown prefixes '${unitDef.prefixes}' for unit '${unitDefKey}'`)
       }
 
       let unitValue; let unitDimension; let skipThisUnit = false
@@ -163,9 +163,11 @@ export default function createUnitStore (options) {
           if (unitDef.hasOwnProperty('value')) {
             if (typeof unitDef.value === 'string') {
               parsed = parser(unitDef.value)
-            } else if (Array.isArray(unitDef.value)) {
+            } else if (Array.isArray(unitDef.value) && unitDef.value.length === 2) {
               parsed = parser(unitDef.value[1])
               parsed.value = unitDef.value[0]
+            } else {
+              throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)  
             }
           } else if (typeof unitDef === 'string') {
             parsed = parser(unitDef)
@@ -246,9 +248,6 @@ export default function createUnitStore (options) {
         sys[quantKey] = unitPrefixPair
 
         // Add the system's name to the unit (for reverse lookup) so we can infer unit systems just by inspecting the individual units
-        if (!unitPrefixPair.unit.systems) {
-          unitPrefixPair.unit.systems = []
-        }
         unitPrefixPair.unit.systems.push(sysKey)
       } else {
         throw new Error(`Unknown unit '${sys[quantKey]}' for quantity '${quantKey}' in unit system '${sysKey}'`)

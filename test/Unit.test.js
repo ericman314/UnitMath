@@ -1,6 +1,6 @@
 import assert from 'assert'
 import approx from './approx'
-import unit from '../src/Unit'
+import unit from '../src/Unit.js'
 
 // TODO: Bring in any other tests that use units from math.js
 
@@ -9,6 +9,14 @@ import unit from '../src/Unit'
 /* global math, Unit */
 
 // TODO: Test to make sure all DIMENSIONS were converted correctly (use old hardcoded arrays from UnitStore.js)
+
+function configCustomUnits(units) {
+  return unit.config({
+    definitions: {
+      units
+    }
+  })
+}
 
 describe('unitmath', () => {
   describe('unitmath namespace', () => {
@@ -82,34 +90,41 @@ describe('unitmath', () => {
 
     describe('custom definitions', () => {
       it('should create new units', () => {
-        let newUnit = unit.config({
-          definitions: {
-            units: {
-              furlongsPerFortnight: { value: '1 furlong/fortnight' },
-              furlong: '220 yards',
-              fortnight: { value: [2, 'weeks'] }
-            }
-          }
+        let newUnit = configCustomUnits({
+          furlongsPerFortnight: { value: '1 furlong/fortnight' },
+          furlong: '220 yards',
+          fortnight: { value: [2, 'weeks'] }
         })
 
         assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
       })
 
       it('should only allow valid names for units', () => {
-        assert.throws(() => { unit.config({ definitions: { units: { 'not_a_valid_unit': '3.14 kg' } } }) }, /Unit name contains non-alpha/)
-        assert.throws(() => { unit.config({ definitions: { units: { '5tartsWithNumber': '42 ft' } } }) }, /Unit name contains non-alpha/)
-        assert.throws(() => { unit.config({ definitions: { units: { 5: '5 day' } } }) }, /Unit name contains non-alpha/)
+        assert.throws(() => configCustomUnits({ 'not_a_valid_unit': '3.14 kg' }), /Unit name contains non-alpha/)
+        assert.throws(() => configCustomUnits({ '5tartsWithNumber': '42 ft' }), /Unit name contains non-alpha/)
+        assert.throws(() => configCustomUnits({ 5: '5 day' }), /Unit name contains non-alpha/)
+      })
+
+      it('should throw on invalid unit value type', () => {
+        assert.throws(() => configCustomUnits({ myUnit: 42 }), /Unit definition for 'myUnit' must be a string/)
+
+        assert.throws(() => configCustomUnits({ myUnit: { value: 42 } }), /Unit definition for 'myUnit' must be a string/)
+      })
+
+      it('should throw on invalid unit quantity', () => {
+        assert.throws(() => configCustomUnits({
+          myUnit: {
+            quantity: 'ESSENCE_OF_FOO',
+            value: 100
+          }
+        }), /Unknown quantity specified for unit myUnit: ESSENCE_OF_FOO/)
       })
 
       it('should override existing units', () => {
-        let newUnit = unit.config({
-          definitions: {
-            units: {
-              poundmass: {
-                value: '0.5 kg',
-                aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
-              }
-            }
+        let newUnit = configCustomUnits({
+          poundmass: {
+            value: '0.5 kg',
+            aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
           }
         })
         assert.strictEqual(unit('1 lb').to('kg').toString(), '0.45359237 kg')
@@ -117,15 +132,42 @@ describe('unitmath', () => {
       })
 
       it('should remove existing units if value is falsey', () => {
-        let newUnit = unit.config({
-          definitions: {
-            units: {
-              henry: null
-            }
-          }
-        })
+        let newUnit = configCustomUnits({ henry: null })
         assert.doesNotThrow(() => unit('henry'))
         assert.throws(() => newUnit('henry'), /Unit "henry" not found/)
+      })
+
+      it('should throw if not all units could be created', () => {
+        assert.throws(() => configCustomUnits({
+          myUnit: '1 theirUnit',
+          theirUnit: '1 myUnit'
+        }), /Error: Could not create the following units: myUnit, theirUnit. Reasons follow: SyntaxError: Unit "theirUnit" not found. SyntaxError: Unit "myUnit" not found./)
+
+        assert.throws(() => configCustomUnits({
+          myUnit: 'q038hfqi3hdq0'
+        }), /Error: Could not create the following units: myUnit. Reasons follow: SyntaxError: Unit "q038hfqi3hdq0" not found./)
+
+        assert.throws(() => configCustomUnits({
+          myUnit: '8 m^',
+        }), /Error: Could not parse value '8 m\^' of unit 'myUnit'/)
+      })
+
+      it('should throw if an alias would override an existing unit', () => {
+        assert.throws(() => configCustomUnits({
+          myUnit: {
+            value: '1 m',
+            aliases: ['m']
+          }
+        }), /Alias 'm' would override an existing unit/)
+      })
+
+      it('should throw on unknown prefix', () => {
+        assert.throws(() => configCustomUnits({
+          myUnit: {
+            value: '45 s',
+            prefixes: 'MADE_UP_PREFIXES'
+          }
+        }), /Unknown prefixes 'MADE_UP_PREFIXES' for unit 'myUnit'/)
       })
 
       it('should create new prefixes', () => {
@@ -148,6 +190,14 @@ describe('unitmath', () => {
 
         assert.strictEqual(newUnit('6 meter').toString(), '1.5 Bmeter')
         assert.strictEqual(newUnit('10 Cmeter').toString(), '1.25 Fmeter')
+      })
+
+      it('should only allow common prefixes that are included in prefixes', () => {
+        let meter = Object.assign({}, unit.definitions().units.meter)
+        meter.commonPrefixes = ['', 'invalidPrefix']
+        assert.throws(() => configCustomUnits({
+          meter
+        }), /common prefix.*was not found among the allowable prefixes/)
       })
 
       it('should create new base quantities and derived quantities', () => {
@@ -183,6 +233,24 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
       })
 
+      it('should throw on invalid quantity definitions', () => {
+        assert.throws(() => unit.config({
+          definitions: {
+            quantities: {
+              'FOONESS': 'LENGTH^UMPTEENTHPOWER'
+            }
+          }
+        }), /Error processing quantity FOONESS: could not determine value of the exponent in string LENGTH\^UMPTEENTHPOWER/)
+
+        assert.throws(() => unit.config({
+          definitions: {
+            quantities: {
+              'AWESOME': 'SAUCE'
+            }
+          }
+        }), /Error processing quantity AWESOME: base quantity SAUCE not found/)
+      })
+
       it('should extend, but not replace, individual unit systems', () => {
         // TODO: Still no good way to say that mi/hr should be replaced by mph unless mi is explicitly designated as a part of the unit system
         let newUnit = unit.config({
@@ -195,6 +263,61 @@ describe('unitmath', () => {
         })
         assert.deepStrictEqual(newUnit('70 mi').div('60 min').toString(), '70 mph')
         assert.deepStrictEqual(newUnit.definitions().unitSystems.us.MASS, 'lbm')
+      })
+
+      it('should throw on unknown unit systems', () => {
+        assert.throws(() => {
+          unit.config({ system: 'nervous' })
+        }, /Unknown unit system/)
+      })
+
+      it('should not allow unknown units in unit systems', () => {
+        assert.throws(() => {
+          unit.config({
+            definitions: {
+              unitSystems: { si: { LENGTH: 'fiddlesticks' } }
+            }
+          })
+        }, /Unknown unit.*for quantity.*in unit system/)
+        assert.doesNotThrow(() => {
+          unit.config({
+            definitions: {
+              unitSystems: { si: { LENGTH: 'chain' } }
+            }
+          })
+        })
+      })
+
+      it('should not allow unknown quantities in unit systems', () => {
+        assert.throws(() => {
+          unit.config({
+            definitions: {
+              unitSystems: { si: { ESSENCE_OF_FOO: 'meter' } }
+            }
+          })
+        }, /Unit system.*mentions quantity.*which does not exist/)
+      })
+
+      it('should not allow inconsistent units/quantities in unit systems', () => {
+        assert.throws(() => {
+          unit.config({
+            definitions: {
+              unitSystems: { si: { LENGTH: 'day' } }
+            }
+          })
+        }, /In system.*quantity.*is inconsistent with unit/)
+      })
+
+      it('should add new unit systems', () => {
+        let newUnit = unit.config({
+          system: 'custom',
+          definitions: {
+            unitSystems: {
+              custom: { LENGTH: 'rod' }
+            }
+          }
+        })
+        assert.strictEqual(newUnit('66 ft').simplify().toString(), '4 rod')
       })
     })
 
@@ -321,6 +444,10 @@ describe('unitmath', () => {
       assert.strictEqual(unit.exists('kb'), true)
       assert.strictEqual(unit.exists('bla'), false)
       assert.strictEqual(unit.exists('5cm'), false)
+    })
+
+    it('should throw on invalid parameter', () => {
+      assert.throws(() => unit.exists(42), /parameter must be a string/)
     })
   })
 
@@ -935,6 +1062,7 @@ describe('unitmath', () => {
       assert.throws(function () { unit('/meter') }, /Unexpected "\/"/)
       assert.throws(function () { unit('1 */ s') }, /Unexpected "\/"/)
       assert.throws(function () { unit('45 kg 34 m') }, /Unexpected "3"/)
+      assert.throws(() => unit('10 m^'), /must be followed by a floating/)
     })
 
     it('should parse empty strings and only numbers', function () {
@@ -1435,4 +1563,5 @@ describe('unitmath', () => {
       assert.throws(function () { Unit.parse('10 baz').toSI() }, /Cannot express custom unit/)
     })
   })
+
 })
