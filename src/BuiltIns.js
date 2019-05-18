@@ -495,7 +495,7 @@ export const units = {
   },
   year: {
     value: '365.25 day', // Julian year
-    aliases: ['year']
+    aliases: ['years']
   },
   decade: {
     value: '10 year', // Julian decade
