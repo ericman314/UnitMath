@@ -5,7 +5,8 @@ node_js:
   - 10
   - 8
 
-script: npm run test:src
+script: 
+  - npm run test:src
 
 jobs:
   include:
@@ -14,3 +15,5 @@ jobs:
       name: Lint
     - script: npm run test:bundle
       name: Bundling Test
+    - script: npm run report-coverage
+      name: Coverage

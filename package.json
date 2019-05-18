@@ -17,7 +17,8 @@
     "test:src": "nyc --require esm mocha 'test/**/*.test.js'",
     "test:bundle": "npm run build && mocha 'test/**/*.test-bundle.js'",
     "lint": "standard --env=mocha --env=worker --verbose",
-    "lint:fix": "standard --env=mocha --env=worker --fix --verbose"
+    "lint:fix": "standard --env=mocha --env=worker --fix --verbose",
+    "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
   "repository": {
     "type": "git",
@@ -40,6 +41,7 @@
   "devDependencies": {
     "@babel/core": "7.4.4",
     "@babel/preset-env": "7.4.4",
+    "codecov": "^3.5.0",
     "core-js": "3.0.1",
     "mocha": "^6.1.4",
     "nyc": "^14.1.1",
