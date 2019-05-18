@@ -10,7 +10,7 @@ export default function createUnitStore (options) {
   /* Units are defined by these objects:
    * defs.prefixes
    * defs.baseQuantities
-   * QUANTITIES
+   * defs.quantities
    * defs.units
    * defs.unitSystems
    */
@@ -18,6 +18,8 @@ export default function createUnitStore (options) {
   // Steps:
   // Import the BUILT_INS
   // Object.assign BUILT_INS, options.extras
+
+  // TODO: Should we deep freeze the built-ins to prevent modification of the built-in units?
 
   const skip = options.definitions.skipBuiltIns
 
@@ -30,13 +32,26 @@ export default function createUnitStore (options) {
   // These will contain copies we can mutate without affecting the originals
   const defs = {}
 
+  // TODO: Don't iterate over definitionKeys any more, it's just too complicated and each key has its own special rules
   definitionKeys.forEach(key => {
     if (Array.isArray(builtIns[key])) {
       originalDefinitions[key] = builtIns[key].concat(options.definitions[key] || [])
       defs[key] = originalDefinitions[key].slice()
     } else {
-      originalDefinitions[key] = Object.assign({}, skip ? {} : builtIns[key], options.definitions[key] || {})
-      if (key !== 'units') defs[key] = Object.assign({}, originalDefinitions[key])
+      if (key === 'unitSystems') {
+        // We would like to extend unitSystem two levels deep
+        originalDefinitions[key] = Object.assign({}, skip ? {} : builtIns[key])
+        for (let subKey in options.definitions[key]) {
+          originalDefinitions[key][subKey] = Object.assign({}, originalDefinitions[key][subKey] || {}, options.definitions[key][subKey])
+        }
+      } else {
+        originalDefinitions[key] = Object.assign({}, skip ? {} : builtIns[key], options.definitions[key] || {})
+      }
+  
+      // Omit units because there is additional processing we need to do before we add them to defs
+      if (key !== 'units') {
+        defs[key] = Object.assign({}, originalDefinitions[key])
+      }
     }
   })
 
@@ -111,8 +126,8 @@ export default function createUnitStore (options) {
   // Empty out the set of units.
   defs.units = {}
 
-  // Create a parser configured for these options, and also supply it with the findUnit function.
-  const parser = createParser(options, findUnit)
+  // Create a parser configured for these options, and also supply it with the findUnit function and the number of base quantities.
+  const parser = createParser(options, findUnit, defs.baseQuantities.length)
 
   // Loop through the units. If the unit has a `quantity` property, initialize that unit with the quantity's dimension, and the given value property. If the unit does not, then parse the unit's value property (which is either a string or an two-element array) using the parser, and create the dimension and value from the resulting Unit. Create the unit with the name, dimension, value, offset, prefixes, and commonPrefixes properties. Convert the prefixes from a string to the associated object from the defs.prefixes object.
 
@@ -125,34 +140,22 @@ export default function createUnitStore (options) {
 
       const unitDef = originalDefinitions.units[unitDefKey]
 
+      if (!unitDef) continue
+
       const containsUnknownPrefix = unitDef.prefixes && !defs.prefixes.hasOwnProperty(unitDef.prefixes)
       if (containsUnknownPrefix) {
         throw new Error(`Unknown prefixes ${unitDef.prefixes} for unit ${unitDefKey}`)
       }
 
-      let unitAndAliases = [unitDefKey].concat(unitDef.aliases || [])
+      let unitValue; let unitDimension; let skipThisUnit = false
 
       if (unitDef.quantity) {
         // Defining the unit based on a quantity.
         if (!defs.quantities.hasOwnProperty(unitDef.quantity)) {
           throw new Error(`Unknown quantity specified for unit ${unitDefKey}: ${unitDef.quantity}`)
         }
-
-        // Add this units and its aliases (they are all the same except for the name)
-        unitAndAliases.forEach(newUnitName => {
-          const newUnit = {
-            name: newUnitName,
-            value: unitDef.value,
-            offset: unitDef.offset || 0,
-            dimension: defs.quantities[unitDef.quantity],
-            prefixes: defs.prefixes[unitDef.prefixes || 'NONE'],
-            commonPrefixes: unitDef.commonPrefixes, // Default should be undefined
-            systems: []
-          }
-          Object.freeze(newUnit)
-          defs.units[newUnitName] = newUnit
-          unitsAdded++
-        })
+        unitValue = unitDef.value
+        unitDimension = defs.quantities[unitDef.quantity]
       } else {
         // Defining the unit based on other units.
         let parsed
@@ -169,34 +172,46 @@ export default function createUnitStore (options) {
           } else {
             throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
           }
-
-          // Add this units and its aliases (they are all the same except for the name)
-          unitAndAliases.forEach(newUnitName => {
-            const newUnit = {
-              name: newUnitName,
-              value: normalize(parsed.units, parsed.value, options.type),
-              offset: unitDef.offset || 0,
-              dimension: Object.freeze(parsed.dimension),
-              prefixes: defs.prefixes[unitDef.prefixes || 'NONE'],
-              commonPrefixes: unitDef.commonPrefixes, // Default should be undefined,
-              systems: []
-            }
-            Object.freeze(newUnit)
-            defs.units[newUnitName] = newUnit
-            unitsAdded++
-          })
+          unitValue = normalize(parsed.units, parsed.value, options.type)
+          unitDimension = Object.freeze(parsed.dimension)
         } catch (ex) {
           if (/Unit.*not found/.test(ex.toString())) {
             unitsSkipped.push(unitDefKey)
             reasonsSkipped.push(ex.toString())
+            skipThisUnit = true
           } else {
             throw new Error(`Could not parse value '${unitDef.value || unitDef}' of unit '${unitDefKey}': ${ex}`)
           }
         }
       }
+
+      if (!skipThisUnit) {
+        // Add this units and its aliases (they are all the same except for the name)
+        let unitAndAliases = [unitDefKey].concat(unitDef.aliases || [])
+        unitAndAliases.forEach(newUnitName => {
+          if (defs.units.hasOwnProperty(newUnitName)) {
+            throw new Error(`Alias '${newUnitName}' would override an existing unit`)
+          }
+          if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(newUnitName) && newUnitName !== '') {
+            throw new SyntaxError(`Unit name contains non-alphanumeric characters or begins with a number: '${newUnitName}'`)
+          }
+          const newUnit = {
+            name: newUnitName,
+            value: unitValue,
+            offset: unitDef.offset || 0,
+            dimension: unitDimension,
+            prefixes: defs.prefixes[unitDef.prefixes || 'NONE'],
+            commonPrefixes: unitDef.commonPrefixes, // Default should be undefined
+            systems: []
+          }
+          Object.freeze(newUnit)
+          defs.units[newUnitName] = newUnit
+          unitsAdded++
+        })
+      }
     }
 
-    console.log(`Added ${unitsAdded} units and skipped: ${unitsSkipped.join(', ')}`)
+    // console.log(`Added ${unitsAdded} units and skipped: ${unitsSkipped.join(', ')}`)
     if (unitsSkipped.length === 0) break
     else if (unitsAdded === 0) {
       throw new Error(`Could not create the following units: ${unitsSkipped.join(', ')}. Reasons follow: ${reasonsSkipped.join(' ')}`)
