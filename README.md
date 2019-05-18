@@ -2,6 +2,7 @@
 UnitMath is a JavaScript library for unit conversion and arithmetic. 
 
 [![Build Status](https://travis-ci.org/ericman314/UnitMath.svg?branch=master)](https://travis-ci.org/ericman314/UnitMath)
+[![codecov](https://codecov.io/gh/ericman314/UnitMath/branch/master/graph/badge.svg)](https://codecov.io/gh/ericman314/UnitMath)
 
 ## Install
 
