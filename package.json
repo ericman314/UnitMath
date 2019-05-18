@@ -14,11 +14,11 @@
     "build": "rollup -c",
     "prepublishOnly": "npm test && npm run test:bundle",
     "test": "npm run test:src && npm run lint",
-    "test:src": "nyc --require esm mocha 'test/**/*.test.js'",
+    "test:src": "mocha --require esm 'test/**/*.test.js'",
     "test:bundle": "npm run build && mocha 'test/**/*.test-bundle.js'",
     "lint": "standard --env=mocha --env=worker --verbose",
     "lint:fix": "standard --env=mocha --env=worker --fix --verbose",
-    "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
+    "coverage": "nyc --reporter=lcov --reporter=text --report-dir coverage --require esm mocha 'test/**/*.test.js'"
   },
   "repository": {
     "type": "git",

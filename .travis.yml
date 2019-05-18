@@ -15,5 +15,5 @@ jobs:
       name: Lint
     - script: npm run test:bundle
       name: Bundling Test
-    - script: npm run report-coverage
+    - script: npm run coverage && npx codecov
       name: Coverage
