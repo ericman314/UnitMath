@@ -236,7 +236,7 @@ let _config = function _config (options) {
       // Search for a matching dimension in the given unit system
       let matchingDim
       for (const key in system) {
-        if (result._hasQuantity(key)) {
+        if (result.hasQuantity(key)) {
           // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
           matchingDim = key
           break
@@ -315,7 +315,7 @@ let _config = function _config (options) {
      * @memberof Unit
      * @param {QUANTITY | string | undefined} quantity
      */
-    _hasQuantity (quantity) {
+    hasQuantity (quantity) {
       if (typeof (quantity) === 'string') {
         quantity = unitStore.defs.quantities[quantity]
       }
@@ -336,7 +336,8 @@ let _config = function _config (options) {
      * @param {Unit} other
      * @return {boolean} true if equal dimensions
      */
-    _equalQuantity (other) {
+    equalQuantity (other) {
+      other = _convertParamToUnit(other)
       // All dimensions must be the same
       for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
         if (Math.abs(this.dimension[i] - other.dimension[i]) > 1e-12) {
@@ -350,10 +351,10 @@ let _config = function _config (options) {
      * Returns a string array of all the quantities that match this unit.
      * @return {string[]} The matching quantities, or an empty array if there are no matching quantities.
      */
-    _getQuantities () {
+    getQuantities () {
       const result = []
       for (let d in unitStore.defs.quantities) {
-        if (this._hasQuantity(d)) {
+        if (this.hasQuantity(d)) {
           result.push(d)
         }
       }
@@ -368,17 +369,17 @@ let _config = function _config (options) {
      */
     equals (other) {
       other = _convertParamToUnit(other)
-      return this._equalQuantity(other) && options.type.eq(normalize(this.units, this.value, options.type), normalize(other.units, other.value, options.type))
+      return this.equalQuantity(other) && options.type.eq(normalize(this.units, this.value, options.type), normalize(other.units, other.value, options.type))
     }
 
     /**
      * Get a string representation of the Unit, with optional formatting options. Alias of `format`.
      * @memberof Unit
-     * @param {Object} [options]  Formatting options.
+     * @param {Object} [opts]  Formatting options.
      * @return {string}
      */
-    toString (options) {
-      return this.format(options)
+    toString (opts) {
+      return this.format(opts)
     }
 
     /**
@@ -421,7 +422,7 @@ let _config = function _config (options) {
       }
 
       if (_opts.prefix === 'always' || (_opts.prefix === 'auto' && !this.fixed)) {
-        simp = _choosePrefix(simp)
+        simp = _choosePrefix(simp, _opts)
       }
 
       let str = ''
@@ -430,7 +431,7 @@ let _config = function _config (options) {
       } else if (simp.value !== null) {
         str += simp.value.toString()
       }
-      const unitStr = _formatUnits(simp)
+      const unitStr = _formatUnits(simp, _opts)
       if (unitStr.length > 0 && str.length > 0) {
         str += ' '
       }
@@ -438,6 +439,7 @@ let _config = function _config (options) {
       return str
     }
   }
+  // END OF UNIT CLASS
 
   // These private functions do not freeze the units before returning, so that we can do mutations on the units before returning the final, frozen unit to the user.
 
@@ -527,7 +529,7 @@ let _config = function _config (options) {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1._equalQuantity(unit2)) {
+    if (!unit1.equalQuantity(unit2)) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
@@ -545,7 +547,7 @@ let _config = function _config (options) {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1._equalQuantity(unit2)) {
+    if (!unit1.equalQuantity(unit2)) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
@@ -667,7 +669,7 @@ let _config = function _config (options) {
     let result
     const value = unit.value === null ? 1 : unit.value
 
-    if (!unit._equalQuantity(valuelessUnit)) {
+    if (!unit.equalQuantity(valuelessUnit)) {
       throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
     }
     if (valuelessUnit.value !== null) {
@@ -684,7 +686,10 @@ let _config = function _config (options) {
    * @param {Unit} unit The unit to choose the best prefix for.
    * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
    */
-  function _choosePrefix (unit) {
+  function _choosePrefix (unit, opts) {
+    if(!opts) {
+      throw new Error('opts is required')
+    }
     let result = _clone(unit)
     let piece = result.units[0] // TODO: Someday this might choose the most "dominant" unit, or something, to prefix, rather than the first unit
 
@@ -704,11 +709,11 @@ let _config = function _config (options) {
       // Unit has power of 0, so prefix will have no effect
       return unit
     }
-    if (options.type.lt(options.type.abs(unit.value), options.type.conv(1e-50))) {
+    if (opts.type.lt(opts.type.abs(unit.value), opts.type.conv(1e-50))) {
       // Unit is too small for the prefix to matter
       return unit
     }
-    if (options.type.le(options.type.abs(unit.value), options.prefixMax) && options.type.ge(options.type.abs(unit.value), options.prefixMin)) {
+    if (opts.type.le(opts.type.abs(unit.value), opts.prefixMax) && opts.type.ge(opts.type.abs(unit.value), opts.prefixMin)) {
       // Unit's value is already acceptable
       return unit
     }
@@ -720,25 +725,25 @@ let _config = function _config (options) {
     }
 
     function calcValue (prefix) {
-      return options.type.div(unit.value, options.type.pow(piece.unit.prefixes[prefix] / piece.unit.prefixes[piece.prefix], piece.power))
+      return opts.type.div(unit.value, opts.type.pow(piece.unit.prefixes[prefix] / piece.unit.prefixes[piece.prefix], piece.power))
     }
 
     function calcScore (prefix) {
       let thisValue = calcValue(prefix)
-      if (options.type.lt(thisValue, options.prefixMin)) {
+      if (opts.type.lt(thisValue, opts.prefixMin)) {
         // prefix makes the value too small
-        return options.type.abs(options.type.div(options.prefixMin, thisValue))
+        return opts.type.abs(opts.type.div(opts.prefixMin, thisValue))
       }
-      if (options.type.gt(thisValue, options.prefixMax)) {
+      if (opts.type.gt(thisValue, opts.prefixMax)) {
         // prefix makes the value too large
-        return options.type.abs(options.type.div(thisValue, options.prefixMax))
+        return opts.type.abs(opts.type.div(thisValue, opts.prefixMax))
       }
 
       // The prefix is in range, but return a score that says how close it is to the original value.
-      if (options.type.le(thisValue, unit.value)) {
-        return -options.type.abs(options.type.div(thisValue, unit.value))
+      if (opts.type.le(thisValue, unit.value)) {
+        return -opts.type.abs(opts.type.div(thisValue, unit.value))
       } else {
-        return -options.type.abs(options.type.div(unit.value, thisValue))
+        return -opts.type.abs(opts.type.div(unit.value, thisValue))
       }
     }
 
@@ -759,7 +764,7 @@ let _config = function _config (options) {
     }
 
     piece.prefix = bestPrefix
-    result.value = options.type.clone(denormalize(result.units, normalize(unit.units, unit.value, options.type), options.type))
+    result.value = opts.type.clone(denormalize(result.units, normalize(unit.units, unit.value, opts.type), opts.type))
 
     Object.freeze(result)
     return result
@@ -803,7 +808,10 @@ let _config = function _config (options) {
    * Get a string representation of the units of this Unit, without the value.
    * @return {string}
    */
-  function _formatUnits (unit) {
+  function _formatUnits (unit, opts) {
+    if (!opts) {
+      throw new Error('opts is required')
+    }
     let strNum = ''
     let strDen = ''
     let nNum = 0
@@ -841,7 +849,7 @@ let _config = function _config (options) {
     strNum = strNum.substr(1)
     strDen = strDen.substr(1)
 
-    if (options.parentheses) {
+    if (opts.parentheses) {
       // Add parans for better copy/paste back into evaluate, for example, or for better pretty print formatting
       if (nNum > 1 && nDen > 0) {
         strNum = '(' + strNum + ')'
@@ -977,7 +985,7 @@ let _config = function _config (options) {
 
   unitmath.exists = unitStore.exists
 
-  // TODO: Temporary, create a public API or something eventually to access the currently configured units
+  // TODO: This is used only for testing, could there be another way rather than exposing it on the public namespace?
   unitmath._unitStore = unitStore
 
   Object.freeze(unitmath)
