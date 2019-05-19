@@ -687,7 +687,7 @@ let _config = function _config (options) {
    * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
    */
   function _choosePrefix (unit, opts) {
-    if(!opts) {
+    if (!opts) {
       throw new Error('opts is required')
     }
     let result = _clone(unit)
