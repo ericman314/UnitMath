@@ -121,7 +121,7 @@ export default function createParser (options, findUnit, nBaseQuantities) {
     code = unitName.charCodeAt(0)
     if ((code >= 65 && code <= 90) ||
         (code >= 97 && code <= 122)) {
-      return unitName || null
+      return unitName
     } else {
       return null
     }
@@ -271,12 +271,6 @@ export default function createParser (options, findUnit, nBaseQuantities) {
         powerMultiplierCurrent = -1
         expectingUnit = true
       }
-    }
-
-    // Has the string been entirely consumed?
-    skipWhitespace()
-    if (c) {
-      throw new SyntaxError('Could not parse: "' + str + '"')
     }
 
     // Is there a trailing slash?

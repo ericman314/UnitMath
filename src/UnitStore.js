@@ -35,7 +35,7 @@ export default function createUnitStore (options) {
   // TODO: Don't iterate over definitionKeys any more, it's just too complicated and each key has its own special rules
   definitionKeys.forEach(key => {
     if (Array.isArray(builtIns[key])) {
-      originalDefinitions[key] = builtIns[key].concat(options.definitions[key] || [])
+      originalDefinitions[key] = builtIns[key].concat(options.definitions[key])
       defs[key] = originalDefinitions[key].slice()
     } else {
       if (key === 'unitSystems') {
@@ -45,7 +45,7 @@ export default function createUnitStore (options) {
           originalDefinitions[key][subKey] = Object.assign({}, originalDefinitions[key][subKey] || {}, options.definitions[key][subKey])
         }
       } else {
-        originalDefinitions[key] = Object.assign({}, skip ? {} : builtIns[key], options.definitions[key] || {})
+        originalDefinitions[key] = Object.assign({}, skip ? {} : builtIns[key], options.definitions[key])
       }
 
       // Omit units because there is additional processing we need to do before we add them to defs
@@ -202,7 +202,7 @@ export default function createUnitStore (options) {
             value: unitValue,
             offset: unitDef.offset || 0,
             dimension: unitDimension,
-            prefixes: defs.prefixes[unitDef.prefixes || 'NONE'],
+            prefixes: defs.prefixes[unitDef.prefixes] || { '': 1 },
             commonPrefixes: unitDef.commonPrefixes, // Default should be undefined
             systems: []
           }

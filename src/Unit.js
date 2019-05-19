@@ -214,8 +214,11 @@ let _config = function _config (options) {
 
       let systemStr = options.system
       if (systemStr === 'auto') {
-        // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si' in the event of a tie.
-        let identifiedSystems = { si: 0.1 }
+        // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
+
+        // TODO: Object key order might not be consistent across platforms
+        let firstAvailableSystem = Object.keys(unitStore.defs.unitSystems)[0]
+        let identifiedSystems = { [firstAvailableSystem]: 0.1 }
         for (let i = 0; i < this.units.length; i++) {
           if (this.units[i].unit.systems) {
             this.units[i].unit.systems.forEach(sys => {

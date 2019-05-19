@@ -1,6 +1,7 @@
 import assert from 'assert'
 import approx from './approx'
 import unit from '../src/Unit.js'
+// import util from 'util'
 
 // TODO: Bring in any other tests that use units from math.js
 
@@ -318,6 +319,49 @@ describe('unitmath', () => {
           }
         })
         assert.strictEqual(newUnit('66 ft').simplify().toString(), '4 rod')
+      })
+
+      it('should skip builtins if so desired', () => {
+        let newUnit = unit.config({
+          prefixMin: 0.200001,
+          prefixMax: 4.99999,
+          definitions: {
+            skipBuiltIns: true,
+            baseQuantities: [ 'ESSENCE_OF_FOO' ],
+            quantities: {
+              'FOOLUME': 'ESSENCE_OF_FOO^3'
+            },
+            units: {
+              foo: {
+                quantity: 'ESSENCE_OF_FOO',
+                value: 1,
+                prefixes: 'PREFOO',
+                commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF']
+              },
+              fib: { value: '5 foo', prefixes: 'PREFOO', commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] },
+              flab: { value: '1 foo^3', prefixes: 'PREFOO', commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] }
+            },
+            unitSystems: {
+              fooSys: {
+                ESSENCE_OF_FOO: 'foo',
+                FOOLUME: 'flab'
+              }
+            },
+            prefixes: {
+              PREFOO: {
+                'fff': 0.008,
+                'ff': 0.04,
+                'f': 0.2,
+                '': 1,
+                'F': 5,
+                'FF': 25,
+                'FFF': 125
+              }
+            }
+          }
+        })
+
+        assert.strictEqual(newUnit('40 fib').format(), '1.6 FFfib')
       })
     })
 
@@ -1065,6 +1109,7 @@ describe('unitmath', () => {
       assert.throws(function () { unit('1 */ s') }, /Unexpected "\/"/)
       assert.throws(function () { unit('45 kg 34 m') }, /Unexpected "3"/)
       assert.throws(() => unit('10 m^'), /must be followed by a floating/)
+      assert.throws(() => unit('10 m+'), /Unexpected "\+"/)
     })
 
     it('should parse empty strings and only numbers', function () {
@@ -1074,6 +1119,10 @@ describe('unitmath', () => {
       assert.strictEqual(unit('').units.length, 0)
       assert.strictEqual(unit().value, null)
       assert.strictEqual(unit().units.length, 0)
+    })
+
+    it('should throw if parser() receives other than a string', () => {
+      assert.throws(() => unit._unitStore.parser(42), /TypeError: Invalid argument in parse/)
     })
   })
 
@@ -1093,6 +1142,7 @@ describe('unitmath', () => {
 
   describe('isCompound', function () {
     it('should return the correct value', function () {
+      assert.strictEqual(unit('34').isCompound(), false)
       assert.strictEqual(unit('34 kg').isCompound(), false)
       assert.strictEqual(unit('34 kg/s').isCompound(), true)
       assert.strictEqual(unit('34 kg^2').isCompound(), true)
