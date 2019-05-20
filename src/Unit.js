@@ -52,14 +52,6 @@ let _config = function _config (options) {
    */
   class Unit {
     constructor (value, unitString) {
-      if (!(this instanceof Unit)) {
-        throw new Error('_unit constructor must be called with the new operator')
-      }
-      // console.log(`Inside the constructor: _unit(${value}, ${unitString})`)
-      // Allowed signatures:
-      // Unit(string)
-      // Unit(*)
-      // Unit(*, string)
       let parseResult
       if (typeof value === 'undefined' && typeof unitString === 'undefined') {
         parseResult = unitStore.parser('')
@@ -220,11 +212,9 @@ let _config = function _config (options) {
         let firstAvailableSystem = Object.keys(unitStore.defs.unitSystems)[0]
         let identifiedSystems = { [firstAvailableSystem]: 0.1 }
         for (let i = 0; i < this.units.length; i++) {
-          if (this.units[i].unit.systems) {
-            this.units[i].unit.systems.forEach(sys => {
-              identifiedSystems[sys] = (identifiedSystems[sys] || 0) + 1
-            })
-          }
+          this.units[i].unit.systems.forEach(sys => {
+            identifiedSystems[sys] = (identifiedSystems[sys] || 0) + 1
+          })
         }
         let ids = Object.keys(identifiedSystems)
         ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
@@ -265,7 +255,7 @@ let _config = function _config (options) {
               proposedUnitList.push({
                 unit: system[baseDim].unit,
                 prefix: system[baseDim].prefix,
-                power: result.dimension[i] || 0
+                power: result.dimension[i]
               })
             } else {
               ok = false
@@ -372,7 +362,20 @@ let _config = function _config (options) {
      */
     equals (other) {
       other = _convertParamToUnit(other)
-      return this.equalQuantity(other) && options.type.eq(normalize(this.units, this.value, options.type), normalize(other.units, other.value, options.type))
+      let value1, value2
+      if (this.value === null && other.value === null) {
+        // If both units are valueless, get the normalized value of 1 to compare only the unit lists
+        value1 = normalize(this.units, 1, options.type)
+        value2 = normalize(other.units, 1, options.type)
+      } else if (this.value !== null && other.value !== null) {
+        // Both units have values
+        value1 = normalize(this.units, this.value, options.type)
+        value2 = normalize(other.units, other.value, options.type)
+      } else {
+        // One has a value and one does not; by definition they cannot be equal
+        return false
+      }
+      return this.equalQuantity(other) && options.type.eq(value1, value2)
     }
 
     /**
@@ -490,9 +493,6 @@ let _config = function _config (options) {
     let result = units.map(u => Object.assign({}, u))
 
     if (result.length >= 2) {
-      if (units[0] === result[0]) { throw new Error('Debug assertion failed, result is not a clone of units') }
-      if (units[0].units !== result[0].units) { throw new Error('Debug assertion failed, units\' units were cloned') }
-
       // Combine duplicate units
       let foundUnits = {}
       for (let i = 0; i < result.length; i++) {
@@ -690,9 +690,6 @@ let _config = function _config (options) {
    * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
    */
   function _choosePrefix (unit, opts) {
-    if (!opts) {
-      throw new Error('opts is required')
-    }
     let result = _clone(unit)
     let piece = result.units[0] // TODO: Someday this might choose the most "dominant" unit, or something, to prefix, rather than the first unit
 
@@ -792,10 +789,10 @@ let _config = function _config (options) {
           proposedUnitList.push({
             unit: unitStore.defs.unitSystems['si'][baseDim].unit,
             prefix: unitStore.defs.unitSystems['si'][baseDim].prefix,
-            power: result.dimension[i] || 0
+            power: result.dimension[i]
           })
         } else {
-          throw new Error('Cannot express custom unit ' + baseDim + ' in SI units')
+          throw new Error(`Cannot express unit '${unit.format()}' in SI units. System 'si' does not contain a unit for base quantity '${baseDim}'`)
         }
       }
     }
@@ -812,9 +809,6 @@ let _config = function _config (options) {
    * @return {string}
    */
   function _formatUnits (unit, opts) {
-    if (!opts) {
-      throw new Error('opts is required')
-    }
     let strNum = ''
     let strDen = ''
     let nNum = 0
@@ -1003,7 +997,7 @@ let defaultMul = (a, b) => a * b
 let defaultDiv = (a, b) => a / b
 let defaultPow = (a, b) => Math.pow(a, b)
 let defaultAbs = (a) => Math.abs(a)
-let defaultEq = (a, b) => Math.abs(a - b) / Math.abs(a + b) < 1e-15
+let defaultEq = (a, b) => (a === b) || Math.abs(a - b) / Math.abs(a + b) < 1e-15
 let defaultLT = (a, b) => a < b
 let defaultGT = (a, b) => a > b
 let defaultLE = (a, b) => a <= b

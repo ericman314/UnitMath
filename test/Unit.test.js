@@ -1,7 +1,6 @@
 import assert from 'assert'
 import approx from './approx'
 import unit from '../src/Unit.js'
-// import util from 'util'
 
 // TODO: Bring in any other tests that use units from math.js
 
@@ -569,6 +568,14 @@ describe('unitmath', () => {
       assert.strictEqual(unit(5, 'cm').hasQuantity('LENGTH'), true)
       assert.strictEqual(unit(5, 'kg m / s ^ 2').hasQuantity('FORCE'), true)
     })
+
+    it('should return false for an unknown quantity', () => {
+      assert.strictEqual(unit(5, 'cm').hasQuantity('FOOLOCITY'), false)
+    })
+
+    it('should work if passed a quantity array directly from the compiled definitions', () => {
+      assert.strictEqual(unit(5, 'kg m / s ^ 2').hasQuantity(unit._unitStore.defs.quantities['FORCE']), true)
+    })
   })
 
   describe('equalQuantity', function () {
@@ -589,6 +596,16 @@ describe('unitmath', () => {
       assert.strictEqual(unit(100, 'N').equals(unit(100, 'kg m / s ^ 2')), true)
       assert.strictEqual(unit(100, 'N').equals(unit(100, 'kg m / s')), false)
       assert.strictEqual(unit(100, 'Hz').equals(unit(100, 's ^ -1')), true)
+    })
+
+    it('should work with valueless units', () => {
+      assert.strictEqual(unit('cm').equals(unit('cm')), true)
+      assert.strictEqual(unit('cm').equals(unit('m')), false)
+      assert.strictEqual(unit('cm/s').equals(unit('cm/s')), true)
+    })
+
+    it('should return false if one unit has a value and the other does not', () => {
+      assert.strictEqual(unit('cm/s').equals(unit('1 cm/s')), false)
     })
 
     it('should convert parameter to a unit', () => {
@@ -743,6 +760,11 @@ describe('unitmath', () => {
       assert.strictEqual(u2.units[0].prefix, '')
     })
 
+    it('the alternate api syntax should also work', () => {
+      assert.strictEqual(unit.to('lbm', 'kg').format(), '0.45359237 kg')
+      assert.strictEqual(unit.to(unit('10 lbm'), unit('kg')).format(), '4.5359237 kg')
+    })
+
     it('should throw an error when converting to an incompatible unit', function () {
       const u1 = unit(5000, 'cm')
       assert.throws(function () { u1.to('kg') }, /dimensions do not match/)
@@ -836,6 +858,24 @@ describe('unitmath', () => {
       assert.strictEqual(unit(2, 'kg^0').toString(), '2')
     })
 
+    it('should not change the prefix unless there is a `commonPrefixes` defined for the unit', () => {
+      // lumen has prefixes, but no commonPrefixes, so its prefixes should not change
+      assert.strictEqual(unit('4 microlumen').format(), '4 microlumen')
+      assert.strictEqual(unit('4e-6 lumen').format(), '0.000004 lumen')
+
+      // newton has prefixes and commonPrefixes so its prefix should change
+      assert.strictEqual(unit('4 micronewton').format(), '4 micronewton')
+      assert.strictEqual(unit('4e-6 newton').format(), '4 micronewton')
+    })
+
+    it('should avoid division by zero by not choosing a prefix for very small values', () => {
+      assert.strictEqual(unit('1e-40 m').format(), '1e-31 nm')
+      assert.strictEqual(unit('1e-60 m').format(), '1e-60 m')
+      assert.strictEqual(unit('0 m').format(), '0 m')
+      assert.strictEqual(unit('-1e-40 m').format(), '-1e-31 nm')
+      assert.strictEqual(unit('-1e-60 m').format(), '-1e-60 m')
+    })
+
     it('should not render best prefix if "fixed" by the `to` method', function () {
       const u = unit(5e-3, 'm')
       assert.strictEqual(u.toString(), '0.5 cm')
@@ -873,11 +913,8 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.toString(), '10 kg m / s^2')
     })
 
-    it('should only simplify units with values', function () {
-      let unit1 = unit(null, 'kg m mol / s^2 mol')
-      assert.strictEqual(unit1.toString(), 'kg m / s^2')
-      unit1 = unit1.mul(1)
-      assert.strictEqual(unit1.toString(), '1 N')
+    it('should simplify units without values', () => {
+      assert.strictEqual(unit('kg m/s^2').simplify().format(), 'N')
     })
 
     it('should simplify units when they cancel out', function () {
@@ -915,6 +952,24 @@ describe('unitmath', () => {
       assert.strictEqual(unit('400 N').div('10 cm^2').toString(), '400 kPa')
     })
 
+    it('should silently fail if the unit system does not specify a unit needed for a base quantity', () => {
+      assert.strictEqual(unit('4 W / F').simplify().format(), '4 kg^2 m^4 / s^7 A^2')
+
+      let newUnit = unit.config({
+        system: 'noAmps',
+        definitions: {
+          unitSystems: {
+            noAmps: {
+              MASS: 'kg',
+              LENGTH: 'm',
+              TIME: 's'
+            }
+          }
+        }
+      })
+      assert.strictEqual(newUnit('4 W / F').simplify().format(), '4 W / F')
+    })
+
     it.skip('should simplify user-defined units when unit system is "auto"', function () {
       Unit.setUnitSystem('auto')
       Unit.createUnit({ 'USD': '' })
@@ -950,6 +1005,25 @@ describe('unitmath', () => {
   describe('format', () => {
     it('should accept formatting options as argument to the function', () => {
       assert.strictEqual(unit('1 lb').to('kg').format({ prefix: 'always', prefixMin: 1, precision: 4 }), '453.6 g')
+    })
+
+    it('should render parentheses if desired', () => {
+      assert.strictEqual(unit('kg m / s^2').to().format({ parentheses: true }), '(kg m) / s^2')
+      assert.strictEqual(unit('8.314 J / mol K').to().format({ parentheses: true }), '8.314 J / (mol K)')
+    })
+
+    it('should only simplify units with values', function () {
+      let unit1 = unit(null, 'kg m mol / s^2 mol')
+      assert.strictEqual(unit1.format(), 'kg m / s^2')
+      unit1 = unit1.mul(1)
+      assert.strictEqual(unit1.format(), '1 N')
+    })
+
+    it('should respect the `simplify` option', () => {
+      assert.strictEqual(unit('1 kg m / s^2').format(), '1 N')
+      assert.strictEqual(unit('1 kg m / s^2').format({ simplify: 'never' }), '1 kg m / s^2')
+      assert.strictEqual(unit('1 N m').format(), '1 N m')
+      assert.strictEqual(unit('1 N m').format({ simplify: 'always' }), '1 J')
     })
   })
 
@@ -1155,6 +1229,7 @@ describe('unitmath', () => {
     it('should add two units', () => {
       assert.deepStrictEqual(unit(300, 'm').add(unit(3, 'km')), unit(3300, 'm'))
       approx.deepEqual(unit('2m').add(unit('3ft')), unit('2.9144 m'))
+      approx.deepEqual(unit('2').add(unit('3')), unit('5'))
     })
 
     it('should convert parameter to unit', () => {
@@ -1169,6 +1244,17 @@ describe('unitmath', () => {
     it('the alternate api syntax should also work', () => {
       assert.deepStrictEqual(unit.add(unit(300, 'm'), unit(3, 'km')), unit(3300, 'm'))
       assert.deepStrictEqual(unit.add('300 m', '3 km'), unit(3300, 'm'))
+    })
+
+    it('should throw if one or both units do not have values', () => {
+      assert.throws(() => unit('10 m').add('ft'), /Cannot add.*both units must have values/)
+      assert.throws(() => unit('m').add('10 ft'), /Cannot add.*both units must have values/)
+    })
+
+    it('should throw if units are not consistent', () => {
+      assert.throws(() => unit('10 kg').add('8 day'), /Cannot add.*dimensions do not match/)
+      assert.throws(() => unit('10 kg').add('8 kg^0.99'), /Cannot add.*dimensions do not match/)
+      assert.throws(() => unit('10 kg').add('8'), /Cannot add.*dimensions do not match/)
     })
   })
 
@@ -1191,6 +1277,17 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit.sub(unit(300, 'm'), unit(3, 'km')), unit(-2700, 'm'))
       assert.deepStrictEqual(unit.sub('300 m', '3 km'), unit(-2700, 'm'))
     })
+
+    it('should throw if one or both units do not have values', () => {
+      assert.throws(() => unit('10 m').sub('ft'), /Cannot subtract.*both units must have values/)
+      assert.throws(() => unit('m').sub('10 ft'), /Cannot subtract.*both units must have values/)
+    })
+
+    it('should throw if units are not consistent', () => {
+      assert.throws(() => unit('10 kg').sub('8 day'), /Cannot subtract.*dimensions do not match/)
+      assert.throws(() => unit('10 kg').sub('8 kg^0.99'), /Cannot subtract.*dimensions do not match/)
+      assert.throws(() => unit('10 kg').sub('8'), /Cannot subtract.*dimensions do not match/)
+    })
   })
 
   describe('mul', () => {
@@ -1201,6 +1298,12 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit('65 mi/h').mul(unit('2 h')), unit('130 mi'))
       assert.deepStrictEqual(unit('2 L').mul(unit('1 s^-1')), unit('2 L / s'))
       assert.deepStrictEqual(unit('2 m/s').mul(unit('0.5 s/m')), unit('1'))
+    })
+
+    it('should multiply units without values', () => {
+      assert.deepStrictEqual(unit('kg').mul('kg'), unit('kg^2'))
+      assert.deepStrictEqual(unit('4 kg').mul('kg'), unit('4 kg^2'))
+      assert.deepStrictEqual(unit('kg').mul('4 kg'), unit('4 kg^2'))
     })
 
     it('should convert parameter to unit', () => {
@@ -1232,6 +1335,12 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit('2000 g').div(unit('0.5 kg')), unit(4))
     })
 
+    it('should divide units without values', () => {
+      assert.deepStrictEqual(unit('kg').div('s'), unit('kg/s'))
+      assert.deepStrictEqual(unit('4 kg').div('s'), unit('4 kg/s'))
+      assert.deepStrictEqual(unit('kg').div('4 s'), unit('0.25 kg/s'))
+    })
+
     it('should convert parameter to unit', () => {
       assert.deepStrictEqual(unit('1 hour').div('0.5 hour'), unit(2))
       assert.deepStrictEqual(unit('1 hour').div(2), unit(0.5, 'hour'))
@@ -1254,6 +1363,32 @@ describe('unitmath', () => {
       assert(unit('4 N').pow(2).equals(unit('16 N^2')))
       assert(unit('0.25 m/s').pow(-0.5).equals(unit('2 m^-0.5 s^0.5')))
       assert(unit('123 chain').pow(0).equals(unit('1')))
+    })
+
+    it('should work with units without values', () => {
+      assert.strictEqual(unit('V/m').pow(2).format(), 'V^2 / m^2')
+      assert(unit('1 V/m').pow(2).equals(unit('1 V^2/m^2')))
+    })
+
+    it('the alternate api syntax should also work', () => {
+      assert(unit.pow('4 N', unit(2)).equals(unit('16 N^2')))
+      assert(unit.pow(unit('0.25 m/s'), -0.5).equals(unit('2 m^-0.5 s^0.5')))
+      assert(unit.pow('123 chain', 0).equals(unit('1')))
+    })
+  })
+
+  describe('sqrt', () => {
+    it('should calculate the square root of a unit', () => {
+      assert(unit('16 kg').sqrt().equals(unit('4 kg^0.5')))
+      assert(unit('16').sqrt().equals(unit('4')))
+      assert(unit('16 m^2/s^2').sqrt().equals(unit('4 m/s')))
+      assert.strictEqual(unit('-16 m^2/s^2').sqrt().format(), 'NaN m / s')
+    })
+
+    it('the alternate api syntax should also work', () => {
+      assert(unit.sqrt('16 kg').equals(unit('4 kg^0.5')))
+      assert(unit.sqrt(16).equals(unit('4')))
+      assert(unit.sqrt(unit('16 m^2/s^2')).equals(unit('4 m/s')))
     })
   })
 
@@ -1605,14 +1740,24 @@ describe('unitmath', () => {
       approx.deepEqual(unit.toSI('4 ft'), unit('1.2192 m').to())
     })
 
-    it.skip('should return SI units for custom units defined from other units', function () {
-      Unit.createUnit({ foo: '3 kW' }, { override: true })
-      assert.strictEqual(Unit.parse('42 foo').toSI().toString(), '1.26e+5 (kg m^2) / s^3')
+    it('should return SI units for custom units defined from other units', function () {
+      let newUnit = configCustomUnits({ foo: '3 kW' })
+      assert.strictEqual(newUnit('42 foo').toSI().format(), '126000 kg m^2 / s^3')
     })
 
-    it.skip('should throw if custom unit not defined from existing units', function () {
-      Unit.createUnit({ baz: '' }, { override: true })
-      assert.throws(function () { Unit.parse('10 baz').toSI() }, /Cannot express custom unit/)
+    it('should throw if custom unit not defined from existing units', function () {
+      let newUnit = unit.config({
+        definitions: {
+          baseQuantities: [ 'BAZINESS' ],
+          units: {
+            baz: {
+              quantity: 'BAZINESS',
+              value: 1
+            }
+          }
+        }
+      })
+      assert.throws(function () { newUnit('10 baz').toSI() }, /Cannot express unit '10 baz' in SI units. System 'si' does not contain a unit for base quantity 'BAZINESS'/)
     })
   })
 })
