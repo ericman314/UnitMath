@@ -1,5 +1,11 @@
 # History
 
+## 2019-05-19, v0.2.1
+- Added numerous tests to improve test coverage
+- Removed some unnecessary statements and branches
+- Minor bug fixes
+- Updated README
+
 ## 2019-05-18, v0.2.0
 - Major refactoring of UnitStore.js to simplify the units definitions
 - Custom units now work with config options
