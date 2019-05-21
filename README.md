@@ -489,6 +489,15 @@ When using custom types, UnitMath cannot implicitly convert strings to units. Th
   unit('1 heactare').sqrt() // 100 m
   ```
 
+- `#abs()`
+
+  Returns the absolute value of this unit. If the unit has an offset, such as `degC`, this is applied before taking the absolute value.
+
+  ```js
+  unit('-5 m / s').abs() // 5 m / s
+  unit('300 degC').abs() // -246.3 degC
+  ```
+
 - `#to(target: unit | string)`  
   `#to()`
 
@@ -661,6 +670,15 @@ When using custom types, UnitMath cannot implicitly convert strings to units. Th
 
   ```js
   unit.sqrt('16 ft^2') // 4 ft
+  ```
+
+- `unit.abs(a: unit | string | number)`
+
+  Alias for `a.abs()`.
+
+  ```js
+  unit.abs('-5 m / s') // 5 m / s
+  unit.abs('300 degC') // -246.3 degC
   ```
 
 - `unit.to(a: unit | string | number, b: unit | string)`

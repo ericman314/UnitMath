@@ -1400,6 +1400,22 @@ describe('unitmath', () => {
     })
   })
 
+  describe('abs', () => {
+    it('should return the absolute value of a unit', () => {
+      assert.strictEqual(unit('5 m').abs().format(), '5 m')
+      assert.strictEqual(unit('-5 m/s').abs().format(), '5 m / s')
+      assert.strictEqual(unit('-283.15 degC').abs().format(), '-263.15 degC') 
+    })
+
+    it('the alternate api syntax should also work', () => {
+      assert.strictEqual(unit.abs('5 m').format(), '5 m')
+      assert.strictEqual(unit.abs('-5 m/s').format(), '5 m / s')
+      assert.strictEqual(unit.abs(unit('-5 m/s')).format(), '5 m / s')
+      assert.strictEqual(unit.abs(-5).format(), '5')
+      assert.strictEqual(unit.abs('-283.15 degC').format(), '-263.15 degC') 
+    })
+  })
+
   describe('mul, div, and pow', function () {
     it('should retain the units of their operands without simplifying', function () {
       const unit1 = unit(10, 'N/s')

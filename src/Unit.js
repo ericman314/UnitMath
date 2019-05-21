@@ -150,11 +150,21 @@ let _config = function _config (options) {
     /**
      * Takes the square root of a unit.
      * @memberof Unit
-     * @param {Unit|string|number} a The unit.
-     * @returns {Unit} The square root of the unit a.
+     * @returns {Unit} The square root of this unit.
      */
     sqrt () {
       let unit = _sqrt(this)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
+     * Returns the absolute value of this unit.
+     * @memberOf Unit
+     * @returns {Unit} The absolute value of this unit.
+     */
+    abs () {
+      let unit = _abs(this)
       Object.freeze(unit)
       return unit
     }
@@ -663,6 +673,12 @@ let _config = function _config (options) {
     return _pow(unit, options.type.conv(0.5))
   }
 
+  function _abs (unit) {
+    const result = _clone(unit)
+    result.value = denormalize(result.units, options.type.abs(normalize(result.units, result.value, options.type)), options.type)
+    return result
+  }
+
   /**
    * Private function _to
    * @param {Unit} unit The unit to convert.
@@ -959,6 +975,15 @@ let _config = function _config (options) {
   */
   unitmath.sqrt = function sqrt (a) {
     return _convertParamToUnit(a).sqrt()
+  }
+
+  /**
+   * Returns the absolute value of a unit.
+   * @param {Unit|string|number} a The unit.
+   * @returns {Unit} The absolute value of the unit a.
+   */
+  unitmath.abs = function abs (a) {
+    return _convertParamToUnit(a).abs()
   }
 
   /**

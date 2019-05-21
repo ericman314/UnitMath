@@ -1,5 +1,8 @@
 # History
 
+## 
+- Added abs
+
 ## 2019-05-19, v0.2.1
 - Added numerous tests to improve test coverage
 - Removed some unnecessary statements and branches
