@@ -1306,12 +1306,15 @@ describe('unitmath', () => {
       assert.deepStrictEqual(unit('65 mi/h').mul(unit('2 h')), unit('130 mi'))
       assert.deepStrictEqual(unit('2 L').mul(unit('1 s^-1')), unit('2 L / s'))
       assert.deepStrictEqual(unit('2 m/s').mul(unit('0.5 s/m')), unit('1'))
+      assert.deepStrictEqual(unit('5 degC').mul(2), unit('283.15 degC'))
     })
 
     it('should multiply units without values', () => {
       assert.deepStrictEqual(unit('kg').mul('kg'), unit('kg^2'))
       assert.deepStrictEqual(unit('4 kg').mul('kg'), unit('4 kg^2'))
       assert.deepStrictEqual(unit('kg').mul('4 kg'), unit('4 kg^2'))
+      assert.deepStrictEqual(unit('m/s').mul('h/m').toString(), 'h / s')
+      assert.deepStrictEqual(unit('1 m/s').mul('h/m').toString(), '3600')
     })
 
     it('should convert parameter to unit', () => {
@@ -1404,7 +1407,7 @@ describe('unitmath', () => {
     it('should return the absolute value of a unit', () => {
       assert.strictEqual(unit('5 m').abs().format(), '5 m')
       assert.strictEqual(unit('-5 m/s').abs().format(), '5 m / s')
-      assert.strictEqual(unit('-283.15 degC').abs().format(), '-263.15 degC') 
+      assert.strictEqual(unit('-283.15 degC').abs().format(), '-263.15 degC')
     })
 
     it('the alternate api syntax should also work', () => {
@@ -1412,7 +1415,7 @@ describe('unitmath', () => {
       assert.strictEqual(unit.abs('-5 m/s').format(), '5 m / s')
       assert.strictEqual(unit.abs(unit('-5 m/s')).format(), '5 m / s')
       assert.strictEqual(unit.abs(-5).format(), '5')
-      assert.strictEqual(unit.abs('-283.15 degC').format(), '-263.15 degC') 
+      assert.strictEqual(unit.abs('-283.15 degC').format(), '-263.15 degC')
     })
   })
 
