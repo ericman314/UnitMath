@@ -233,6 +233,14 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
       })
 
+      it('should throw on duplicate base quantities', () => {
+        assert.throws(() => unit.config({
+          definitions: {
+            baseQuantities: ['MASS']
+          }
+        }), /Duplicate base quantity: MASS/)
+      })
+
       it('should throw on invalid quantity definitions', () => {
         assert.throws(() => unit.config({
           definitions: {

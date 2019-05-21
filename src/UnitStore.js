@@ -55,8 +55,6 @@ export default function createUnitStore (options) {
     }
   })
 
-  // TODO: Check for duplicate base quantities
-
   /**
    * A unit system is a set of dimensionally independent base units plus a set of derived units, formed by multiplication and division of the base units, that are by convention used with the unit system.
    */
@@ -84,6 +82,15 @@ export default function createUnitStore (options) {
    * - Clone units that have aliases. Shallow copies are acceptable since the resulting defs.units object will be deep-immutable.
    *
 */
+
+  // Sort base quantities and check for duplicates
+  let sortedBases = defs.baseQuantities.slice()
+  sortedBases.sort()
+  for (let i = 0; i < sortedBases.length; i++) {
+    if (sortedBases[i] === sortedBases[i + 1]) {
+      throw new Error(`Duplicate base quantity: ${sortedBases[i]}`)
+    }
+  }
 
   // For each key in defs.quantities, replace the string value with a dimension array, where each index of the array corresponds to the base quantity's index in defs.baseQuantities, and the value of each element is the power (exponent) of that base in the dimension.
   // The value must be a string, which is a space-delimited list of base quantities, each optionally raised to a power.

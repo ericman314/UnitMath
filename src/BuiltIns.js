@@ -437,6 +437,11 @@ export const units = {
     commonPrefixes: ['', 'kilo', 'mega', 'giga'],
     value: '1000 kg'
   },
+  t: {
+    prefixes: 'SHORT',
+    // kt could be confused with knot (speed),
+    value: '1 tonne'
+  },
   grain: {
     value: '64.79891 mg',
     aliases: ['gr']
@@ -637,7 +642,14 @@ export const units = {
   cd: {
     quantity: 'LUMINOUS_INTENSITY',
     value: 1,
-    aliases: ['candela']
+    prefixes: 'SHORT',
+    commonPrefixes: ['', 'm']
+  },
+  candela: {
+    quantity: 'LUMINOUS_INTENSITY',
+    value: '1 cd',
+    prefixes: 'LONG',
+    commonPrefixes: ['', 'milli']
   },
 
   // luminous flux
