@@ -190,7 +190,6 @@ export default function createUnitStore (options) {
             skipThisUnit = true
           } else {
             throw ex
-            // throw new Error(`Could not parse value '${unitDef.value || unitDef}' of unit '${unitDefKey}': ${ex}`)
           }
         }
       }
