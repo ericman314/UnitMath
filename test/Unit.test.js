@@ -149,7 +149,7 @@ describe('unitmath', () => {
 
         assert.throws(() => configCustomUnits({
           myUnit: '8 m^'
-        }), /Error: Could not parse value '8 m\^' of unit 'myUnit'/)
+        }), /In "8 m\^", "\^" must be followed by a floating-point number/)
       })
 
       it('should throw if an alias would override an existing unit', () => {

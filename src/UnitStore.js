@@ -189,7 +189,8 @@ export default function createUnitStore (options) {
             reasonsSkipped.push(ex.toString())
             skipThisUnit = true
           } else {
-            throw new Error(`Could not parse value '${unitDef.value || unitDef}' of unit '${unitDefKey}': ${ex}`)
+            throw ex
+            // throw new Error(`Could not parse value '${unitDef.value || unitDef}' of unit '${unitDefKey}': ${ex}`)
           }
         }
       }
