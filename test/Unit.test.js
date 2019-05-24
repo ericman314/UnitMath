@@ -1,6 +1,7 @@
 import assert from 'assert'
 import approx from './approx'
 import unit from '../src/Unit.js'
+import Decimal from 'decimal.js'
 
 // TODO: Bring in any other tests that use units from math.js
 
@@ -17,6 +18,47 @@ function configCustomUnits (units) {
     }
   })
 }
+
+let unitDec
+
+before(() => {
+  Decimal.set({ precision: 32 })
+
+  // Use strict type checking to make sure no numbers sneak in
+  const isDec = a => assert(a instanceof Decimal)
+
+  unitDec = require('../index.js').config({
+    type: {
+      add: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.add(a, b)
+      },
+      sub: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.sub(a, b)
+      },
+      mul: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.mul(a, b)
+      },
+      div: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.div(a, b)
+      },
+      pow: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.pow(a, b)
+      },
+      conv: a => Decimal(a),
+      clone: a => { isDec(a); return Decimal(a) }
+    }
+  })
+})
 
 describe('unitmath', () => {
   describe('unitmath namespace', () => {
@@ -1785,6 +1827,78 @@ describe('unitmath', () => {
         }
       })
       assert.throws(function () { newUnit('10 baz').toSI() }, /Cannot express unit '10 baz' in SI units. System 'si' does not contain a unit for base quantity 'BAZINESS'/)
+    })
+  })
+
+  describe('custom types', () => {
+    describe('constructing a unit', () => {
+      it('if given a string, should parse as number, then convert to custom type', () => {
+        let u = unitDec('3.1415926535897932384626433832795 rad')
+        assert(u.value instanceof Decimal)
+        assert.strictEqual(u.toString(), '3.141592653589793 rad')
+      })
+
+      it('if given a number, should convert it to custom type', () => {
+        assert(unitDec(3.1415, 'rad').value instanceof Decimal)
+      })
+
+      it('should create valueless units', () => {
+        let u = unitDec('rad')
+        assert.strictEqual(u.toString(), 'rad')
+        assert.strictEqual(u.value, null)
+      })
+
+      it('should make a unit with a custom type', () => {
+        let u = unitDec(Decimal('3.1415926535897932384626433832795'), 'rad')
+        assert.strictEqual(u.toString(), '3.1415926535897932384626433832795 rad')
+        assert(u.value instanceof Decimal)
+      })
+    })
+
+    describe('operations', () => {
+      it('should add custom typed units', () => {
+        let u1 = unitDec(Decimal('0.3333333333333333333333'), 'kg/m^3')
+        let u2 = unitDec(Decimal('0.6666666666666666666666'), 'kg/m^3')
+        let u3 = u1.add(u2)
+        assert.strictEqual(u3.toString(), '0.9999999999999999999999 kg / m^3')
+        assert(u3.value instanceof Decimal)
+      })
+
+      it('should subtract custom typed units', () => {
+        let u1 = unitDec(Decimal('0.3333333333333333333333'), 'kg/m^3')
+        let u2 = unitDec(Decimal('0.6666666666666666666666'), 'kg/m^3')
+        let u3 = u1.sub(u2)
+        assert.strictEqual(u3.toString(), '-0.3333333333333333333333 kg / m^3')
+        assert(u3.value instanceof Decimal)
+      })
+
+      it('should multiply custom typed units', () => {
+        let u1 = unitDec(Decimal('0.3333333333333333333333'), 'kg/m^3')
+        let u2 = unitDec(Decimal('3'), 'm^3')
+        let u3 = u1.mul(u2)
+        assert.strictEqual(u3.toString(), '0.9999999999999999999999 kg')
+        assert(u3.value instanceof Decimal)
+      })
+
+      it('should divide custom typed units', () => {
+        let u1 = unitDec(Decimal('1'), 'kg')
+        let u2 = unitDec(Decimal('3'), 'm^3')
+        let u3 = u1.div(u2)
+        assert.strictEqual(u3.toString(), '0.33333333333333333333333333333333 kg / m^3') // 32 3's
+        assert(u3.value instanceof Decimal)
+      })
+
+      it('should do powers', () => {
+        let u1 = unitDec(Decimal('11'), 's')
+        let u2 = u1.pow(30)
+        assert.strictEqual(u2.toString(), '1.7449402268886407318558803753801e+31 s^30')
+        assert(u2.value instanceof Decimal)
+      })
+    })
+
+    describe.skip('formatting', () => {
+      // prefixes
+      // simplify
     })
   })
 })

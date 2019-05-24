@@ -60,10 +60,10 @@ let _config = function _config (options) {
         parseResult = unitStore.parser(value)
       } else if (typeof unitString === 'string') {
         parseResult = unitStore.parser(unitString)
-        parseResult.value = value
+        parseResult.value = options.type.conv(value)
       } else if (typeof unitString === 'undefined') {
         parseResult = unitStore.parser('')
-        parseResult.value = value
+        parseResult.value = options.type.conv(value)
       } else {
         throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
       }
@@ -652,16 +652,16 @@ let _config = function _config (options) {
     // TODO: combineDuplicateUnits
     const result = _clone(unit)
     for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
-      result.dimension[i] = options.type.mul(unit.dimension[i], p)
+      result.dimension[i] = unit.dimension[i] * p
     }
 
     // Adjust the power of each unit in the list
     for (let i = 0; i < result.units.length; i++) {
-      result.units[i].power = options.type.mul(result.units[i].power, p)
+      result.units[i].power = result.units[i].power * p
     }
 
     if (result.value !== null) {
-      result.value = options.type.pow(result.value, p)
+      result.value = options.type.pow(result.value, options.type.conv(p))
     } else {
       result.value = null
     }
@@ -741,18 +741,27 @@ let _config = function _config (options) {
     }
 
     function calcValue (prefix) {
-      return opts.type.div(unit.value, opts.type.pow(piece.unit.prefixes[prefix] / piece.unit.prefixes[piece.prefix], piece.power))
+      return opts.type.div(
+        unit.value,
+        opts.type.pow(
+          options.type.div(
+            options.type.conv(piece.unit.prefixes[prefix]),
+            options.type.conv(piece.unit.prefixes[piece.prefix])
+          ),
+          options.type.conv(piece.power)
+        )
+      )
     }
 
     function calcScore (prefix) {
       let thisValue = calcValue(prefix)
       if (opts.type.lt(thisValue, opts.prefixMin)) {
         // prefix makes the value too small
-        return opts.type.abs(opts.type.div(opts.prefixMin, thisValue))
+        return opts.type.abs(opts.type.div(options.type.conv(opts.prefixMin), thisValue))
       }
       if (opts.type.gt(thisValue, opts.prefixMax)) {
         // prefix makes the value too large
-        return opts.type.abs(opts.type.div(thisValue, opts.prefixMax))
+        return opts.type.abs(opts.type.div(thisValue, options.type.conv(opts.prefixMax)))
       }
 
       // The prefix is in range, but return a score that says how close it is to the original value.

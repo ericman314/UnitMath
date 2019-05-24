@@ -30,7 +30,6 @@ export function normalize (unitPieces, value, type) {
     unitValue = type.conv(unitPieces[0].unit.value)
     unitOffset = type.conv(unitPieces[0].unit.offset)
     unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix])
-
     return type.mul(type.add(value, unitOffset), type.mul(unitValue, unitPrefixValue))
   }
 }

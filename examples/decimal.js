@@ -15,3 +15,4 @@ const unit = require('../index.js').config({
 
 console.log(Decimal(1).dividedBy(3).toString())
 console.log(unit('1 m').div('3 s').toString())
+console.log(Decimal(1).dividedBy(3) instanceof Decimal)

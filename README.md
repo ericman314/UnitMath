@@ -383,8 +383,18 @@ let apUnit = unit(apNumber(2.74518864784926316174649567946), 'm')
 
 For best results, you should extend all of the `type` functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. You still might be able to use some of UnitMath's methods, though.
 
+Even when using custom types, UnitMath will parse the numeric portion of a string such as `'42 kg'` as a number, then call `type.conv` to convert the number `42` to your custom type. This means that if your custom type cannot be represented exactly by a floating-point number, you must use the two-argument `unit(value, unitString)` to construct units:
 
-When using custom types, UnitMath cannot implicitly convert strings to units. Therefore, you must use the two-argument `unit(value, unitString)` to construct units. This is because UnitMath's string parser only works with native `number` types. To see why this must be, consider the string `"1 / 2 kg"`, which the user of a fraction library may wish to parse. UnitMath's parser wouldn't know what to do with `1 / 2`, and the fraction library's parser might choke when it encounters `kg`. The proper way to create this unit might be `unit(fraction('1 / 2'), 'kg')`.
+```js
+// Correct
+let d = unit(Decimal('3.1415926535897932384626433832795', 'rad'))
+let f = unit(Fraction(1, 2), 'kg') 
+
+// Incorrect
+let d = unit('3.1415926535897932384626433832795 rad') // Will lose precision
+let f = unit('1 / 2 kg') // Parse error
+
+```
 
 ## API Reference
 
