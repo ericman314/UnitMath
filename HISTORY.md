@@ -1,7 +1,8 @@
 # History
 
-## 
+## 2019-05-23, v0.3.0
 - Added abs
+- Basic functionality with custom types (tested with Decimal.js, some features may not work)
 
 ## 2019-05-19, v0.2.1
 - Added numerous tests to improve test coverage

@@ -173,7 +173,7 @@ These are the available options and their defaults:
   unit('6 furlongs/fortnight').to('m/s') // 0.000997857142857143 m / s
   ```
 
-- `type`. *Experimental and untested.* An object that allows UnitMath to work with custom numeric types. Each property of `type` is a function that accepts one or more parameters (most of which are of the custom numeric type). Below are all of the available functions, along with the required function signatures and return values, where `T` represents the custom numeric type:
+- `type`. An object that allows UnitMath to work with custom numeric types. Each property of `type` is a function that accepts one or more parameters (most of which are of the custom numeric type). Below are all of the available functions, along with the required function signatures and return values, where `T` represents the custom numeric type:
 
   - `add: (a: T, b: T) => T`
   - `sub: (a: T, b: T) => T`
