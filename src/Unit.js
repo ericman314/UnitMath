@@ -53,24 +53,32 @@ let _config = function _config (options) {
   class Unit {
     constructor (value, unitString) {
       let parseResult
+
       if (typeof value === 'undefined' && typeof unitString === 'undefined') {
+        // undefined undefined
         parseResult = unitStore.parser('')
         parseResult.value = null
       } else if (typeof value === 'string' && typeof unitString === 'undefined') {
+        // string undefined
         parseResult = unitStore.parser(value)
+      } else if (typeof value === 'string' && typeof unitString === 'string') {
+        // string string
+        parseResult = unitStore.parser(unitString)
+        parseResult.value = options.type.parse(value)
       } else if (typeof unitString === 'string') {
+        // number|custom string
         parseResult = unitStore.parser(unitString)
         parseResult.value = options.type.conv(value)
       } else if (typeof unitString === 'undefined') {
+        // number|custom undefined
         parseResult = unitStore.parser('')
         parseResult.value = options.type.conv(value)
       } else {
-        throw new TypeError('To construct a unit, you must supply a single string, a number and a string, or a custom type and a string.')
+        throw new TypeError('To construct a unit, you must supply a single string, two strings, a number and a string, or a custom type and a string.')
       }
       this.type = 'Unit'
       this.dimension = parseResult.dimension
       this.units = _combineDuplicateUnits(parseResult.units)
-      // TODO: All the denormalizing/normalizing creates round-off error. See if we can reduce the number of floating point operations somehow.
       this.value = (parseResult.value === undefined || parseResult.value === null) ? null : denormalize(this.units, normalize(parseResult.units, parseResult.value, options.type), options.type)
     }
 
@@ -375,8 +383,8 @@ let _config = function _config (options) {
       let value1, value2
       if (this.value === null && other.value === null) {
         // If both units are valueless, get the normalized value of 1 to compare only the unit lists
-        value1 = normalize(this.units, 1, options.type)
-        value2 = normalize(other.units, 1, options.type)
+        value1 = normalize(this.units, options.type.conv(1), options.type)
+        value2 = normalize(other.units, options.type.conv(1), options.type)
       } else if (this.value !== null && other.value !== null) {
         // Both units have values
         value1 = normalize(this.units, this.value, options.type)
@@ -1025,23 +1033,30 @@ let _config = function _config (options) {
 }
 
 // Define default arithmetic functions
-let defaultAdd = (a, b) => a + b
-let defaultSub = (a, b) => a - b
-let defaultMul = (a, b) => a * b
-let defaultDiv = (a, b) => a / b
-let defaultPow = (a, b) => Math.pow(a, b)
-let defaultAbs = (a) => Math.abs(a)
-let defaultEq = (a, b) => (a === b) || Math.abs(a - b) / Math.abs(a + b) < 1e-15
-let defaultLT = (a, b) => a < b
-let defaultGT = (a, b) => a > b
-let defaultLE = (a, b) => a <= b
-let defaultGE = (a, b) => a >= b
-let defaultConv = a => a
-let defaultClone = (a) => {
+let defaults = {}
+defaults.add = (a, b) => a + b
+defaults.sub = (a, b) => a - b
+defaults.mul = (a, b) => a * b
+defaults.div = (a, b) => a / b
+defaults.pow = (a, b) => Math.pow(a, b)
+defaults.abs = (a) => Math.abs(a)
+defaults.eq = (a, b) => (a === b) || Math.abs(a - b) / Math.abs(a + b) < 1e-15
+defaults.lt = (a, b) => a < b
+defaults.gt = (a, b) => a > b
+defaults.le = (a, b) => a <= b
+defaults.ge = (a, b) => a >= b
+defaults.conv = a => a
+defaults.parse = a => parseFloat(a)
+defaults.clone = (a) => {
   if (typeof (a) !== 'number') {
     throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof (a)})`)
   }
   return a
+}
+
+// These are mostly to help warn the user if they forgot to override one or more of the default functions
+for (const key in defaults) {
+  defaults[key]._IS_UNITMATH_DEFAULT_FUNCTION = true
 }
 
 // TODO: setting to say whether to format using only the common prefixes or all prefixes
@@ -1064,21 +1079,7 @@ let defaultOptions = {
     quantities: {},
     unitSystems: {}
   },
-  type: {
-    add: defaultAdd,
-    sub: defaultSub,
-    mul: defaultMul,
-    div: defaultDiv,
-    pow: defaultPow,
-    abs: defaultAbs,
-    eq: defaultEq,
-    lt: defaultLT,
-    gt: defaultGT,
-    le: defaultLE,
-    ge: defaultGE,
-    conv: defaultConv,
-    clone: defaultClone
-  }
+  type: defaults
 }
 
 let firstUnit = _config(defaultOptions, {})

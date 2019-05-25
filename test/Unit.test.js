@@ -11,6 +11,8 @@ import Decimal from 'decimal.js'
 
 // TODO: Test to make sure all DIMENSIONS were converted correctly (use old hardcoded arrays from UnitStore.js)
 
+// TODO: Test custom types eq, lt, gt, etc.
+
 function configCustomUnits (units) {
   return unit.config({
     definitions: {
@@ -19,7 +21,7 @@ function configCustomUnits (units) {
   })
 }
 
-let unitDec
+let unitDec, unitDecNoParse
 
 before(() => {
   Decimal.set({ precision: 32 })
@@ -54,7 +56,46 @@ before(() => {
         isDec(b)
         return Decimal.pow(a, b)
       },
+      eq: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return a.equals(b)
+      },
       conv: a => Decimal(a),
+      parse: a => Decimal(a),
+      clone: a => { isDec(a); return Decimal(a) }
+    }
+  })
+
+  unitDecNoParse = require('../index.js').config({
+    type: {
+      add: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.add(a, b)
+      },
+      sub: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.sub(a, b)
+      },
+      mul: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.mul(a, b)
+      },
+      div: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.div(a, b)
+      },
+      pow: (a, b) => {
+        isDec(a)
+        isDec(b)
+        return Decimal.pow(a, b)
+      },
+      conv: a => Decimal(a),
+      // parse: a => Decimal(a),
       clone: a => { isDec(a); return Decimal(a) }
     }
   })
@@ -502,6 +543,12 @@ describe('unitmath', () => {
       assert.strictEqual(unit1.units[2].unit.name, 's')
 
       unit1 = unit('9.81 kg m/s^2')
+      assert.strictEqual(unit1.value, 9.81)
+      assert.strictEqual(unit1.units[0].unit.name, 'g')
+      assert.strictEqual(unit1.units[1].unit.name, 'm')
+      assert.strictEqual(unit1.units[2].unit.name, 's')
+
+      unit1 = unit('9.81', 'kg m/s^2')
       assert.strictEqual(unit1.value, 9.81)
       assert.strictEqual(unit1.units[0].unit.name, 'g')
       assert.strictEqual(unit1.units[1].unit.name, 'm')
@@ -1832,14 +1879,20 @@ describe('unitmath', () => {
 
   describe('custom types', () => {
     describe('constructing a unit', () => {
-      it('if given a string, should parse as number, then convert to custom type', () => {
+      it('if given a single string, should parse the numeric portion using type.parse', () => {
         let u = unitDec('3.1415926535897932384626433832795 rad')
         assert(u.value instanceof Decimal)
-        assert.strictEqual(u.toString(), '3.141592653589793 rad')
+        assert.strictEqual(u.toString(), '3.1415926535897932384626433832795 rad')
       })
 
       it('if given a number, should convert it to custom type', () => {
         assert(unitDec(3.1415, 'rad').value instanceof Decimal)
+      })
+
+      it('should work if given the custom type directly', () => {
+        let u = unitDec(Decimal('3.1415926535897932384626433832795'), 'rad')
+        assert.strictEqual(u.toString(), '3.1415926535897932384626433832795 rad')
+        assert(u.value instanceof Decimal)
       })
 
       it('should create valueless units', () => {
@@ -1848,57 +1901,99 @@ describe('unitmath', () => {
         assert.strictEqual(u.value, null)
       })
 
-      it('should make a unit with a custom type', () => {
-        let u = unitDec(Decimal('3.1415926535897932384626433832795'), 'rad')
-        assert.strictEqual(u.toString(), '3.1415926535897932384626433832795 rad')
+      it('should parse as number, then convert to custom type, if type.parse is not available', () => {
+        let u = unitDecNoParse('3.1415926535897932384626433832795 rad')
         assert(u.value instanceof Decimal)
+        assert.strictEqual(u.toString(), '3.141592653589793 rad')
       })
     })
 
     describe('operations', () => {
       it('should add custom typed units', () => {
-        let u1 = unitDec(Decimal('0.3333333333333333333333'), 'kg/m^3')
-        let u2 = unitDec(Decimal('0.6666666666666666666666'), 'kg/m^3')
+        let u1 = unitDec('0.3333333333333333333333 kg/m^3')
+        let u2 = unitDec('0.6666666666666666666666 kg/m^3')
         let u3 = u1.add(u2)
         assert.strictEqual(u3.toString(), '0.9999999999999999999999 kg / m^3')
         assert(u3.value instanceof Decimal)
       })
 
       it('should subtract custom typed units', () => {
-        let u1 = unitDec(Decimal('0.3333333333333333333333'), 'kg/m^3')
-        let u2 = unitDec(Decimal('0.6666666666666666666666'), 'kg/m^3')
+        let u1 = unitDec('0.3333333333333333333333 kg/m^3')
+        let u2 = unitDec('0.6666666666666666666666 kg/m^3')
         let u3 = u1.sub(u2)
         assert.strictEqual(u3.toString(), '-0.3333333333333333333333 kg / m^3')
         assert(u3.value instanceof Decimal)
       })
 
       it('should multiply custom typed units', () => {
-        let u1 = unitDec(Decimal('0.3333333333333333333333'), 'kg/m^3')
-        let u2 = unitDec(Decimal('3'), 'm^3')
+        let u1 = unitDec('0.3333333333333333333333 kg/m^3')
+        let u2 = unitDec('3 m^3')
         let u3 = u1.mul(u2)
         assert.strictEqual(u3.toString(), '0.9999999999999999999999 kg')
         assert(u3.value instanceof Decimal)
       })
 
       it('should divide custom typed units', () => {
-        let u1 = unitDec(Decimal('1'), 'kg')
-        let u2 = unitDec(Decimal('3'), 'm^3')
+        let u1 = unitDec('1 kg')
+        let u2 = unitDec('3 m^3')
         let u3 = u1.div(u2)
         assert.strictEqual(u3.toString(), '0.33333333333333333333333333333333 kg / m^3') // 32 3's
         assert(u3.value instanceof Decimal)
       })
 
       it('should do powers', () => {
-        let u1 = unitDec(Decimal('11'), 's')
+        let u1 = unitDec('11 s')
         let u2 = u1.pow(30)
         assert.strictEqual(u2.toString(), '1.7449402268886407318558803753801e+31 s^30')
         assert(u2.value instanceof Decimal)
       })
+
+      describe('equals', () => {
+        it('should test if two custom typed units are equal', () => {
+          assert.strictEqual(unitDec(100, 'cm').equals(unitDec(1, 'm')), true)
+          assert.strictEqual(unitDec(100, 'cm').equals(unitDec(2, 'm')), false)
+          assert.strictEqual(unitDec(100, 'cm').equals(unitDec(1, 'kg')), false)
+          assert.strictEqual(unitDec(100, 'ft lbf').equals(unitDec(1200, 'in lbf')), true)
+          assert.strictEqual(unitDec(100, 'N').equals(unitDec(100, 'kg m / s ^ 2')), true)
+          assert.strictEqual(unitDec(100, 'N').equals(unitDec(100, 'kg m / s')), false)
+          assert.strictEqual(unitDec(100, 'Hz').equals(unitDec(100, 's ^ -1')), true)
+        })
+
+        it('should work with valueless units', () => {
+          assert.strictEqual(unitDec('cm').equals(unitDec('cm')), true)
+          assert.strictEqual(unitDec('cm').equals(unitDec('m')), false)
+          assert.strictEqual(unitDec('cm/s').equals(unitDec('cm/s')), true)
+        })
+
+        it('should convert parameter to a unit', () => {
+          assert(unitDec(100, 'cm').equals('1 m'))
+          assert(unitDec('3 kg / kg').equals(3))
+        })
+      })
+
+      // TODO: Test all other custom functions
     })
 
-    describe.skip('formatting', () => {
-      // prefixes
-      // simplify
+    describe('formatting', () => {
+      it('should choose the best prefix', () => {
+        assert.strictEqual(unitDec('0.000001 m').format(8), '1 um')
+        assert.strictEqual(unitDec('0.00001 m').format(8), '10 um')
+        assert.strictEqual(unitDec('0.0001 m').format(8), '0.1 mm')
+        assert.strictEqual(unitDec('0.0005 m').format(8), '0.5 mm')
+        assert.strictEqual(unitDec('0.0006 m').toString(), '0.6 mm')
+        assert.strictEqual(unitDec('0.001 m').toString(), '0.1 cm')
+        assert.strictEqual(unitDec('0.01 m').toString(), '1 cm')
+        assert.strictEqual(unitDec('100000 m').toString(), '100 km')
+        assert.strictEqual(unitDec('300000 m').toString(), '300 km')
+        assert.strictEqual(unitDec('500000 m').toString(), '500 km')
+        assert.strictEqual(unitDec('600000 m').toString(), '600 km')
+        assert.strictEqual(unitDec('1000000 m').toString(), '1000 km')
+        assert.strictEqual(unitDec('10000000 m').toString(), '10000 km')
+        assert.strictEqual(unitDec('1232123212321232123212321 m').toString(), '1.232123212321232123212321e+21 km')
+        assert.strictEqual(unitDec('2000 ohm').toString(), '2 kohm')
+      })
+
+      // TODO: There are custom lt, gt, and so forth in the choosePrefix function. Test those for custom types.
     })
   })
 })

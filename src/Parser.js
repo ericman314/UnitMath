@@ -191,7 +191,11 @@ export default function createParser (options, findUnit, nBaseQuantities) {
     // console.log(`valueStr = "${valueStr}"`)
 
     if (valueStr) {
-      unit.value = options.type.conv(parseFloat(valueStr))
+      unit.value = options.type.parse(valueStr)
+      if (options.type.parse._IS_UNITMATH_DEFAULT_FUNCTION && !options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION) {
+        // User supplied a conv function but not a parse. Use default parse, THEN use conv.
+        unit.value = options.type.conv(unit.value)
+      }
 
       skipWhitespace() // Whitespace is not required here
 

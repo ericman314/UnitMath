@@ -33,6 +33,9 @@ let b = unit('hour')
 // Number and string
 let g = unit(9.8, 'm/s^2')
 let h = unit(19.6, 'm')
+
+// Two strings
+let k = unit('45', 'W / m K')
 ```
 
 Units can be simple (`4 kg`) or compound (`8.314 J/mol K`). They may also be valueless (`hour`). Below are more examples of parsing units:
@@ -173,7 +176,7 @@ These are the available options and their defaults:
   unit('6 furlongs/fortnight').to('m/s') // 0.000997857142857143 m / s
   ```
 
-- `type`. An object that allows UnitMath to work with custom numeric types. Each property of `type` is a function that accepts one or more parameters (most of which are of the custom numeric type). Below are all of the available functions, along with the required function signatures and return values, where `T` represents the custom numeric type:
+- `type`. An object that allows UnitMath to work with custom numeric types. Each property of `type` is a function. Below are all of the available functions, along with the required function signatures and return values, where `T` represents the custom numeric type:
 
   - `add: (a: T, b: T) => T`
   - `sub: (a: T, b: T) => T`
@@ -188,6 +191,7 @@ These are the available options and their defaults:
   - `ge: (a: T, b: T) => boolean`
   - `clone: (a: T) => T`
   - `conv: (a: number) => T`
+  - `parse: (a: string) => T`
 
   Example:
 
@@ -358,9 +362,7 @@ quantities: {
 
 #### Custom Types
 
-*Warning: Custom types are experimental and have not yet been tested.*
-
-You can easily extend UnitMath to work with custom types by setting the `type` options. These replace the normal `+`, `-`, `*`, `/`, and other arithmetic operators used by UnitMath with functions you specify. For example, if you wrote an arbitrary-precision number library, and would like to use arbitrary-precision numbers with UnitMath:
+You can easily extend UnitMath to work with custom types by setting the `type` options. These replace the normal `+`, `-`, `*`, `/`, and other arithmetic operators used internally by UnitMath with functions you specify. For example, if you wrote an arbitrary-precision number library, and would like to use arbitrary-precision numbers with UnitMath:
 
 ```js
 const apNumber = require('my-arbitrary-precision-number')
@@ -374,27 +376,32 @@ const unit = require('unitmath').config({
     eq: apNumber.eq,
     clone: apNumber,
     conv: apNumber,
+    parse: apNumber,
     format: apNumber.toString
   }
 })
 
-let apUnit = unit(apNumber(2.74518864784926316174649567946), 'm')
+let apUnit = unit('2.74518864784926316174649567946 m')
 ```
 
-For best results, you should extend all of the `type` functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. You still might be able to use some of UnitMath's methods, though.
-
-Even when using custom types, UnitMath will parse the numeric portion of a string such as `'42 kg'` as a number, then call `type.conv` to convert the number `42` to your custom type. This means that if your custom type cannot be represented exactly by a floating-point number, you must use the two-argument `unit(value, unitString)` to construct units:
+If your custom type is representable using decimal or scientific notation (such as `6.022e+23`), specifying the `type.parse` option will enable UnitMath to parse your type as a string:
 
 ```js
-// Correct
-let d = unit(Decimal('3.1415926535897932384626433832795', 'rad'))
-let f = unit(Fraction(1, 2), 'kg') 
-
-// Incorrect
-let d = unit('3.1415926535897932384626433832795 rad') // Will lose precision
-let f = unit('1 / 2 kg') // Parse error
-
+// Parse the numeric portion of the string using type.parse
+unit('3.1415926535897932384626433832795 rad')
 ```
+
+If you don't provide a `type.parse` function, UnitMath will use `parseFloat` to convert the input string to a number, then use `type.conv` to convert that to your custom type. This could result in a loss of precision.
+
+If your custom type cannot be parsed from decimal or scientific notation (such as complex numbers and fractions), you will have to use the more generic two-argument constructor, supplying either two strings, or your custom type and a string:
+
+```js
+unit(Fraction(1, 2), 'kg') // Supply the value directly, or...
+
+unit('1 / 2', 'kg') // Supply separate value and unit arguments (requires type.parse)
+```
+
+For best results, you should extend all of the `type` functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. You still might be able to use some of UnitMath's methods, though. *TODO: Warnings for not setting required or recommended type options.*
 
 ## API Reference
 

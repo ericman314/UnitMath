@@ -1,5 +1,8 @@
 # History
 
+##
+- Better support for parsing of custom types
+
 ## 2019-05-23, v0.3.0
 - Added abs
 - Basic functionality with custom types (tested with Decimal.js, some features may not work)
