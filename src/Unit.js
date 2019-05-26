@@ -1,27 +1,7 @@
 import createUnitStore from './UnitStore.js'
 import { normalize, denormalize, isCompound as _isCompound } from './utils.js'
 
-/* The export will be a function named unit.
-
-unit's prototype will have some method properties, like add and mul.
-
-There is also a function named config. It returns a _new_ function named unit, that has different prototype or something.
-
-So when this module is loaded, it needs to run config once with default options.
-
-Units are immutable, so all public functions that return a new unit must freeze the unit. The constructor does not freeze it, because some mutation is necessary after constructing the unit.
-
-TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
-
-TODO: Store value in the original units (the "denormalized" value), so that there is no round-off error. Upon conversion or simplification, the internal value might change.
-
-TODO: Change normalize and denormalize to something more intuitive
-
-TODO: Make a function that combines equal units (ft ft becomes ft^2, for instance)
-
-*/
-
-/* Will any of the configuration options affect parsing? They might. So we will also create a new parse function every time config is called. */
+// TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
 /**
  * Create a clone of the this unit factory function, but with the specified options.
@@ -31,7 +11,19 @@ TODO: Make a function that combines equal units (ft ft becomes ft^2, for instanc
 let _config = function _config (options) {
   options = Object.assign({}, options)
 
-  // TODO: Check for valid options
+  // Check to make sure options are valid
+
+  const validPrefix = ['never', 'auto', 'always']
+  if (!validPrefix.includes(options.prefix)) {
+    throw new Error(`Invalid option for prefix: '${options.prefix}'. Valid options are ${validPrefix.join(', ')}`)
+  }
+
+  const validSimplify = ['never', 'auto', 'always']
+  if (!validSimplify.includes(options.simplify)) {
+    throw new Error(`Invalid option for simplify: '${options.simplify}'. Valid options are ${validSimplify.join(', ')}`)
+  }
+
+  // options.system will be checked in createUnitStore
 
   // Check to see if all required options.type functions have been set
   const requiredTypeFns = ['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
@@ -328,8 +320,6 @@ let _config = function _config (options) {
 
       // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
 
-      // TODO: Tests for all this stuff
-
       if (ok) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList
@@ -484,8 +474,6 @@ let _config = function _config (options) {
 
         // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
 
-        // TODO: Tests for all this stuff
-
         // Is the proposed unit list "simpler" than the existing one?
         if (calcComplexity(simp2.units) <= calcComplexity(simp.units) - _opts.simplifyThreshold) {
           simp = simp2
@@ -514,7 +502,7 @@ let _config = function _config (options) {
 
   // These private functions do not freeze the units before returning, so that we can do mutations on the units before returning the final, frozen unit to the user.
 
-  // TODO: Possible source of unhelpful error message and user confusion, if user supplies a type that it not a unit, not a string, and not a number, to a public API method that uses this function to convert input to a unit. Since there is no way to know whether a user might be using a custom type, or just sent the wrong type.
+  // TODO: Possible source of unhelpful error message and user confusion, if user supplies a type that is not a unit, not a string, and not a number, to a public API method that uses this function to convert input to a unit. Since there is no way to know whether a user might be using a custom type, or just sent the wrong type.
   /**
    * Converts the supplied parameter to a frozen unit, or, if a unit was supplied, returns it unchanged.
    * @param {any} param
@@ -734,6 +722,9 @@ let _config = function _config (options) {
      * @returns {Unit[]} An array of units
      */
   function _split (unit, units) {
+    if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION) {
+      throw new Error('split is not yet implemented for custom types')
+    }
     let x = _clone(unit)
     const result = []
     for (let i = 0; i < units.length; i++) {
@@ -993,8 +984,6 @@ let _config = function _config (options) {
 
   let unitStore = createUnitStore(options)
 
-  // TODO: How to add custom units which are defined based on other units? They will need to be parsed, but the parser depends on the unit store, so the unit store can't use the parser.
-
   // Public functions available on the unitmath namespace
 
   /**
@@ -1139,12 +1128,7 @@ defaults.gt = (a, b) => a > b
 defaults.le = (a, b) => a <= b
 defaults.ge = (a, b) => a >= b
 defaults.conv = a => typeof a === 'string' ? parseFloat(a) : a
-defaults.clone = (a) => {
-  if (typeof (a) !== 'number') {
-    throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof (a)})`)
-  }
-  return a
-}
+defaults.clone = (a) => a
 
 // These are mostly to help warn the user if they forgot to override one or more of the default functions
 for (const key in defaults) {

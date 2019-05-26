@@ -3,10 +3,6 @@ import approx from './approx'
 import unit from '../src/Unit.js'
 import Decimal from 'decimal.js'
 
-// TODO: Test to make sure all DIMENSIONS were converted correctly (use old hardcoded arrays from UnitStore.js)
-
-// TODO: Test custom types eq, lt, gt, etc.
-
 function configCustomUnits (units) {
   return unit.config({
     definitions: {
@@ -148,6 +144,11 @@ describe('unitmath', () => {
       assert.strictEqual(unit.config().prefix, 'auto')
       assert.strictEqual(newUnit.config().prefix, 'always')
       assert.strictEqual(newUnit.config().simplify, 'auto')
+    })
+
+    it('should throw on invalid options', () => {
+      assert.throws(() => unit.config({ prefix: 'invalidOption' }), /Invalid option for prefix: 'invalidOption'/)
+      assert.throws(() => unit.config({ simplify: 'bad' }), /Invalid option for simplify: 'bad'/)
     })
 
     describe('custom definitions', () => {
@@ -1620,7 +1621,7 @@ describe('unitmath', () => {
       })
     })
 
-    describe('UNITS', () => {
+    describe('defs.units', () => {
       it('built-in units should be of the correct value and dimension', function () {
         assert.strictEqual(unit(1, 's A').equals(unit(1, 'C')), true)
         assert.strictEqual(unit(1, 'W/A').equals(unit(1, 'V')), true)
@@ -1634,16 +1635,18 @@ describe('unitmath', () => {
       })
 
       it("For each built-in unit, 'name' should match key", function () {
-        for (const key in unit._unitStore.UNITS) {
-          assert.strictEqual(key, unit._unitStore.UNITS[key].name)
+        assert(unit._unitStore.defs.hasOwnProperty('units'))
+        for (const key in unit._unitStore.defs.units) {
+          assert.strictEqual(key, unit._unitStore.defs.units[key].name)
         }
       })
     })
 
-    describe('UNIT_SYSTEMS', () => {
+    describe('defs.unitSystems', () => {
       it('should not have any dimensions that are not present in DIMENSIONS', () => {
-        for (let sys in unit._unitStore.UNIT_SYSTEMS) {
-          for (let dim in unit._unitStore.UNIT_SYSTEMS[sys]) {
+        assert(unit._unitStore.defs.hasOwnProperty('unitSystems'))
+        for (let sys in unit._unitStore.defs.unitSystems) {
+          for (let dim in unit._unitStore.defs.unitSystems[sys]) {
             assert(unit._unitStore.defs.quantities.hasOwnProperty(dim), `${dim} not found in defs.quantities`)
           }
         }
@@ -1829,6 +1832,15 @@ describe('unitmath', () => {
         let u2 = u1.pow(30)
         assert.strictEqual(u2.toString(), '1.7449402268886407318558803753801e+31 s^30')
         assert(u2.value instanceof Decimal)
+      })
+
+      it('should do sqrt', () => {
+        assert.strictEqual(unitDec('64 m^2/s^2').sqrt().format(), '8 m / s')
+        assert.strictEqual(unitDec('2 W').sqrt().format(), '1.4142135623730950488016887242097 W^0.5')
+      })
+
+      it('split should throw because it is not implemented', () => {
+        assert.throws(() => unitDec('10 km').split(['mi', 'ft', 'in']), /split is not yet implemented for custom types/)
       })
 
       describe('equals', () => {
