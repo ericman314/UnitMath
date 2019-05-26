@@ -1,6 +1,7 @@
 # History
 
-##
+## 2019-05-26, v0.4.0
+- Added split
 - Better support for parsing of custom types
 
 ## 2019-05-23, v0.3.0
