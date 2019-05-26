@@ -349,7 +349,6 @@ Example using Decimal.js as the custom type:
 const Decimal = require('decimal.js')
 const unit = require('unitmath').config({
   type: {
-    // Required
     clone: Decimal,
     conv: Decimal,
     add: (a, b) => a.add(b),
@@ -357,8 +356,6 @@ const unit = require('unitmath').config({
     mul: (a, b) => a.mul(b),
     div: (a, b) => a.div(b),
     pow: (a, b) => a.pow(b),
-
-    // Optional
     eq: (a, b) => a.eq(b),
     lt: (a, b) => a.lt(b),
     le: (a, b) => a.lte(b),
