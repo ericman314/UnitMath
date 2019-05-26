@@ -34,32 +34,31 @@ let _config = function _config (options) {
   // Check to see if all required options.type functions have been set
   const requiredTypeFns = ['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
   let allRequiredTypeFnsPresent = true
-  let noRequiredTypeFnsPresent = true
+  let oneRequiredTypeFnsPresent = false
   for(const fn of requiredTypeFns) {
     if (options.type[fn]._IS_UNITMATH_DEFAULT_FUNCTION) {
       allRequiredTypeFnsPresent = false
     } else {
-      noRequiredTypeFnsPresent = false
+      oneRequiredTypeFnsPresent = true
     }
   } 
 
-  if (!noRequiredTypeFnsPresent) {
+  if (oneRequiredTypeFnsPresent) {
     if (!allRequiredTypeFnsPresent) {
       throw new Error(`You must supply all required custom type functions: ${requiredTypeFns.join(', ')}`)
     }
 
-    // Check optional type functions required for _choosePrefix
+    // Check type functions required for _choosePrefix
     if (options.prefix !== 'never') {
-      const optionalTypeFnsPrefix = ['lt', 'gt', 'le', 'ge', 'abs']
-      let allOptionalRequiredTypeFnsPrefixPresent = true
-      for(const fn of optionalTypeFnsPrefix) {
+      const prefixRequiredTypeFns = ['lt', 'gt', 'le', 'ge', 'abs']
+      let allPrefixRequiredTypeFnsPresent = true
+      for(const fn of prefixRequiredTypeFns) {
         if (options.type[fn]._IS_UNITMATH_DEFAULT_FUNCTION) {
-          allOptionalRequiredTypeFnsPrefixPresent = false
+          allPrefixRequiredTypeFnsPresent = false
         }
       }
-
-      if (!allOptionalRequiredTypeFnsPrefixPresent) {
-        throw new Error(`The following custom type functions are required when prefix is '${options.prefix}': ${optionalTypeFnsPrefix.join(', ')}`)
+      if (!allPrefixRequiredTypeFnsPresent) {
+        throw new Error(`The following custom type functions are required when prefix is '${options.prefix}': ${prefixRequiredTypeFns.join(', ')}`)
       }
     }
   }
@@ -410,6 +409,9 @@ let _config = function _config (options) {
      * @return {boolean} true if both units are equal
      */
     equals (other) {
+      if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && options.type.eq._IS_UNITMATH_DEFAULT_FUNCTION) {
+        throw new Error(`When using custom types, equals requires a type.eq function`)
+      }
       other = _convertParamToUnit(other)
       let value1, value2
       if (this.value === null && other.value === null) {

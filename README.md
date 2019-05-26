@@ -371,9 +371,9 @@ const unit = require('unitmath').config({
 let u = unit('2.74518864784926316174649567946 m')
 ```
 
-Below is a list of the required and optional functions and their signatures:
+Below is a list of functions, their signatures, and when they are required.
 
-Required
+Required always:
   - `clone: (a: T) => T`          
   - `conv: (a: number | string | T) => T` 
   - `add: (a: T, b: T) => T`     
@@ -382,13 +382,15 @@ Required
   - `div: (a: T, b: T) => T`     
   - `pow: (a: T, b: number) => T`
   
-Optional
+Required for prefix = 'auto' or 'always':
   - `abs: (a: T) => T`
-  - `eq: (a: T, b: T) => boolean`
   - `lt: (a: T, b: T) => boolean`
   - `gt: (a: T, b: T) => boolean`
   - `le: (a: T, b: T) => boolean`
   - `ge: (a: T, b: T) => boolean`
+
+Required for specific functions:
+  - `eq: (a: T, b: T) => boolean ` (Required for `equals` function)
 
 The `add`, `sub`, `mul`, `div`, and `pow` functions replace `+`, `-`, `*`, `/`, and `Math.pow`, respectively. The `clone` function should return a clone of your custom type (same value, different object). 
 
@@ -411,7 +413,7 @@ unit(0.5, 'kg') // Supply a number and a string
 unit(Fraction(1, 2), 'kg') // Supply the value directly
 ```
 
-The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are all required. Omitting any of these will cause the `config` method to throw an error. Omitting any of the optional functions will result in a console warning, and some functionality will be disabled. 
+The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always required. Omitting any of these will cause the `config` method to throw an error. The other functions are conditionally required, and you may receive an error if you attempt something that depends on a function you haven't provided.
 
 ## API Reference
 
