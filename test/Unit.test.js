@@ -3,12 +3,6 @@ import approx from './approx'
 import unit from '../src/Unit.js'
 import Decimal from 'decimal.js'
 
-// TODO: Bring in any other tests that use units from math.js
-
-// TODO: Remove once uses of `math`, and `Unit` are removed or these values
-//       are imported.
-/* global math, Unit */
-
 // TODO: Test to make sure all DIMENSIONS were converted correctly (use old hardcoded arrays from UnitStore.js)
 
 // TODO: Test custom types eq, lt, gt, etc.
@@ -297,6 +291,7 @@ describe('unitmath', () => {
 
         assert.deepStrictEqual(newUnit('fib').getQuantities(), [ 'FOOLOCITY' ])
         assert.deepStrictEqual(newUnit('flab').getQuantities(), [ 'FOOLUME' ])
+        assert.strictEqual(newUnit('1 megafoo/s').simplify().toString(), '720000000 fib')
         assert.strictEqual(newUnit('1 megafoo/s').to('fib').toString(), '720000000 fib')
         assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
       })
@@ -1052,13 +1047,6 @@ describe('unitmath', () => {
       assert.strictEqual(newUnit('4 W / F').simplify().format(), '4 W / F')
     })
 
-    it.skip('should simplify user-defined units when unit system is "auto"', function () {
-      Unit.setUnitSystem('auto')
-      Unit.createUnit({ 'USD': '' })
-      Unit.createUnit({ 'EUR': '1.15 USD' })
-      assert.strictEqual(math.evaluate('10 EUR/hour * 2 hours').toString(), '20 EUR')
-    })
-
     it('should not simplify unless complexity is reduced by the threshold', () => {
       assert.strictEqual(unit('10 N m').toString(), '10 N m')
       assert.strictEqual(unit('10 J / m').toString(), '10 N')
@@ -1696,127 +1684,27 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('createUnitSingle', function () {
-    it('should create a custom unit from a string definition', function () {
-      Unit.createUnitSingle('widget', '5 kg bytes')
-      assert.strictEqual(unit(1, 'widget').equals(unit(5, 'kg bytes')), true)
-      Unit.createUnitSingle('woggle', '4 widget^2')
-      assert.strictEqual(unit(1, 'woggle').equals(unit(4, 'widget^2')), true)
-      assert.strictEqual(unit(2, 'woggle').equals(unit(200, 'kg^2 bytes^2')), true)
-    })
-
-    it('should create a custom unit from a Unit definition', function () {
-      const Unit1 = unit(5, 'N/woggle')
-      Unit.createUnitSingle('gadget', Unit1)
-      assert.strictEqual(unit(1, 'gadget').equals(unit(5, 'N/woggle')), true)
-    })
-
-    it('should create a custom unit from a configuration object', function () {
-      Unit.createUnitSingle('wiggle', { definition: '4 rad^2/s', offset: 1, prefixes: 'long' })
-      assert.strictEqual(math.evaluate('8000 rad^2/s').toString(), '1 kilowiggle')
-    })
-
-    it('should return the new (value-less) unit', function () {
-      const Unit2 = unit(1000, 'N h kg^-2 bytes^-2')
-      const newUnit = Unit.createUnitSingle('whimsy', '8 gadget hours')
-      assert.strictEqual(Unit2.to(newUnit).toString(), '2500 whimsy')
-    })
-
-    it('should not override an existing unit', function () {
-      assert.throws(function () { Unit.createUnitSingle('m', '1 kg') }, /Cannot create unit .*: a unit with that name already exists/)
-      assert.throws(function () { Unit.createUnitSingle('gadget', '1 kg') }, /Cannot create unit .*: a unit with that name already exists/)
-      assert.throws(function () { Unit.createUnitSingle('morogrove', { aliases: 's' }) }, /Cannot create alias .*: a unit with that name already exists/)
-    })
-
-    it('should throw an error for invalid parameters', function () {
-      assert.throws(function () { Unit.createUnitSingle() }, /createUnitSingle expects first parameter/)
-      assert.throws(function () { Unit.createUnitSingle(42) }, /createUnitSingle expects first parameter/)
-      assert.throws(function () { Unit.createUnitSingle('42') }, /Error: Invalid unit name/)
-    })
-
-    it('should apply the correct prefixes', function () {
-      Unit.createUnitSingle('millizilch', { definition: '1e-3 m', prefixes: 'long' })
-      assert.strictEqual(unit(1e-6, 'millizilch').toString(), '1 micromillizilch')
-    })
-
-    it('should override prefixed built-in units', function () {
-      Unit.createUnitSingle('mm', { definition: '1e-4 m', prefixes: 'short' }) // User is being silly
-      assert.strictEqual(unit(1e-3, 'mm').toString(), '1 mmm') // Use the user's new definition
-      assert.strictEqual(unit(1e-3, 'mm').to('m').format(4), '1e-7 m') // Use the user's new definition
-    })
-
-    it('should create aliases', function () {
-      Unit.createUnitSingle('knot', { definition: '0.51444444 m/s', aliases: ['knots', 'kts', 'kt'] })
-      assert.strictEqual(unit(1, 'knot').equals(unit(1, 'kts')), true)
-      assert.strictEqual(unit(1, 'kt').equals(unit(1, 'knots')), true)
-    })
-
-    it('should apply offset correctly', function () {
-      Unit.createUnitSingle('whatsit', { definition: '3.14 kN', offset: 2 })
-      assert.strictEqual(unit(1, 'whatsit').to('kN').toString(), '9.42 kN')
-    })
-
-    it('should create new base units', function () {
-      const fooBaseUnit = Unit.createUnitSingle('fooBase')
-      assert.strictEqual(fooBaseUnit.dimensions.toString(), Unit.BASE_UNITS['fooBase_STUFF'].dimensions.toString())
-      const testUnit = unit(5, 'fooBase')
-      assert.strictEqual(testUnit.toString(), '5 fooBase')
-    })
-
-    it('should not override base units', function () {
-      assert.throws(function () { Unit.createUnitSingle('fooBase', '', { override: true }) }, /Cannot create/)
-    })
-
-    it('should create and use a new base if no matching base exists', function () {
-      Unit.createUnitSingle('jabberwocky', '1 mile^5/hour')
-      assert.strictEqual('jabberwocky_STUFF' in Unit.BASE_UNITS, true)
-      assert.strictEqual(math.evaluate('4 mile^5/minute').format(4), '240 jabberwocky')
-    })
-  })
-
-  describe.skip('createUnit', function () {
-    it('should create multiple units', function () {
-      Unit.createUnit({
-        'foo1': '',
-        'foo2': '2 foo1',
-        'foo3': {
-          definition: '2 foo2',
-          prefixes: 'long'
-        }
-      })
-      assert.strictEqual(math.evaluate('2 foo3 to foo1').toString(), '8 foo1')
-    })
-
-    it('should override units when requested and if able', function () {
-      assert.throws(function () { Unit.createUnit({ foo1: '' }) }, /Cannot/)
-      assert.throws(function () { Unit.createUnit({ foo1: '', override: true }) }, /Cannot/)
-      Unit.createUnit({ foo3: '' }, { override: true })
-    })
-
-    it('should throw error when first parameter is not an object', function () {
-      assert.throws(function () { Unit.createUnit('not an object') }, /createUnit expects first/)
-    })
-  })
-
-  describe.skip('splitUnit', function () {
+  describe('split', function () {
     it('should split a unit into parts', function () {
-      assert.strictEqual((unit(1, 'm')).splitUnit(['ft', 'in']).toString(), '3 ft,3.3700787401574765 in')
-      assert.strictEqual((unit(-1, 'm')).splitUnit(['ft', 'in']).toString(), '-3 ft,-3.3700787401574765 in')
-      assert.strictEqual((unit(1, 'm/s')).splitUnit(['m/s']).toString(), '1 m / s')
-      assert.strictEqual((unit(1, 'm')).splitUnit(['ft', 'ft']).toString(), '3 ft,0.280839895013123 ft')
-      assert.strictEqual((unit(1.23, 'm/s')).splitUnit([]).toString(), '1.23 m / s')
-      assert.strictEqual((unit(1, 'm')).splitUnit(['in', 'ft']).toString(), '39 in,0.030839895013123605 ft')
-      assert.strictEqual((unit(1, 'm')).splitUnit([ unit(null, 'ft'), unit(null, 'in') ]).toString(), '3 ft,3.3700787401574765 in')
+      assert.strictEqual(unit(1, 'm').split(['ft', 'in']).join(','), '3 ft,3.37007874015748 in')
+      assert.strictEqual(unit(-1, 'm').split(['ft', 'in']).join(','), '-3 ft,-3.37007874015748 in')
+      assert.strictEqual(unit(1, 'm/s').split(['m/s']).join(','), '1 m / s')
+      assert.strictEqual(unit(1, 'm').split(['ft', 'ft']).join(','), '3 ft,0.280839895013124 ft')
+      assert.strictEqual(unit(1.23, 'm/s').split([]).join(','), '1.23 m / s')
+      assert.strictEqual(unit(1, 'm').split(['in', 'ft']).join(','), '39 in,0.0308398950131236 ft')
+      assert.strictEqual(unit(10, 'km').split([ 'mi', 'ft', 'in' ]).join(','), '6 mi,1128 ft,4.78740157486361 in')
+      assert.strictEqual(unit(1, 'm').split([ unit(null, 'ft'), unit(null, 'in') ]).join(','), '3 ft,3.37007874015748 in')
+      assert.strictEqual(unit('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]).map(a => a.toString({ precision: 6 })).join(','), '51 deg,29 arcmin,36.24 arcsec')
     })
 
     it('should be resistant to round-off error', function () {
-      assert.strictEqual((unit(-12, 'in')).splitUnit(['ft', 'in']).toString(), '-1 ft,0 in')
-      assert.strictEqual((unit(12, 'in')).splitUnit(['ft', 'in']).toString(), '1 ft,0 in')
-      assert.strictEqual((unit(24, 'in')).splitUnit(['ft', 'in']).toString(), '2 ft,0 in')
-      assert.strictEqual((unit(36, 'in')).splitUnit(['ft', 'in']).toString(), '3 ft,0 in')
-      assert.strictEqual((unit(48, 'in')).splitUnit(['ft', 'in']).toString(), '4 ft,0 in')
-      assert.strictEqual((unit(60, 'in')).splitUnit(['ft', 'in']).toString(), '5 ft,0 in')
-      assert.strictEqual((unit(36000, 'in')).splitUnit(['ft', 'in']).toString(), '3000 ft,0 in')
+      assert.strictEqual((unit(-12, 'in')).split(['ft', 'in']).join(','), '-1 ft,0 in')
+      assert.strictEqual((unit(12, 'in')).split(['ft', 'in']).join(','), '1 ft,0 in')
+      assert.strictEqual((unit(24, 'in')).split(['ft', 'in']).join(','), '2 ft,0 in')
+      assert.strictEqual((unit(36, 'in')).split(['ft', 'in']).join(','), '3 ft,0 in')
+      assert.strictEqual((unit(48, 'in')).split(['ft', 'in']).join(','), '4 ft,0 in')
+      assert.strictEqual((unit(60, 'in')).split(['ft', 'in']).join(','), '5 ft,0 in')
+      assert.strictEqual((unit(36000, 'in')).split(['ft', 'in']).join(','), '3000 ft,0 in')
     })
   })
 

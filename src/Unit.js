@@ -209,6 +209,19 @@ let _config = function _config (options) {
     }
 
     /**
+     * Returns an array of units whose sum is equal to this unit, where each unit in the array is taken from the supplied string array.
+     * @param {string[]} units A string array of units to split this unit into.
+     * @returns {Unit[]} An array of units
+     */
+    split (units) {
+      let us = _split(this, units)
+      for (let i = 0; i < us.length; i++) {
+        Object.freeze(us[i])
+      }
+      return us
+    }
+
+    /**
      * Convert the unit to a specific unit.
      * @memberof Unit
      * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm". If omitted, a new unit is returned which is fixed (will not be auto-simplified)
@@ -715,6 +728,53 @@ let _config = function _config (options) {
     return _pow(unit, options.type.conv(0.5))
   }
 
+  /**
+     * Returns an array of units whose sum is equal to this unit, where each unit in the array is taken from the supplied string array.
+     * @param {string[]} units A string array of units to split this unit into.
+     * @returns {Unit[]} An array of units
+     */
+  function _split (unit, units) {
+    let x = _clone(unit)
+    const result = []
+    for (let i = 0; i < units.length; i++) {
+      // Convert x to the requested unit
+
+      x = _to(x, _convertParamToUnit(units[i]))
+      if (i === units.length - 1) break
+
+      // Check to see if xNumeric is nearly equal to an integer,
+      // since fix can incorrectly round down if there is round-off error
+      const xRounded = Math.round(x.value)
+      let xFixed
+      const isNearlyEqual = options.type.eq(xRounded, x.value)
+      if (isNearlyEqual) {
+        xFixed = xRounded
+      } else {
+        xFixed = Math.trunc(x.value)
+      }
+
+      const y = new Unit(xFixed, units[i].toString())
+      result.push(y)
+      x = _sub(x, y)
+    }
+
+    // This little bit fixes a bug where the remainder should be 0 but is a little bit off.
+    // But instead of comparing x, the remainder, with zero--we will compare the sum of
+    // all the parts so far with the original value. If they are nearly equal,
+    // we set the remainder to 0.
+    let testSum = options.type.conv(0)
+    for (let i = 0; i < result.length; i++) {
+      testSum = options.type.add(testSum, normalize(result[i].units, result[i].value, options.type))
+    }
+    if (options.type.eq(testSum, normalize(unit.units, unit.value, options.type))) {
+      x.value = options.type.conv(0)
+    }
+
+    result.push(x)
+
+    return result
+  }
+
   function _abs (unit) {
     const result = _clone(unit)
     result.value = denormalize(result.units, options.type.abs(normalize(result.units, result.value, options.type)), options.type)
@@ -729,7 +789,6 @@ let _config = function _config (options) {
   function _to (unit, valuelessUnit) {
     let result
     const value = unit.value === null ? 1 : unit.value
-
     if (!unit.equalQuantity(valuelessUnit)) {
       throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
     }

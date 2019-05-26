@@ -65,6 +65,13 @@ unit('10 / s').simplify() // 10 Hz
 unit('J / m').simplify() // N
 ```
 
+The `split` method will convert one unit into an array of units like so:
+
+```js
+unit('10 km').split([ 'mi', 'ft', 'in' ]) // [ 6 mi, 1128 ft, 4.78740157486361 in ]
+unit('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]) // [ 51 deg, 29 arcmin, 36.24 arcsec ]
+```
+
 ### Arithmetic
 
 Use the methods `add`, `sub`, `mul`, `div`, `pow`, `sqrt`, and others to perform arithmetic on units. Multiple operations can be chained together:
@@ -550,6 +557,14 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
 
   ```js
   unit('10 N m').simplify() // 10 J
+  ```
+
+- `#split(Array(string | unit))`
+
+  Converts this unit into an array of units, where the sum of the resulting units is equal to this unit, and where each of the resulting units is the result of truncating this unit to an integer, and then passing the remainder to the next unit, until the final unit, which takes up all the remainder.
+
+  ```js
+  unit('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]) // [ 51 deg, 29 arcmin, 36.24 arcsec ]
   ```
 
 - `#getUnits()`
