@@ -70,7 +70,6 @@ before(() => {
       abs: (a) => a.abs()
     }
   })
-
 })
 
 describe('unitmath', () => {
@@ -1872,7 +1871,6 @@ describe('unitmath', () => {
         assert.strictEqual(u.toString(), 'rad')
         assert.strictEqual(u.value, null)
       })
-
     })
 
     describe('operations', () => {
@@ -1959,7 +1957,6 @@ describe('unitmath', () => {
         assert.strictEqual(unitDec('1232123212321232123212321 m').toString(), '1.232123212321232123212321e+21 km')
         assert.strictEqual(unitDec('2000 ohm').toString(), '2 kohm')
       })
-
     })
   })
 })

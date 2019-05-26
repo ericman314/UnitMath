@@ -35,13 +35,13 @@ let _config = function _config (options) {
   const requiredTypeFns = ['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
   let allRequiredTypeFnsPresent = true
   let oneRequiredTypeFnsPresent = false
-  for(const fn of requiredTypeFns) {
+  for (const fn of requiredTypeFns) {
     if (options.type[fn]._IS_UNITMATH_DEFAULT_FUNCTION) {
       allRequiredTypeFnsPresent = false
     } else {
       oneRequiredTypeFnsPresent = true
     }
-  } 
+  }
 
   if (oneRequiredTypeFnsPresent) {
     if (!allRequiredTypeFnsPresent) {
@@ -52,7 +52,7 @@ let _config = function _config (options) {
     if (options.prefix !== 'never') {
       const prefixRequiredTypeFns = ['lt', 'gt', 'le', 'ge', 'abs']
       let allPrefixRequiredTypeFnsPresent = true
-      for(const fn of prefixRequiredTypeFns) {
+      for (const fn of prefixRequiredTypeFns) {
         if (options.type[fn]._IS_UNITMATH_DEFAULT_FUNCTION) {
           allPrefixRequiredTypeFnsPresent = false
         }
@@ -62,7 +62,6 @@ let _config = function _config (options) {
       }
     }
   }
-
 
   Object.freeze(options)
 
@@ -1078,7 +1077,7 @@ defaults.lt = (a, b) => a < b
 defaults.gt = (a, b) => a > b
 defaults.le = (a, b) => a <= b
 defaults.ge = (a, b) => a >= b
-defaults.conv = a => typeof a === 'string' ? parseFloat(a) : a 
+defaults.conv = a => typeof a === 'string' ? parseFloat(a) : a
 defaults.clone = (a) => {
   if (typeof (a) !== 'number') {
     throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof (a)})`)
