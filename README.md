@@ -410,7 +410,7 @@ unit(0.5, 'kg') // Supply a number and a string
 unit(Fraction(1, 2), 'kg') // Supply the value directly
 ```
 
-The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always required. Omitting any of these will cause the `config` method to throw an error. The other functions are conditionally required, and you may receive an error if you attempt something that depends on a function you haven't provided.
+The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always required. Omitting any of these will cause the `config` method to throw an error. The other functions are conditionally required, and you will receive an error if you attempt something that depends on a function you haven't provided.
 
 ## API Reference
 

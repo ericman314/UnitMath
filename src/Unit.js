@@ -31,6 +31,8 @@ TODO: Make a function that combines equal units (ft ft becomes ft^2, for instanc
 let _config = function _config (options) {
   options = Object.assign({}, options)
 
+  // TODO: Check for valid options
+
   // Check to see if all required options.type functions have been set
   const requiredTypeFns = ['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
   let allRequiredTypeFnsPresent = true
