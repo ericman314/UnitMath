@@ -161,7 +161,7 @@ These are the available options and their defaults:
   unit('4000 kg').mul('9.8 m/s^2').mul('100 m').toString()  // "3.92 MJ"
   ```
 
-- `definitions`. An object that allows you to add to, modify, or remove the built-in units. See the section titled "Extending UnitMath" for complete details.
+- `definitions`. An object that allows you to add to, modify, or remove the built-in units. See [Custom Units](#custom-units) for complete details.
 
   ```js
   unit = unit.config({
@@ -176,28 +176,7 @@ These are the available options and their defaults:
   unit('6 furlongs/fortnight').to('m/s') // 0.000997857142857143 m / s
   ```
 
-- `type`. An object that allows UnitMath to work with custom numeric types. Each property of `type` is a function. Below are all of the available functions, along with the required function signatures and return values, where `T` represents the custom numeric type:
-
-  - `add: (a: T, b: T) => T`
-  - `sub: (a: T, b: T) => T`
-  - `mul: (a: T, b: T) => T`
-  - `div: (a: T, b: T) => T`
-  - `pow: (a: T, b: number) => T`
-  - `abs: (a: T) => T`
-  - `eq: (a: T, b: T) => boolean`
-  - `lt: (a: T, b: T) => boolean`
-  - `gt: (a: T, b: T) => boolean`
-  - `le: (a: T, b: T) => boolean`
-  - `ge: (a: T, b: T) => boolean`
-  - `clone: (a: T) => T`
-  - `conv: (a: number) => T`
-  - `parse: (a: string) => T`
-
-  Example:
-
-  ```js
-  // TODO
-  ```
+- `type`. An object that allows UnitMath to work with custom numeric types. See [Custom Types](#custom-types) for complete details and examples.
 
 Because `unit.config(options)` returns a new instance of UnitMath, is is technically possible to perform operations between units created from different instances. The resulting behavior is undefined, however, so it is probably best to avoid doing this.
 
@@ -362,46 +341,77 @@ quantities: {
 
 #### Custom Types
 
-You can easily extend UnitMath to work with custom types by setting the `type` options. These replace the normal `+`, `-`, `*`, `/`, and other arithmetic operators used internally by UnitMath with functions you specify. For example, if you wrote an arbitrary-precision number library, and would like to use arbitrary-precision numbers with UnitMath:
+You can easily extend UnitMath to work with custom types. The `type` option is an object containing several key/value pairs, where each value is a function that replaces the normal `+`, `-`, `*`, `/`, and other arithmetic operators used internally by UnitMath with functions you specify.
+
+Example using Decimal.js as the custom type:
 
 ```js
-const apNumber = require('my-arbitrary-precision-number')
+const Decimal = require('decimal.js')
 const unit = require('unitmath').config({
   type: {
-    add: apNumber.add,
-    sub: apNumber.sub,
-    mul: apNumber.mul,
-    div: apNumber.div,
-    pow: apNumber.pow,
-    eq: apNumber.eq,
-    clone: apNumber,
-    conv: apNumber,
-    parse: apNumber,
-    format: apNumber.toString
+    // Required
+    clone: Decimal,
+    conv: Decimal,
+    add: (a, b) => a.add(b),
+    sub: (a, b) => a.sub(b),
+    mul: (a, b) => a.mul(b),
+    div: (a, b) => a.div(b),
+    pow: (a, b) => a.pow(b),
+
+    // Optional
+    eq: (a, b) => a.eq(b),
+    lt: (a, b) => a.lt(b),
+    le: (a, b) => a.lte(b),
+    gt: (a, b) => a.gt(b),
+    ge: (a, b) => a.gte(b),
+    abs: (a) => a.abs()
   }
 })
 
-let apUnit = unit('2.74518864784926316174649567946 m')
+let u = unit('2.74518864784926316174649567946 m')
 ```
 
-If your custom type is representable using decimal or scientific notation (such as `6.022e+23`), specifying the `type.parse` option will enable UnitMath to parse your type as a string:
+Below is a list of the required and optional functions and their signatures:
+
+Required
+  - `clone: (a: T) => T`          
+  - `conv: (a: number | string | T) => T` 
+  - `add: (a: T, b: T) => T`     
+  - `sub: (a: T, b: T) => T`     
+  - `mul: (a: T, b: T) => T`     
+  - `div: (a: T, b: T) => T`     
+  - `pow: (a: T, b: number) => T`
+  
+Optional
+  - `abs: (a: T) => T`
+  - `eq: (a: T, b: T) => boolean`
+  - `lt: (a: T, b: T) => boolean`
+  - `gt: (a: T, b: T) => boolean`
+  - `le: (a: T, b: T) => boolean`
+  - `ge: (a: T, b: T) => boolean`
+
+The `add`, `sub`, `mul`, `div`, and `pow` functions replace `+`, `-`, `*`, `/`, and `Math.pow`, respectively. The `clone` function should return a clone of your custom type (same value, different object). 
+
+The `conv` function must, at a minimum, be capable of converting both strings and numbers into your custom type. If given a custom type, it should return it unchanged, or return a clone. Among other things, the `conv` function is used by UnitMath to convert the values of the built-in units to your custom type.
+
+UnitMath will also use the `conv` function when constructing units from numbers and strings. If your custom type is representable using decimal or scientific notation (such as `6.022e+23`), you can include both the value and the units in a single string:
 
 ```js
-// Parse the numeric portion of the string using type.parse
+// Supply a single string and the numeric portion will be parsed using type.conv
 unit('3.1415926535897932384626433832795 rad')
 ```
 
-If you don't provide a `type.parse` function, UnitMath will use `parseFloat` to convert the input string to a number, then use `type.conv` to convert that to your custom type. This could result in a loss of precision.
-
-If your custom type cannot be parsed from decimal or scientific notation (such as complex numbers and fractions), you will have to use the more generic two-argument constructor, supplying either two strings, or your custom type and a string:
+If your custom type cannot be represented in decimal or scientific notation, such as is the case with complex numbers and fractions, you will have to use the more generic two-argument constructor, supplying either two strings, a number and a string, or your custom type and a string:
 
 ```js
-unit(Fraction(1, 2), 'kg') // Supply the value directly, or...
+unit('1 / 2', 'kg') // Supply two strings
 
-unit('1 / 2', 'kg') // Supply separate value and unit arguments (requires type.parse)
+unit(0.5, 'kg') // Supply a number and a string
+
+unit(Fraction(1, 2), 'kg') // Supply the value directly
 ```
 
-For best results, you should extend all of the `type` functions. If you try to use custom types without extending all of UnitMath's internal arithmetic functions, you might receive a `TypeError`. You still might be able to use some of UnitMath's methods, though. *TODO: Warnings for not setting required or recommended type options.*
+The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are all required. Omitting any of these will cause the `config` method to throw an error. Omitting any of the optional functions will result in a console warning, and some functionality will be disabled. 
 
 ## API Reference
 

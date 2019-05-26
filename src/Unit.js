@@ -30,6 +30,41 @@ TODO: Make a function that combines equal units (ft ft becomes ft^2, for instanc
  */
 let _config = function _config (options) {
   options = Object.assign({}, options)
+
+  // Check to see if all required options.type functions have been set
+  const requiredTypeFns = ['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
+  let allRequiredTypeFnsPresent = true
+  let noRequiredTypeFnsPresent = true
+  for(const fn of requiredTypeFns) {
+    if (options.type[fn]._IS_UNITMATH_DEFAULT_FUNCTION) {
+      allRequiredTypeFnsPresent = false
+    } else {
+      noRequiredTypeFnsPresent = false
+    }
+  } 
+
+  if (!noRequiredTypeFnsPresent) {
+    if (!allRequiredTypeFnsPresent) {
+      throw new Error(`You must supply all required custom type functions: ${requiredTypeFns.join(', ')}`)
+    }
+
+    // Check optional type functions required for _choosePrefix
+    if (options.prefix !== 'never') {
+      const optionalTypeFnsPrefix = ['lt', 'gt', 'le', 'ge', 'abs']
+      let allOptionalRequiredTypeFnsPrefixPresent = true
+      for(const fn of optionalTypeFnsPrefix) {
+        if (options.type[fn]._IS_UNITMATH_DEFAULT_FUNCTION) {
+          allOptionalRequiredTypeFnsPrefixPresent = false
+        }
+      }
+
+      if (!allOptionalRequiredTypeFnsPrefixPresent) {
+        throw new Error(`The following custom type functions are required when prefix is '${options.prefix}': ${optionalTypeFnsPrefix.join(', ')}`)
+      }
+    }
+  }
+
+
   Object.freeze(options)
 
   /**
@@ -55,22 +90,18 @@ let _config = function _config (options) {
       let parseResult
 
       if (typeof value === 'undefined' && typeof unitString === 'undefined') {
-        // undefined undefined
+        // No arguments
         parseResult = unitStore.parser('')
         parseResult.value = null
       } else if (typeof value === 'string' && typeof unitString === 'undefined') {
-        // string undefined
+        // single string
         parseResult = unitStore.parser(value)
-      } else if (typeof value === 'string' && typeof unitString === 'string') {
-        // string string
-        parseResult = unitStore.parser(unitString)
-        parseResult.value = options.type.parse(value)
       } else if (typeof unitString === 'string') {
-        // number|custom string
+        // number|string|custom, string
         parseResult = unitStore.parser(unitString)
         parseResult.value = options.type.conv(value)
       } else if (typeof unitString === 'undefined') {
-        // number|custom undefined
+        // number|custom
         parseResult = unitStore.parser('')
         parseResult.value = options.type.conv(value)
       } else {
@@ -290,7 +321,7 @@ let _config = function _config (options) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList
         if (this.value !== null) {
-          result.value = options.type.clone(denormalize(result.units, normalize(this.units, this.value, options.type), options.type))
+          result.value = denormalize(result.units, normalize(this.units, this.value, options.type), options.type)
         } else {
           result.value = null
         }
@@ -703,7 +734,7 @@ let _config = function _config (options) {
       throw new Error(`Cannot convert ${unit.toString()}: target unit must be valueless`)
     }
     result = _clone(valuelessUnit)
-    result.value = options.type.clone(denormalize(result.units, normalize(unit.units, value, options.type), options.type))
+    result.value = denormalize(result.units, normalize(unit.units, value, options.type), options.type)
     result.fixed = true // Don't auto simplify
     return result
   }
@@ -774,9 +805,9 @@ let _config = function _config (options) {
 
       // The prefix is in range, but return a score that says how close it is to the original value.
       if (opts.type.le(thisValue, unit.value)) {
-        return -opts.type.abs(opts.type.div(thisValue, unit.value))
+        return opts.type.mul(opts.type.abs(opts.type.div(thisValue, unit.value)), opts.type.conv(-1))
       } else {
-        return -opts.type.abs(opts.type.div(unit.value, thisValue))
+        return opts.type.mul(opts.type.abs(opts.type.div(unit.value, thisValue)), opts.type.conv(-1))
       }
     }
 
@@ -790,14 +821,14 @@ let _config = function _config (options) {
       let thisPrefix = prefixes[i]
       let thisScore = calcScore(thisPrefix)
 
-      if (thisScore < bestScore) {
+      if (opts.type.lt(thisScore, bestScore)) {
         bestScore = thisScore
         bestPrefix = thisPrefix
       }
     }
 
     piece.prefix = bestPrefix
-    result.value = opts.type.clone(denormalize(result.units, normalize(unit.units, unit.value, opts.type), opts.type))
+    result.value = denormalize(result.units, normalize(unit.units, unit.value, opts.type), opts.type)
 
     Object.freeze(result)
     return result
@@ -832,7 +863,7 @@ let _config = function _config (options) {
 
     // Replace this unit list with the proposed list
     result.units = proposedUnitList
-    if (unit.value !== null) { result.value = options.type.clone(denormalize(result.units, normalize(unit.units, unit.value, options.type), options.type)) }
+    if (unit.value !== null) { result.value = denormalize(result.units, normalize(unit.units, unit.value, options.type), options.type) }
     result.fixed = true // Don't auto simplify
     return result
   }
@@ -1045,8 +1076,7 @@ defaults.lt = (a, b) => a < b
 defaults.gt = (a, b) => a > b
 defaults.le = (a, b) => a <= b
 defaults.ge = (a, b) => a >= b
-defaults.conv = a => a
-defaults.parse = a => parseFloat(a)
+defaults.conv = a => typeof a === 'string' ? parseFloat(a) : a 
 defaults.clone = (a) => {
   if (typeof (a) !== 'number') {
     throw new TypeError(`To clone units with value types other than 'number', you must configure a custom 'clone' method. (Value type is ${typeof (a)})`)

@@ -21,7 +21,7 @@ function configCustomUnits (units) {
   })
 }
 
-let unitDec, unitDecNoParse
+let unitDec
 
 before(() => {
   Decimal.set({ precision: 32 })
@@ -31,6 +31,8 @@ before(() => {
 
   unitDec = require('../index.js').config({
     type: {
+      conv: a => Decimal(a),
+      clone: a => { isDec(a); return Decimal(a) },
       add: (a, b) => {
         isDec(a)
         isDec(b)
@@ -61,44 +63,14 @@ before(() => {
         isDec(b)
         return a.equals(b)
       },
-      conv: a => Decimal(a),
-      parse: a => Decimal(a),
-      clone: a => { isDec(a); return Decimal(a) }
+      lt: (a, b) => a.lt(b),
+      le: (a, b) => a.lte(b),
+      gt: (a, b) => a.gt(b),
+      ge: (a, b) => a.gte(b),
+      abs: (a) => a.abs()
     }
   })
 
-  unitDecNoParse = require('../index.js').config({
-    type: {
-      add: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.add(a, b)
-      },
-      sub: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.sub(a, b)
-      },
-      mul: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.mul(a, b)
-      },
-      div: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.div(a, b)
-      },
-      pow: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.pow(a, b)
-      },
-      conv: a => Decimal(a),
-      // parse: a => Decimal(a),
-      clone: a => { isDec(a); return Decimal(a) }
-    }
-  })
 })
 
 describe('unitmath', () => {
@@ -1879,7 +1851,7 @@ describe('unitmath', () => {
 
   describe('custom types', () => {
     describe('constructing a unit', () => {
-      it('if given a single string, should parse the numeric portion using type.parse', () => {
+      it('if given a single string, should parse the numeric portion using type.conv', () => {
         let u = unitDec('3.1415926535897932384626433832795 rad')
         assert(u.value instanceof Decimal)
         assert.strictEqual(u.toString(), '3.1415926535897932384626433832795 rad')
@@ -1901,11 +1873,6 @@ describe('unitmath', () => {
         assert.strictEqual(u.value, null)
       })
 
-      it('should parse as number, then convert to custom type, if type.parse is not available', () => {
-        let u = unitDecNoParse('3.1415926535897932384626433832795 rad')
-        assert(u.value instanceof Decimal)
-        assert.strictEqual(u.toString(), '3.141592653589793 rad')
-      })
     })
 
     describe('operations', () => {
@@ -1993,7 +1960,6 @@ describe('unitmath', () => {
         assert.strictEqual(unitDec('2000 ohm').toString(), '2 kohm')
       })
 
-      // TODO: There are custom lt, gt, and so forth in the choosePrefix function. Test those for custom types.
     })
   })
 })
