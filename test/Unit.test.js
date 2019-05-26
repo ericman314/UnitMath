@@ -21,7 +21,8 @@ function configCustomUnits (units) {
   })
 }
 
-let unitDec, unitDecNoParse
+let unitDec
+let typeNoPow, typeNoGt, typeNoEq
 
 before(() => {
   Decimal.set({ precision: 32 })
@@ -29,76 +30,60 @@ before(() => {
   // Use strict type checking to make sure no numbers sneak in
   const isDec = a => assert(a instanceof Decimal)
 
-  unitDec = require('../index.js').config({
-    type: {
-      add: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.add(a, b)
-      },
-      sub: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.sub(a, b)
-      },
-      mul: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.mul(a, b)
-      },
-      div: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.div(a, b)
-      },
-      pow: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.pow(a, b)
-      },
-      eq: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return a.equals(b)
-      },
-      conv: a => Decimal(a),
-      parse: a => Decimal(a),
-      clone: a => { isDec(a); return Decimal(a) }
-    }
-  })
+  let typeComplete = {
+    conv: a => Decimal(a),
+    clone: a => { isDec(a); return Decimal(a) },
+    add: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.add(a, b)
+    },
+    sub: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.sub(a, b)
+    },
+    mul: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.mul(a, b)
+    },
+    div: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.div(a, b)
+    },
+    pow: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.pow(a, b)
+    },
+    eq: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return a.equals(b)
+    },
+    lt: (a, b) => a.lt(b),
+    le: (a, b) => a.lte(b),
+    gt: (a, b) => a.gt(b),
+    ge: (a, b) => a.gte(b),
+    abs: (a) => a.abs()
+  }
 
-  unitDecNoParse = require('../index.js').config({
-    type: {
-      add: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.add(a, b)
-      },
-      sub: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.sub(a, b)
-      },
-      mul: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.mul(a, b)
-      },
-      div: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.div(a, b)
-      },
-      pow: (a, b) => {
-        isDec(a)
-        isDec(b)
-        return Decimal.pow(a, b)
-      },
-      conv: a => Decimal(a),
-      // parse: a => Decimal(a),
-      clone: a => { isDec(a); return Decimal(a) }
-    }
-  })
+  typeNoPow = Object.assign({}, typeComplete)
+  delete typeNoPow.pow
+
+  typeNoGt = Object.assign({}, typeComplete)
+  delete typeNoGt.gt
+
+  typeNoEq = Object.assign({}, typeComplete)
+  delete typeNoEq.eq
+
+  unitDec = require('../index.js').config({ type: typeComplete })
+  // These will be tested below
+  // unitDecNoPow = require('../index.js').config({ type: typeNoPow })
+  // unitDecNoGt = require('../index.js').config({ type: typeNoGt })
+  // unitDecNoEq = require('../index.js').config({ type: typeNoEq })
 })
 
 describe('unitmath', () => {
@@ -1878,8 +1863,24 @@ describe('unitmath', () => {
   })
 
   describe('custom types', () => {
+    describe('configuration', () => {
+      it('should throw if failed to include all custom type functions', () => {
+        assert.throws(() => require('../index.js').config({ type: typeNoPow }), /You must supply all required custom type functions/)
+      })
+
+      it('should throw if failed to include conditionally required functions', () => {
+        assert.throws(() => require('../index.js').config({ type: typeNoGt }), /The following custom type functions are required when prefix is/)
+        assert.doesNotThrow(() => require('../index.js').config({ type: typeNoGt, prefix: 'never' }))
+      })
+
+      it('should throw if attempting to call a method that depends on a custom type function that was not provided', () => {
+        let unitDecNoEq = require('../index.js').config({ type: typeNoEq })
+        assert.throws(() => unitDecNoEq('3 m').equals('4 m'), /When using custom types, equals requires a type.eq function/)
+      })
+    })
+
     describe('constructing a unit', () => {
-      it('if given a single string, should parse the numeric portion using type.parse', () => {
+      it('if given a single string, should parse the numeric portion using type.conv', () => {
         let u = unitDec('3.1415926535897932384626433832795 rad')
         assert(u.value instanceof Decimal)
         assert.strictEqual(u.toString(), '3.1415926535897932384626433832795 rad')
@@ -1899,12 +1900,6 @@ describe('unitmath', () => {
         let u = unitDec('rad')
         assert.strictEqual(u.toString(), 'rad')
         assert.strictEqual(u.value, null)
-      })
-
-      it('should parse as number, then convert to custom type, if type.parse is not available', () => {
-        let u = unitDecNoParse('3.1415926535897932384626433832795 rad')
-        assert(u.value instanceof Decimal)
-        assert.strictEqual(u.toString(), '3.141592653589793 rad')
       })
     })
 
@@ -1992,8 +1987,6 @@ describe('unitmath', () => {
         assert.strictEqual(unitDec('1232123212321232123212321 m').toString(), '1.232123212321232123212321e+21 km')
         assert.strictEqual(unitDec('2000 ohm').toString(), '2 kohm')
       })
-
-      // TODO: There are custom lt, gt, and so forth in the choosePrefix function. Test those for custom types.
     })
   })
 })
