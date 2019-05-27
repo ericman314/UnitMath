@@ -250,6 +250,17 @@ let _config = function _config (options) {
     }
 
     /**
+     * Returns a new unit with the given value.
+     * @param {number | string | custom} value
+     * @returns A new unit with the given value.
+     */
+    setValue (value) {
+      let unit = _setValue(this, value)
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
@@ -783,7 +794,7 @@ let _config = function _config (options) {
     let result
     const value = unit.value === null ? 1 : unit.value
     if (!unit.equalQuantity(valuelessUnit)) {
-      throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match)`)
+      throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match`)
     }
     if (valuelessUnit.value !== null) {
       throw new Error(`Cannot convert ${unit.toString()}: target unit must be valueless`)
@@ -920,6 +931,21 @@ let _config = function _config (options) {
     result.units = proposedUnitList
     if (unit.value !== null) { result.value = denormalize(result.units, normalize(unit.units, unit.value, options.type), options.type) }
     result.fixed = true // Don't auto simplify
+    return result
+  }
+
+  /** Private function _setValue
+   * @param {Unit} unit The unit to set the value of
+   * @param {string | number | custom} value The value to set
+   * @returns {Unit} A new unit with the given value
+   */
+  function _setValue (unit, value) {
+    let result = _clone(unit)
+    if (typeof value === 'undefined' || value === null) {
+      result.value = null
+    } else {
+      result.value = options.type.conv(value)
+    }
     return result
   }
 

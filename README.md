@@ -553,6 +553,17 @@ UnitMath will use your custom type's `toString()` method when formatting a custo
   unit('10 ft/s').toSI() // 3.048 m / s
   ```
 
+- `#setValue(x: number | string | custom)`
+
+  Returns a copy of this unit but with its value replaced with the given value. Useful if you would like to perform your own operations on a unit's value. If supplied with no arguments, or `null`, will remove the value from the unit.
+
+  ```js
+  unit('10 m').setValue(20) // 20 m
+  unit('m').setValue(20) // 20 m
+  unit('10 ft').setValue(20) // 20 ft
+  unit('10 ft').setValue() // ft
+  ```
+
 - `#simplify()`
 
   Attempts to simplify the unit, and returns the simplified unit (or a clone of the original if unsuccessful). `simplify()` is called when a unit is being formatted as a string whenever the config option `simplify` is `'auto'` or `'always'`.
