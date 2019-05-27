@@ -1,5 +1,10 @@
 # History
 
+## 2019-05-27, v0.5.0
+- Added setValue
+- Fixed bug with custom type formatting
+- Fixed candela unit definition
+
 ## 2019-05-26, v0.4.0
 - Added split
 - Better support for parsing of custom types
