@@ -485,9 +485,11 @@ let _config = function _config (options) {
       }
 
       let str = ''
-      if (typeof simp.value === 'number') {
+      if (typeof simp.value === 'number' && _opts.type.conv._IS_UNITMATH_DEFAULT_FUNCTION) {
+        // Use default formatter
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
+        // Use custom type's toString method
         str += simp.value.toString()
       }
       const unitStr = _formatUnits(simp, _opts)
