@@ -646,7 +646,6 @@ export const units = {
     commonPrefixes: ['', 'm']
   },
   candela: {
-    quantity: 'LUMINOUS_INTENSITY',
     value: '1 cd',
     prefixes: 'LONG',
     commonPrefixes: ['', 'milli']
