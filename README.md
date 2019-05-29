@@ -636,6 +636,16 @@ UnitMath will use your custom type's `toString()` method when formatting a custo
   unit('3 ft').equals('1 yard') // true
   ```
 
+- `#compare(other: unit | string)`
+
+  Returns a value indicating whether this unit is less than (-1), greater than (1), or equal to (0), another unit.
+
+  ```js
+  unit('30 min').compare('1 hour') // -1
+  unit('60 min').compare('1 hour') // 0
+  unit('90 min').compare('1 hour') // 1
+  ```
+
 - `#lessThan(other: unit | string)`
 
   Compares this and another unit and returns true if this unit is less than the other.

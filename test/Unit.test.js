@@ -696,6 +696,30 @@ describe('unitmath', () => {
     })
   })
 
+  describe('compare', () => {
+    it('should compare two units', () => {
+      assert.strictEqual(unit('30 min').compare('1 hour'), -1)
+      assert.strictEqual(unit('60 min').compare('1 hour'), 0)
+      assert.strictEqual(unit('90 min').compare('1 hour'), 1)
+    })
+
+    it('should work with valueless units', () => {
+      assert.strictEqual(unit('kg/hr').compare('kg/min'), -1)
+      assert.strictEqual(unit('kg/hr').compare('kg/hr'), 0)
+      assert.strictEqual(unit('kg/hr').compare('g/hr'), 1)
+    })
+
+    it('should throw if dimensions do not match', () => {
+      assert.throws(() => unit(100, 'N').compare(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
+      assert.throws(() => unit(100, 'cm').compare(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+    })
+
+    it('should convert parameter to a unit', () => {
+      assert.strictEqual(unit(100, 'cm').compare('2 m'), -1)
+      assert.strictEqual(unit('3 kg / kg').compare(2), 1)
+    })
+  })
+
   describe('lessThan', () => {
     it('should test whether one unit is less than another', () => {
       assert.strictEqual(unit(100, 'cm').lessThan(unit(1, 'm')), false)
@@ -2024,6 +2048,9 @@ describe('unitmath', () => {
         assert(unitDec('5 km').lessThanOrEqual('500000 cm'))
         assert(unitDec('5 N').greaterThan('5 dyne'))
         assert(unitDec('10 kg').greaterThanOrEqual('1 kg'))
+        assert.strictEqual(unitDec('60 min').compare('2 hour'), -1)
+        assert.strictEqual(unitDec('60 min').compare('1 hour'), 0)
+        assert.strictEqual(unitDec('60 min').compare('0.5 hour'), 1)
       })
 
       it('should do setValue', () => {

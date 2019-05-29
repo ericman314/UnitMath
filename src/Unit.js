@@ -437,6 +437,26 @@ let _config = function _config (options) {
     }
 
     /**
+     * Compare this unit to another and return a value indicating whether this unit is less than, greater than, or equal to the other.
+     * @param {Unit} other
+     * @return {number} -1 if this unit is less than, 1 if this unit is greater than, and 0 if this unit is equal to the other unit.
+     */
+    compare (other) {
+      if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && (options.type.gt._IS_UNITMATH_DEFAULT_FUNCTION || options.type.lt._IS_UNITMATH_DEFAULT_FUNCTION)) {
+        throw new Error(`When using custom types, compare requires a type.gt and a type.lt function`)
+      }
+      other = _convertParamToUnit(other)
+      let { value1, value2 } = _comparePrepare(this, other, true)
+      if (options.type.lt(value1, value2)) {
+        return -1
+      } else if (options.type.gt(value1, value2)) {
+        return 1
+      } else {
+        return 0
+      }
+    }
+
+    /**
      * Compare this unit to another and return whether this unit is less than the other.
      * @param {Unit} other
      * @return {boolean} true if this unit is less than the other.

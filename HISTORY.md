@@ -1,5 +1,8 @@
 # History
 
+## 2019-05-28, v0.7.0
+- Added compare
+
 ## 2019-05-28, v0.6.0
 - Implement valueOf()
 - Added lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual
