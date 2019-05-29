@@ -1147,6 +1147,24 @@ describe('unitmath', () => {
     })
   })
 
+  describe('getValue', () => {
+    it('should get a unit\'s value', () => {
+      assert.strictEqual(unit('20 kg').getValue(), 20)
+      assert.strictEqual(unit('3 g').getValue(), 3)
+      assert.strictEqual(unit('40 mi/hr').getValue(), 40)
+      assert.strictEqual(unit('km/hr').getValue(), null)
+    })
+  })
+
+  describe('getNormalizedValue', () => {
+    it('should get a unit\'s normalized value', () => {
+      assert.strictEqual(unit('20 kg').getNormalizedValue(), 20)
+      assert.strictEqual(unit('3 g').getNormalizedValue(), 0.003)
+      assert.strictEqual(unit('40 mi/hr').getNormalizedValue(), 17.8816)
+      assert.strictEqual(unit('km/hr').getNormalizedValue(), null)
+    })
+  })
+
   describe('simplify', () => {
     it('should not simplify units fixed by the to() method', () => {
       const unit1 = unit(10, 'kg m/s^2').to()
@@ -1940,6 +1958,7 @@ describe('unitmath', () => {
       it('should throw if attempting to call a method that depends on a custom type function that was not provided', () => {
         let unitDecNoComp = require('../index.js').config({ type: typeNoComp, prefix: 'never' })
         assert.throws(() => unitDecNoComp('3 m').equals('4 m'), /When using custom types, equals requires a type.eq function/)
+        assert.throws(() => unitDecNoComp('3 m').compare('4 m'), /When using custom types, compare requires a type.gt and a type.lt function/)
         assert.throws(() => unitDecNoComp('3 m').lessThan('4 m'), /When using custom types, lessThan requires a type.lt function/)
         assert.throws(() => unitDecNoComp('3 m').lessThanOrEqual('4 m'), /When using custom types, lessThanOrEqual requires a type.le function/)
         assert.throws(() => unitDecNoComp('3 m').greaterThan('4 m'), /When using custom types, greaterThan requires a type.gt function/)

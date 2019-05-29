@@ -261,6 +261,22 @@ let _config = function _config (options) {
     }
 
     /**
+     * Returns this unit's value.
+     * @returns The value of this unit.
+     */
+    getValue () {
+      return this.value
+    }
+
+    /**
+     * Returns this unit's normalized value, which is the value it would have if it were to be converted to SI base units (or whatever base units are defined)
+     * @returns The notmalized value of the unit.
+     */
+    getNormalizedValue () {
+      return normalize(this.units, this.value, options.type)
+    }
+
+    /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
