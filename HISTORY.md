@@ -1,5 +1,9 @@
 # History
 
+## 2019-05-28, v0.6.0
+- Implement valueOf()
+- Added lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual
+
 ## 2019-05-27, v0.5.0
 - Added setValue
 - Fixed bug with custom type formatting

@@ -128,7 +128,7 @@ These are the available options and their defaults:
   unit('45 W / m K').format({ parentheses: true }) // 45 W / (m K)
   ```
 
-- `precision: 15`. The number of significant figures to output when converting a unit to a string. Reducing this can help reduce the appearance of round-off errors.
+- `precision: 15`. The number of significant figures to output when converting a unit to a string. Reducing this can help reduce the appearance of round-off errors. A value of 0 will disable rounding entirely.
 
   ```js
   unit('180 deg').to('rad').format({ precision: 6 }) // 3.14159 rad
@@ -635,6 +635,22 @@ UnitMath will use your custom type's `toString()` method when formatting a custo
   ```js
   unit('3 ft').equals('1 yard') // true
   ```
+
+- `#lessThan(other: unit | string)`
+
+  Compares this and another unit and returns true if this unit is less than the other.
+
+- `#lessThanOrEqual(other: unit | string)`
+
+  Compares this and another unit and returns true if this unit is less than or equal to the other.
+
+- `#greaterThan(other: unit | string)`
+
+  Compares this and another unit and returns true if this unit is greater than the other.
+
+- `#greaterThanOrEqual(other: unit | string)`
+
+  Compares this and another unit and returns true if this unit is greater than or equal to the other.
 
 - `#format(options)`  
 

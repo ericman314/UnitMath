@@ -12,7 +12,7 @@ function configCustomUnits (units) {
 }
 
 let unitDec
-let typeNoPow, typeNoGt, typeNoEq
+let typeNoPow, typeNoGt, typeNoComp
 
 before(() => {
   Decimal.set({ precision: 32 })
@@ -66,8 +66,12 @@ before(() => {
   typeNoGt = Object.assign({}, typeComplete)
   delete typeNoGt.gt
 
-  typeNoEq = Object.assign({}, typeComplete)
-  delete typeNoEq.eq
+  typeNoComp = Object.assign({}, typeComplete)
+  delete typeNoComp.eq
+  delete typeNoComp.lt
+  delete typeNoComp.le
+  delete typeNoComp.gt
+  delete typeNoComp.ge
 
   unitDec = require('../index.js').config({ type: typeComplete })
   // These will be tested below
@@ -692,6 +696,134 @@ describe('unitmath', () => {
     })
   })
 
+  describe('lessThan', () => {
+    it('should test whether one unit is less than another', () => {
+      assert.strictEqual(unit(100, 'cm').lessThan(unit(1, 'm')), false)
+      assert.strictEqual(unit(100, 'cm').lessThan(unit(2, 'm')), true)
+      // assert.strictEqual(unit(100, 'ft lbf').lessThan(unit(1200, 'in lbf')), false)  // Round-off error
+      assert.strictEqual(unit(100, 'N').lessThan(unit(100, 'kg m / s ^ 2')), false)
+      assert.strictEqual(unit(100, 'Hz').lessThan(unit(100, 's ^ -1')), false)
+      assert.strictEqual(unit(101, 'Hz').lessThan(unit(100, 's ^ -1')), false)
+      assert.strictEqual(unit(99, 'Hz').lessThan(unit(100, 's ^ -1')), true)
+    })
+
+    it('should work with valueless units', () => {
+      assert.strictEqual(unit('cm').lessThan(unit('cm')), false)
+      assert.strictEqual(unit('cm').lessThan(unit('m')), true)
+      assert.strictEqual(unit('cm/s').lessThan(unit('cm/min')), false)
+    })
+
+    it('should throw if dimensions do not match', () => {
+      assert.throws(() => unit(100, 'N').lessThan(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
+      assert.throws(() => unit(100, 'cm').lessThan(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+    })
+
+    it('should throw if one unit has a value and the other does not', () => {
+      assert.throws(() => unit('1m').lessThan('km'), /Cannot compare units.*one has a value and the other does not/)
+    })
+
+    it('should convert parameter to a unit', () => {
+      assert(unit(100, 'cm').lessThan('2 m'))
+      assert(unit('3 kg / kg').lessThan(4))
+    })
+  })
+
+  describe('lessThanOrEqual', () => {
+    it('should test whether one unit is less than another', () => {
+      assert.strictEqual(unit(100, 'cm').lessThanOrEqual(unit(1, 'm')), true)
+      assert.strictEqual(unit(100, 'cm').lessThanOrEqual(unit(2, 'm')), true)
+      // assert.strictEqual(unit(100, 'ft lbf').lessThanOrEqual(unit(1200, 'in lbf')), false)  // Round-off error
+      assert.strictEqual(unit(100, 'N').lessThanOrEqual(unit(100, 'kg m / s ^ 2')), true)
+      assert.strictEqual(unit(100, 'Hz').lessThanOrEqual(unit(100, 's ^ -1')), true)
+      assert.strictEqual(unit(101, 'Hz').lessThanOrEqual(unit(100, 's ^ -1')), false)
+      assert.strictEqual(unit(99, 'Hz').lessThanOrEqual(unit(100, 's ^ -1')), true)
+    })
+
+    it('should work with valueless units', () => {
+      assert.strictEqual(unit('cm').lessThanOrEqual(unit('cm')), true)
+      assert.strictEqual(unit('cm').lessThanOrEqual(unit('m')), true)
+      assert.strictEqual(unit('cm/s').lessThanOrEqual(unit('cm/min')), false)
+    })
+
+    it('should throw if dimensions do not match', () => {
+      assert.throws(() => unit(100, 'N').lessThanOrEqual(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
+      assert.throws(() => unit(100, 'cm').lessThanOrEqual(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+    })
+
+    it('should throw if one unit has a value and the other does not', () => {
+      assert.throws(() => unit('1m').lessThanOrEqual('km'), /Cannot compare units.*one has a value and the other does not/)
+    })
+
+    it('should convert parameter to a unit', () => {
+      assert(unit(100, 'cm').lessThanOrEqual('2 m'))
+      assert(unit('3 kg / kg').lessThanOrEqual(4))
+    })
+  })
+
+  describe('greaterThan', () => {
+    it('should test whether one unit is greater than another', () => {
+      assert.strictEqual(unit(100, 'cm').greaterThan(unit(1, 'm')), false)
+      assert.strictEqual(unit(100, 'cm').greaterThan(unit(0.5, 'm')), true)
+      // assert.strictEqual(unit(100, 'ft lbf').greaterThan(unit(1200, 'in lbf')), false)  // Round-off error
+      assert.strictEqual(unit(100, 'N').greaterThan(unit(100, 'kg m / s ^ 2')), false)
+      assert.strictEqual(unit(100, 'Hz').greaterThan(unit(100, 's ^ -1')), false)
+      assert.strictEqual(unit(101, 'Hz').greaterThan(unit(100, 's ^ -1')), true)
+      assert.strictEqual(unit(99, 'Hz').greaterThan(unit(100, 's ^ -1')), false)
+    })
+
+    it('should work with valueless units', () => {
+      assert.strictEqual(unit('cm').greaterThan(unit('cm')), false)
+      assert.strictEqual(unit('cm').greaterThan(unit('m')), false)
+      assert.strictEqual(unit('cm/s').greaterThan(unit('cm/min')), true)
+    })
+
+    it('should throw if dimensions do not match', () => {
+      assert.throws(() => unit(100, 'N').greaterThan(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
+      assert.throws(() => unit(100, 'cm').greaterThan(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+    })
+
+    it('should throw if one unit has a value and the other does not', () => {
+      assert.throws(() => unit('1m').greaterThan('km'), /Cannot compare units.*one has a value and the other does not/)
+    })
+
+    it('should convert parameter to a unit', () => {
+      assert(unit(100, 'cm').greaterThan('0.5 m'))
+      assert(unit('3 kg / kg').greaterThan(2))
+    })
+  })
+
+  describe('greaterThanOrEqual', () => {
+    it('should test whether one unit is greater than another', () => {
+      assert.strictEqual(unit(100, 'cm').greaterThanOrEqual(unit(1, 'm')), true)
+      assert.strictEqual(unit(100, 'cm').greaterThanOrEqual(unit(2, 'm')), false)
+      // assert.strictEqual(unit(100, 'ft lbf').greaterThanOrEqual(unit(1200, 'in lbf')), false)  // Round-off error
+      assert.strictEqual(unit(100, 'N').greaterThanOrEqual(unit(100, 'kg m / s ^ 2')), true)
+      assert.strictEqual(unit(100, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1')), true)
+      assert.strictEqual(unit(101, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1')), true)
+      assert.strictEqual(unit(99, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1')), false)
+    })
+
+    it('should work with valueless units', () => {
+      assert.strictEqual(unit('cm').greaterThanOrEqual(unit('cm')), true)
+      assert.strictEqual(unit('cm').greaterThanOrEqual(unit('m')), false)
+      assert.strictEqual(unit('cm/s').greaterThanOrEqual(unit('cm/min')), true)
+    })
+
+    it('should throw if dimensions do not match', () => {
+      assert.throws(() => unit(100, 'N').greaterThanOrEqual(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
+      assert.throws(() => unit(100, 'cm').greaterThanOrEqual(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+    })
+
+    it('should throw if one unit has a value and the other does not', () => {
+      assert.throws(() => unit('1m').greaterThanOrEqual('km'), /Cannot compare units.*one has a value and the other does not/)
+    })
+
+    it('should convert parameter to a unit', () => {
+      assert(unit(100, 'cm').greaterThanOrEqual('0.5 m'))
+      assert(unit('3 kg / kg').greaterThanOrEqual(2))
+    })
+  })
+
   describe('clone', () => {
     it('should clone a unit', () => {
       const u1 = unit(100, 'cm')
@@ -1104,6 +1236,14 @@ describe('unitmath', () => {
       assert.strictEqual(unit('1 kg m / s^2').format({ simplify: 'never' }), '1 kg m / s^2')
       assert.strictEqual(unit('1 N m').format(), '1 N m')
       assert.strictEqual(unit('1 N m').format({ simplify: 'always' }), '1 J')
+    })
+  })
+
+  describe('valueOf', () => {
+    it('should output a raw, unsimplified string representation of this unit', () => {
+      assert.strictEqual(unit('8.314 J / mol K').valueOf(), '8.314 J / mol K')
+      assert.strictEqual(unit('10 h / s').valueOf(), '10 h / s')
+      assert.strictEqual(unit('10 h / s').format(), '36000')
     })
   })
 
@@ -1774,8 +1914,12 @@ describe('unitmath', () => {
       })
 
       it('should throw if attempting to call a method that depends on a custom type function that was not provided', () => {
-        let unitDecNoEq = require('../index.js').config({ type: typeNoEq })
-        assert.throws(() => unitDecNoEq('3 m').equals('4 m'), /When using custom types, equals requires a type.eq function/)
+        let unitDecNoComp = require('../index.js').config({ type: typeNoComp, prefix: 'never' })
+        assert.throws(() => unitDecNoComp('3 m').equals('4 m'), /When using custom types, equals requires a type.eq function/)
+        assert.throws(() => unitDecNoComp('3 m').lessThan('4 m'), /When using custom types, lessThan requires a type.lt function/)
+        assert.throws(() => unitDecNoComp('3 m').lessThanOrEqual('4 m'), /When using custom types, lessThanOrEqual requires a type.le function/)
+        assert.throws(() => unitDecNoComp('3 m').greaterThan('4 m'), /When using custom types, greaterThan requires a type.gt function/)
+        assert.throws(() => unitDecNoComp('3 m').greaterThanOrEqual('4 m'), /When using custom types, greaterThanOrEqual requires a type.ge function/)
       })
     })
 
@@ -1873,6 +2017,13 @@ describe('unitmath', () => {
           assert(unitDec(100, 'cm').equals('1 m'))
           assert(unitDec('3 kg / kg').equals(3))
         })
+      })
+
+      it('should do comparisons', () => {
+        assert(unitDec('10 m').lessThan('1 km'))
+        assert(unitDec('5 km').lessThanOrEqual('500000 cm'))
+        assert(unitDec('5 N').greaterThan('5 dyne'))
+        assert(unitDec('10 kg').greaterThanOrEqual('1 kg'))
       })
 
       it('should do setValue', () => {

@@ -428,20 +428,68 @@ let _config = function _config (options) {
         throw new Error(`When using custom types, equals requires a type.eq function`)
       }
       other = _convertParamToUnit(other)
-      let value1, value2
-      if (this.value === null && other.value === null) {
-        // If both units are valueless, get the normalized value of 1 to compare only the unit lists
-        value1 = normalize(this.units, options.type.conv(1), options.type)
-        value2 = normalize(other.units, options.type.conv(1), options.type)
-      } else if (this.value !== null && other.value !== null) {
-        // Both units have values
-        value1 = normalize(this.units, this.value, options.type)
-        value2 = normalize(other.units, other.value, options.type)
-      } else {
-        // One has a value and one does not; by definition they cannot be equal
+      if ((this.value === null) !== (other.value === null)) {
+        // One has a value and the other does not, so they cannot be equal
         return false
       }
+      let { value1, value2 } = _comparePrepare(this, other, false)
       return this.equalQuantity(other) && options.type.eq(value1, value2)
+    }
+
+    /**
+     * Compare this unit to another and return whether this unit is less than the other.
+     * @param {Unit} other
+     * @return {boolean} true if this unit is less than the other.
+     */
+    lessThan (other) {
+      if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && options.type.lt._IS_UNITMATH_DEFAULT_FUNCTION) {
+        throw new Error(`When using custom types, lessThan requires a type.lt function`)
+      }
+      other = _convertParamToUnit(other)
+      let { value1, value2 } = _comparePrepare(this, other, true)
+      return options.type.lt(value1, value2)
+    }
+
+    /**
+     * Compare this unit to another and return whether this unit is less than or equal to the other.
+     * @param {Unit} other
+     * @return {boolean} true if this unit is less than or equal the other.
+     */
+    lessThanOrEqual (other) {
+      if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && options.type.le._IS_UNITMATH_DEFAULT_FUNCTION) {
+        throw new Error(`When using custom types, lessThanOrEqual requires a type.le function`)
+      }
+      other = _convertParamToUnit(other)
+      let { value1, value2 } = _comparePrepare(this, other, true)
+      return options.type.le(value1, value2)
+    }
+
+    /**
+     * Compare this unit to another and return whether this unit is greater than the other.
+     * @param {Unit} other
+     * @return {boolean} true if this unit is greater than the other.
+     */
+    greaterThan (other) {
+      if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && options.type.gt._IS_UNITMATH_DEFAULT_FUNCTION) {
+        throw new Error(`When using custom types, greaterThan requires a type.gt function`)
+      }
+      other = _convertParamToUnit(other)
+      let { value1, value2 } = _comparePrepare(this, other, true)
+      return options.type.gt(value1, value2)
+    }
+
+    /**
+     * Compare this unit to another and return whether this unit is greater than or equal to the other.
+     * @param {Unit} other
+     * @return {boolean} true if this unit is greater than or equal the other.
+     */
+    greaterThanOrEqual (other) {
+      if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && options.type.ge._IS_UNITMATH_DEFAULT_FUNCTION) {
+        throw new Error(`When using custom types, greaterThanOrEqual requires a type.ge function`)
+      }
+      other = _convertParamToUnit(other)
+      let { value1, value2 } = _comparePrepare(this, other, true)
+      return options.type.ge(value1, value2)
     }
 
     /**
@@ -452,6 +500,18 @@ let _config = function _config (options) {
      */
     toString (opts) {
       return this.format(opts)
+    }
+
+    /**
+     * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
+     */
+    valueOf () {
+      return this.format({
+        precision: 0, // 0 means do not round
+        simplify: 'never',
+        prefix: 'never',
+        parentheses: false
+      })
     }
 
     /**
@@ -496,7 +556,7 @@ let _config = function _config (options) {
       }
 
       let str = ''
-      if (typeof simp.value === 'number' && _opts.type.conv._IS_UNITMATH_DEFAULT_FUNCTION) {
+      if (typeof simp.value === 'number' && _opts.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && _opts.precision > 0) {
         // Use default formatter
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
@@ -586,6 +646,26 @@ let _config = function _config (options) {
     }
 
     return result
+  }
+
+  function _comparePrepare (unit1, unit2, requireMatchingDimensions) {
+    if (requireMatchingDimensions && !unit1.equalQuantity(unit2)) {
+      throw new Error(`Cannot compare units ${unit1} and ${unit2}; dimensions do not match`)
+    }
+    let value1, value2
+    if (unit1.value === null && unit2.value === null) {
+      // If both units are valueless, get the normalized value of 1 to compare only the unit lists
+      value1 = normalize(unit1.units, options.type.conv(1), options.type)
+      value2 = normalize(unit2.units, options.type.conv(1), options.type)
+    } else if (unit1.value !== null && unit2.value !== null) {
+      // Both units have values
+      value1 = normalize(unit1.units, unit1.value, options.type)
+      value2 = normalize(unit2.units, unit2.value, options.type)
+    } else {
+      // One has a value and one does not. Not allowed.
+      throw new Error(`Cannot compare units ${unit1} and ${unit2}; one has a value and the other does not`)
+    }
+    return { value1, value2 }
   }
 
   /**
