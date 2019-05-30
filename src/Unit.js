@@ -277,6 +277,17 @@ let _config = function _config (options) {
     }
 
     /**
+     * Returns a new unit with the given normalized value.
+     * @param {number | string | custom} normalizedValue
+     * @returns A new unit with the given normalized value.
+     */
+    setNormalizedValue (normalizedValue) {
+      let unit = _setValue(this, denormalize(this.units, normalizedValue, options.type))
+      Object.freeze(unit)
+      return unit
+    }
+
+    /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.

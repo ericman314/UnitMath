@@ -557,10 +557,6 @@ UnitMath will use your custom type's `toString()` method when formatting a custo
 
   Returns the value of this unit, or `null` if the unit is valueless.
 
-- `getNormalizedValue()`
-
-  Returns the value of this unit if it were to be converted to SI base units (or whatever base units that are defined). Returns `null` if the unit is valueless.
-
 - `#setValue(x: number | string | custom)`
 
   Returns a copy of this unit but with its value replaced with the given value. Useful if you would like to perform your own operations on a unit's value. If supplied with no arguments, or `null`, will remove the value from the unit.
@@ -571,6 +567,14 @@ UnitMath will use your custom type's `toString()` method when formatting a custo
   unit('10 ft').setValue(20) // 20 ft
   unit('10 ft').setValue() // ft
   ```
+
+- `getNormalizedValue()`
+
+  Returns the value of this unit if it were to be converted to SI base units (or whatever base units that are defined). Returns `null` if the unit is valueless.
+
+- `setNormalizedValue()`
+
+  Returns a copy of this unit but with its value replaced with the given normalized value.
 
 - `#simplify()`
 

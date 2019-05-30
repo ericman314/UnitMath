@@ -557,8 +557,8 @@ describe('unitmath', () => {
     })
 
     it('should throw an error if called with wrong type of arguments', () => {
-      assert.throws(() => { console.log(unit(0, 'bla')) })
-      assert.throws(() => { console.log(unit(0, 3)) })
+    assert.throws(() => { console.log(unit(0, 'bla')) }, /Unit.*not found/)
+      assert.throws(() => { console.log(unit(0, 3)) }, /you must supply a single/)
     })
   })
 
@@ -1162,6 +1162,15 @@ describe('unitmath', () => {
       assert.strictEqual(unit('3 g').getNormalizedValue(), 0.003)
       assert.strictEqual(unit('40 mi/hr').getNormalizedValue(), 17.8816)
       assert.strictEqual(unit('km/hr').getNormalizedValue(), null)
+    })
+  })
+
+  describe('setNormalizedValue', () => {
+    it('should set a unit\'s normalized value', () => {
+      assert.strictEqual(unit('20 kg').setNormalizedValue(10).format(), '10 kg')
+      assert.strictEqual(unit('3 g').setNormalizedValue(5).format(), '5 kg')
+      assert.strictEqual(unit('40 mi/hr').setNormalizedValue(10).format(), '22.369362920544 mi / hr')
+      assert.strictEqual(unit('km/hr').setNormalizedValue(1).format(), '3.6 km / hr')
     })
   })
 
