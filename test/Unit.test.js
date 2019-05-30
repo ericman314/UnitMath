@@ -557,7 +557,7 @@ describe('unitmath', () => {
     })
 
     it('should throw an error if called with wrong type of arguments', () => {
-    assert.throws(() => { console.log(unit(0, 'bla')) }, /Unit.*not found/)
+      assert.throws(() => { console.log(unit(0, 'bla')) }, /Unit.*not found/)
       assert.throws(() => { console.log(unit(0, 3)) }, /you must supply a single/)
     })
   })
