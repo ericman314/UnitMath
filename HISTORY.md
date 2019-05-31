@@ -1,5 +1,9 @@
 # History
 
+## 2019-05-30, v0.8.0
+- Added `getValue`, `getNormalizedValue`, and `setNormalizedValue`
+- Added format option for custom types
+
 ## 2019-05-28, v0.7.0
 - Added compare
 
