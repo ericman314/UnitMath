@@ -607,8 +607,8 @@ let _config = function _config (options) {
         // Use default formatter
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
-        // Use custom type's toString method
-        str += simp.value.toString()
+        // Use custom type's format method (which defaults to the toString() method)
+        str += _opts.type.format(simp.value)
       }
       const unitStr = _formatUnits(simp, _opts)
       if (unitStr.length > 0 && str.length > 0) {
@@ -1284,6 +1284,7 @@ defaults.le = (a, b) => a <= b
 defaults.ge = (a, b) => a >= b
 defaults.conv = a => typeof a === 'string' ? parseFloat(a) : a
 defaults.clone = (a) => a
+defaults.format = (a) => a.toString()
 
 // These are mostly to help warn the user if they forgot to override one or more of the default functions
 for (const key in defaults) {

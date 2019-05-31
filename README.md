@@ -368,7 +368,8 @@ const unit = require('unitmath').config({
     le: (a, b) => a.lte(b),
     gt: (a, b) => a.gt(b),
     ge: (a, b) => a.gte(b),
-    abs: (a) => a.abs()
+    abs: (a) => a.abs(),
+    format: a => a.toString()
   }
 })
 
@@ -394,7 +395,10 @@ Required for prefix = 'auto' or 'always':
   - `ge: (a: T, b: T) => boolean`
 
 Required for specific functions:
-  - `eq: (a: T, b: T) => boolean ` (Required for `equals` function)
+  - `eq: (a: T, b: T) => boolean` (Required for `equals` function)
+
+Optional:
+  - `format: (a: T) => string`
 
 The `add`, `sub`, `mul`, `div`, and `pow` functions replace `+`, `-`, `*`, `/`, and `Math.pow`, respectively. The `clone` function should return a clone of your custom type (same value, different object). 
 
@@ -419,7 +423,7 @@ unit(Fraction(1, 2), 'kg') // Supply the value directly
 
 The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always required. Omitting any of these will cause the `config` method to throw an error. The other functions are conditionally required, and you will receive an error if you attempt something that depends on a function you haven't provided.
 
-UnitMath will use your custom type's `toString()` method when formatting a custom typed unit.
+If you specify a `format` function, UnitMath will use it when outputting your custom type as a string. Otherwise, it will use your type's `toString()` method.
 
 ## API Reference
 

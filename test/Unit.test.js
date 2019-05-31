@@ -12,7 +12,7 @@ function configCustomUnits (units) {
 }
 
 let unitDec
-let typeNoPow, typeNoGt, typeNoComp
+let typeNoPow, typeNoGt, typeNoComp, typeFunnyFormat
 
 before(() => {
   Decimal.set({ precision: 32 })
@@ -72,6 +72,9 @@ before(() => {
   delete typeNoComp.le
   delete typeNoComp.gt
   delete typeNoComp.ge
+
+  typeFunnyFormat = Object.assign({}, typeComplete)
+  typeFunnyFormat.format = a => a.toString().split('').reverse().join('')
 
   unitDec = require('../index.js').config({ type: typeComplete })
   // These will be tested below
@@ -2107,6 +2110,11 @@ describe('unitmath', () => {
         assert.strictEqual(unitDec('10000000 m').toString(), '10000 km')
         assert.strictEqual(unitDec('1232123212321232123212321 m').toString(), '1.232123212321232123212321e+21 km')
         assert.strictEqual(unitDec('2000 ohm').toString(), '2 kohm')
+      })
+
+      it('should use custom formatter', () => {
+        let unitFunny = require('../index.js').config({ type: typeFunnyFormat })
+        assert.strictEqual(unitFunny('3.14159 rad').toString(), '95141.3 rad')
       })
     })
   })
