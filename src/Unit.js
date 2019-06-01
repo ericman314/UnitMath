@@ -545,8 +545,8 @@ let _config = function _config (options) {
      * @param {Object} [opts]  Formatting options.
      * @return {string}
      */
-    toString (opts) {
-      return this.format(opts)
+    toString (...opts) {
+      return this.format(...opts)
     }
 
     /**
@@ -567,7 +567,7 @@ let _config = function _config (options) {
      * @param {Object} [userOpts]  Formatting options.
      * @return {string}
      */
-    format (userOpts) {
+    format (...userOpts) {
       let simp = this.clone()
 
       // A bit of clarification:
@@ -576,8 +576,8 @@ let _config = function _config (options) {
       // _opts is the original options, extended with opts if opts is an object
 
       let _opts = Object.assign({}, options)
-      if (typeof userOpts === 'object') {
-        _opts = Object.assign(_opts, userOpts)
+      if (typeof userOpts[0] === 'object') {
+        _opts = Object.assign(_opts, userOpts[0])
       }
 
       if (_opts.simplify === 'always') {
@@ -616,7 +616,7 @@ let _config = function _config (options) {
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
         // Use custom type's format method (which defaults to the toString(opts) method)
-        str += _opts.type.format(simp.value, userOpts)
+        str += _opts.type.format(simp.value, ...userOpts)
       }
       const unitStr = _formatUnits(simp, _opts)
       if (unitStr.length > 0 && str.length > 0) {

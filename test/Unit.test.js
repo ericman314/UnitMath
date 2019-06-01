@@ -73,7 +73,7 @@ before(() => {
   delete typeNoComp.gt
   delete typeNoComp.ge
 
-  typeFunnyFormat = { format: (a, b) => a.toString().split('').reverse().join(b) }
+  typeFunnyFormat = { format: (a, b, c) => b + a.toString().split('').reverse().join(c) }
 
   unitDec = require('../index.js').config({ type: typeComplete })
   // These will be tested below
@@ -2113,7 +2113,7 @@ describe('unitmath', () => {
 
       it('should use custom formatter', () => {
         let unitFunny = require('../index.js').config({ type: typeFunnyFormat })
-        assert.strictEqual(unitFunny('3.14159 rad').toString('_'), '9_5_1_4_1_._3 rad')
+        assert.strictEqual(unitFunny('3.14159 rad').toString('$', '_'), '$9_5_1_4_1_._3 rad')
       })
     })
   })
