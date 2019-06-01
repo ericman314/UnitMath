@@ -228,7 +228,7 @@ let _config = function _config (options) {
         Object.freeze(unit)
         return unit
       } else {
-        if (!(valuelessUnit.isUnit()) && typeof valuelessUnit !== 'string') {
+        if (!(valuelessUnit.type === 'Unit') && typeof valuelessUnit !== 'string') {
           throw new TypeError('Parameter must be a Unit or a string.')
         }
         valuelessUnit = _convertParamToUnit(valuelessUnit)
@@ -641,14 +641,6 @@ let _config = function _config (options) {
       str += unitStr
       return str
     }
-
-    /**
-     * Returns a true boolean value indicating that this is a Unit. instanceof may not always work if using different instances of UnitMath
-     * @returns {boolean} true
-     */
-    isUnit() {
-      return true
-    }
   }
   // END OF UNIT CLASS
 
@@ -661,7 +653,7 @@ let _config = function _config (options) {
    * @returns {Unit} The frozen unit that was converted from the input parameter, or the original unit.
    */
   function _convertParamToUnit (param) {
-    if (param.isUnit()) {
+    if (param.type === 'Unit') {
       return param
     }
     return unitmath(param)
