@@ -568,7 +568,7 @@ export const units = {
     aliases: ['gradians']
   },
   cycle: {
-    value: [2 * Math.pi, 'rad'],
+    value: [2 * Math.PI, 'rad'],
     aliases: ['cycles']
   },
   arcmin: {
