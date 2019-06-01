@@ -1,5 +1,9 @@
 # History
 
+## 2019-06-01, v0.8.1
+- Format function can now be used with number or custom types
+- Now supports passing parameters to custom format function
+
 ## 2019-05-30, v0.8.0
 - Added `getValue`, `getNormalizedValue`, and `setNormalizedValue`
 - Added format option for custom types
