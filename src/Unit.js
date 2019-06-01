@@ -564,20 +564,20 @@ let _config = function _config (options) {
     /**
      * Get a string representation of the Unit, with optional formatting options.
      * @memberof Unit
-     * @param {Object} [opts]  Formatting options.
+     * @param {Object} [userOpts]  Formatting options.
      * @return {string}
      */
-    format (opts) {
+    format (userOpts) {
       let simp = this.clone()
 
       // A bit of clarification:
       // options is the original options
-      // opts is a user-supplied argument
+      // userOpts is a user-supplied argument
       // _opts is the original options, extended with opts if opts is an object
 
       let _opts = Object.assign({}, options)
-      if (typeof opts === 'object') {
-        _opts = Object.assign(_opts, opts)
+      if (typeof userOpts === 'object') {
+        _opts = Object.assign(_opts, userOpts)
       }
 
       if (_opts.simplify === 'always') {
@@ -616,7 +616,7 @@ let _config = function _config (options) {
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
         // Use custom type's format method (which defaults to the toString(opts) method)
-        str += _opts.type.format(simp.value, opts)
+        str += _opts.type.format(simp.value, userOpts)
       }
       const unitStr = _formatUnits(simp, _opts)
       if (unitStr.length > 0 && str.length > 0) {
