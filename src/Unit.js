@@ -570,7 +570,15 @@ let _config = function _config (options) {
     format (opts) {
       let simp = this.clone()
 
-      let _opts = Object.assign({}, options, opts)
+      // A bit of clarification:
+      // options is the original options
+      // opts is a user-supplied argument
+      // _opts is the original options, extended with opts if opts is an object
+
+      let _opts = Object.assign({}, options)
+      if (typeof opts === 'object') {
+        _opts = Object.assign(_opts, opts)
+      }
 
       if (_opts.simplify === 'always') {
         simp = simp.simplify()
