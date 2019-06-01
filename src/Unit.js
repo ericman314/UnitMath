@@ -586,15 +586,33 @@ let _config = function _config (options) {
         let simp2 = simp.simplify()
 
         // Determine if the simplified unit is simpler
+
+
+
         let calcComplexity = (unitList) => {
-          // Number of total units
+          // Number of total units, each adds one symbol
           let comp = unitList.length
-          // Number of units containing powers !== +/-1
-          comp += unitList.filter(a => (Math.abs(a.power) - 1) > 1e-14).length * 2
-          // At least one unit in denominator
-          if (unitList.filter(a => a.power < 0).length > 0) {
+
+          // Number of units in denominator and numerator
+          let nDen = unitList.filter(a => a.power < 1e-14).length
+          let nNum = unitList.length - nDen
+  
+          // If there are no units in the numerator, then any units in the denominator will need a ^-1
+
+          // Number of units in the numerator containing powers !== 1, i.e. kg^2, adds two symbols
+          comp += unitList.filter(a => Math.abs(a.power - 1) > 1e-14).length * 2
+
+          // If there is at least one unit in the numerator and denominator, we will invert the denominator units' powers
+          let denPowerInvert = nDen > 0 && nNum > 0 ? -1 : 1
+
+          // Number of units in the denominator containing inverted? powers !== 1
+          comp += unitList.filter(a => a.power < 0 && Math.abs(a.power * denPowerInvert - 1) > 1e-14).length * 2
+
+          // At least one unit in numerator and denominator, adds one symbol: '/'
+          if (nNum > 0 && nDen > 0) {
             comp += 1
           }
+
           return comp
         }
 

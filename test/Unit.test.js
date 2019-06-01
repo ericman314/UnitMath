@@ -1246,6 +1246,8 @@ describe('unitmath', () => {
       assert.strictEqual(unit('10 N m').toString(), '10 N m')
       assert.strictEqual(unit('10 J / m').toString(), '10 N')
       assert.strictEqual(unit('10 m^3 Pa').toString(), '10 J')
+      assert.strictEqual(unit('10 s^-1').toString(), '10 Hz')
+      assert.strictEqual(unit('10 C/s').toString(), '10 A')
 
       let newUnit = unit.config({ simplifyThreshold: 10 })
       assert.strictEqual(newUnit('10 N m').toString(), '10 N m')
