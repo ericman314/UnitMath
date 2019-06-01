@@ -1,5 +1,9 @@
 # History
 
+## 2019-06-01, v0.8.2
+- Fixed unit complexity calculation for deciding whether to simplify units
+- Added undocumented second parameter to `conv` function, which could be removed at any time
+
 ## 2019-06-01, v0.8.1
 - Format function can now be used with number or custom types
 - Now supports passing parameters to custom format function

@@ -18,18 +18,18 @@ export function normalize (unitPieces, value, type) {
     let result = value
 
     for (let i = 0; i < unitPieces.length; i++) {
-      unitValue = type.conv(unitPieces[i].unit.value)
-      unitPrefixValue = type.conv(unitPieces[i].unit.prefixes[unitPieces[i].prefix])
-      unitPower = type.conv(unitPieces[i].power)
+      unitValue = type.conv(unitPieces[i].unit.value, value)
+      unitPrefixValue = type.conv(unitPieces[i].unit.prefixes[unitPieces[i].prefix], value)
+      unitPower = type.conv(unitPieces[i].power, value)
       result = type.mul(result, type.pow(type.mul(unitValue, unitPrefixValue), unitPower))
     }
 
     return result
   } else {
     // units is a single unit of power 1, like kg or degC
-    unitValue = type.conv(unitPieces[0].unit.value)
-    unitOffset = type.conv(unitPieces[0].unit.offset)
-    unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix])
+    unitValue = type.conv(unitPieces[0].unit.value, value)
+    unitOffset = type.conv(unitPieces[0].unit.offset, value)
+    unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix], value)
     return type.mul(type.add(value, unitOffset), type.mul(unitValue, unitPrefixValue))
   }
 }
@@ -53,9 +53,9 @@ export function denormalize (unitPieces, value, type) {
     let result = value
 
     for (let i = 0; i < unitPieces.length; i++) {
-      unitValue = type.conv(unitPieces[i].unit.value)
-      unitPrefixValue = type.conv(unitPieces[i].unit.prefixes[unitPieces[i].prefix])
-      unitPower = type.conv(unitPieces[i].power)
+      unitValue = type.conv(unitPieces[i].unit.value, value)
+      unitPrefixValue = type.conv(unitPieces[i].unit.prefixes[unitPieces[i].prefix], value)
+      unitPower = type.conv(unitPieces[i].power, value)
       result = type.div(result, type.pow(type.mul(unitValue, unitPrefixValue), unitPower))
     }
 
@@ -63,9 +63,9 @@ export function denormalize (unitPieces, value, type) {
   } else {
     // unit is a single unit of power 1, like kg or degC
 
-    unitValue = type.conv(unitPieces[0].unit.value)
-    unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix])
-    unitOffset = type.conv(unitPieces[0].unit.offset)
+    unitValue = type.conv(unitPieces[0].unit.value, value)
+    unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix], value)
+    unitOffset = type.conv(unitPieces[0].unit.offset, value)
 
     return type.sub(type.div(type.div(value, unitValue), unitPrefixValue), unitOffset)
   }

@@ -587,8 +587,6 @@ let _config = function _config (options) {
 
         // Determine if the simplified unit is simpler
 
-
-
         let calcComplexity = (unitList) => {
           // Number of total units, each adds one symbol
           let comp = unitList.length
@@ -596,7 +594,7 @@ let _config = function _config (options) {
           // Number of units in denominator and numerator
           let nDen = unitList.filter(a => a.power < 1e-14).length
           let nNum = unitList.length - nDen
-  
+
           // If there are no units in the numerator, then any units in the denominator will need a ^-1
 
           // Number of units in the numerator containing powers !== 1, i.e. kg^2, adds two symbols
@@ -728,8 +726,8 @@ let _config = function _config (options) {
     let value1, value2
     if (unit1.value === null && unit2.value === null) {
       // If both units are valueless, get the normalized value of 1 to compare only the unit lists
-      value1 = normalize(unit1.units, options.type.conv(1), options.type)
-      value2 = normalize(unit2.units, options.type.conv(1), options.type)
+      value1 = normalize(unit1.units, options.type.conv(1, unit1.value), options.type)
+      value2 = normalize(unit2.units, options.type.conv(1, unit2.value), options.type)
     } else if (unit1.value !== null && unit2.value !== null) {
       // Both units have values
       value1 = normalize(unit1.units, unit1.value, options.type)
@@ -870,7 +868,7 @@ let _config = function _config (options) {
     }
 
     if (result.value !== null) {
-      result.value = options.type.pow(result.value, options.type.conv(p))
+      result.value = options.type.pow(result.value, options.type.conv(p, unit.value))
     } else {
       result.value = null
     }
@@ -879,7 +877,7 @@ let _config = function _config (options) {
   }
 
   function _sqrt (unit) {
-    return _pow(unit, options.type.conv(0.5))
+    return _pow(unit, options.type.conv(0.5, unit.value))
   }
 
   /**
@@ -919,12 +917,12 @@ let _config = function _config (options) {
     // But instead of comparing x, the remainder, with zero--we will compare the sum of
     // all the parts so far with the original value. If they are nearly equal,
     // we set the remainder to 0.
-    let testSum = options.type.conv(0)
+    let testSum = options.type.conv(0, unit.value)
     for (let i = 0; i < result.length; i++) {
       testSum = options.type.add(testSum, normalize(result[i].units, result[i].value, options.type))
     }
     if (options.type.eq(testSum, normalize(unit.units, unit.value, options.type))) {
-      x.value = options.type.conv(0)
+      x.value = options.type.conv(0, unit.value)
     }
 
     result.push(x)
@@ -983,7 +981,7 @@ let _config = function _config (options) {
       // Unit has power of 0, so prefix will have no effect
       return unit
     }
-    if (opts.type.lt(opts.type.abs(unit.value), opts.type.conv(1e-50))) {
+    if (opts.type.lt(opts.type.abs(unit.value), opts.type.conv(1e-50, unit.value))) {
       // Unit is too small for the prefix to matter
       return unit
     }
@@ -1003,10 +1001,10 @@ let _config = function _config (options) {
         unit.value,
         opts.type.pow(
           options.type.div(
-            options.type.conv(piece.unit.prefixes[prefix]),
-            options.type.conv(piece.unit.prefixes[piece.prefix])
+            options.type.conv(piece.unit.prefixes[prefix], unit.value),
+            options.type.conv(piece.unit.prefixes[piece.prefix], unit.value)
           ),
-          options.type.conv(piece.power)
+          options.type.conv(piece.power, unit.value)
         )
       )
     }
@@ -1015,18 +1013,18 @@ let _config = function _config (options) {
       let thisValue = calcValue(prefix)
       if (opts.type.lt(thisValue, opts.prefixMin)) {
         // prefix makes the value too small
-        return opts.type.abs(opts.type.div(options.type.conv(opts.prefixMin), thisValue))
+        return opts.type.abs(opts.type.div(options.type.conv(opts.prefixMin, unit.value), thisValue))
       }
       if (opts.type.gt(thisValue, opts.prefixMax)) {
         // prefix makes the value too large
-        return opts.type.abs(opts.type.div(thisValue, options.type.conv(opts.prefixMax)))
+        return opts.type.abs(opts.type.div(thisValue, options.type.conv(opts.prefixMax, unit.value)))
       }
 
       // The prefix is in range, but return a score that says how close it is to the original value.
       if (opts.type.le(thisValue, unit.value)) {
-        return opts.type.mul(opts.type.abs(opts.type.div(thisValue, unit.value)), opts.type.conv(-1))
+        return opts.type.mul(opts.type.abs(opts.type.div(thisValue, unit.value)), opts.type.conv(-1, unit.value))
       } else {
-        return opts.type.mul(opts.type.abs(opts.type.div(unit.value, thisValue)), opts.type.conv(-1))
+        return opts.type.mul(opts.type.abs(opts.type.div(unit.value, thisValue)), opts.type.conv(-1, unit.value))
       }
     }
 
