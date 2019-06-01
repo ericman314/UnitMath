@@ -603,12 +603,12 @@ let _config = function _config (options) {
       }
 
       let str = ''
-      if (typeof simp.value === 'number' && _opts.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && _opts.precision > 0) {
+      if (typeof simp.value === 'number' && _opts.type.format._IS_UNITMATH_DEFAULT_FUNCTION && _opts.precision > 0) {
         // Use default formatter
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
-        // Use custom type's format method (which defaults to the toString() method)
-        str += _opts.type.format(simp.value)
+        // Use custom type's format method (which defaults to the toString(opts) method)
+        str += _opts.type.format(simp.value, opts)
       }
       const unitStr = _formatUnits(simp, _opts)
       if (unitStr.length > 0 && str.length > 0) {

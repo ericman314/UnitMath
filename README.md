@@ -104,6 +104,8 @@ Use either the `format` method to format a unit as a string. `toString` is an al
 unit('1 lb').to('kg').format() // '0.45359237 kg'
 ```
 
+The `format` and `toString` methods accept several options; see [Configuring](#configuring).
+
 ### Configuring
 
 UnitMath can be configured using `unit.config(options)`. The function returns a *new* instance of UnitMath with the specified configuration options:
@@ -398,7 +400,7 @@ Required for specific functions:
   - `eq: (a: T, b: T) => boolean` (Required for `equals` function)
 
 Optional:
-  - `format: (a: T) => string`
+  - `format: (a: T, options: any) => string`
 
 The `add`, `sub`, `mul`, `div`, and `pow` functions replace `+`, `-`, `*`, `/`, and `Math.pow`, respectively. The `clone` function should return a clone of your custom type (same value, different object). 
 
@@ -423,7 +425,17 @@ unit(Fraction(1, 2), 'kg') // Supply the value directly
 
 The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always required. Omitting any of these will cause the `config` method to throw an error. The other functions are conditionally required, and you will receive an error if you attempt something that depends on a function you haven't provided.
 
-If you specify a `format` function, UnitMath will use it when outputting your custom type as a string. Otherwise, it will use your type's `toString()` method.
+UnitMath will use your type's `toString` method when formatting a unit. You can use a different formatter by setting the `type.format` function. This works even if you are not using custom types. If you passed an options object to the unit's `format` or `toString` method, that object will also be passed to your custom `format` function.
+
+```js
+let unitFunny = require('../index.js').config({
+  type: {
+    format: (a, b) => a.toString().split('').reverse().join(b)
+  }
+})
+
+unitFunny('3.14159 rad').format('_') // '9_5_1_4_1_._3 rad'
+```
 
 ## API Reference
 
