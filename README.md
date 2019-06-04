@@ -373,6 +373,8 @@ const unit = require('unitmath').config({
     gt: (a, b) => a.gt(b),
     ge: (a, b) => a.gte(b),
     abs: (a) => a.abs(),
+    round: (a) => a.round(),
+    trunc: (a) => Decimal.trunc(a),
     format: a => a.toString()
   }
 })
@@ -400,6 +402,8 @@ Required for prefix = 'auto' or 'always':
 
 Required for specific functions:
   - `eq: (a: T, b: T) => boolean` (Required for `equals` function)
+  - `round: (a: T) => T` (Required for `split` function)
+  - `trunc: (a: T) => T` (Required for `split` function)
 
 Optional:
   - `format: (a: T, options: any) => string`

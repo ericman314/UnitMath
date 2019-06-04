@@ -12,7 +12,7 @@ function configCustomUnits (units) {
 }
 
 let unitDec
-let typeNoPow, typeNoGt, typeNoComp, typeFunnyFormat
+let typeNoPow, typeNoGt, typeNoComp, typeFunnyFormat, typeNoRound
 
 before(() => {
   Decimal.set({ precision: 32 })
@@ -57,7 +57,9 @@ before(() => {
     le: (a, b) => a.lte(b),
     gt: (a, b) => a.gt(b),
     ge: (a, b) => a.gte(b),
-    abs: (a) => a.abs()
+    abs: (a) => a.abs(),
+    round: (a) => a.round(),
+    trunc: (a) => Decimal.trunc(a)
   }
 
   typeNoPow = Object.assign({}, typeComplete)
@@ -65,6 +67,9 @@ before(() => {
 
   typeNoGt = Object.assign({}, typeComplete)
   delete typeNoGt.gt
+
+  typeNoRound = Object.assign({}, typeComplete)
+  delete typeNoRound.round
 
   typeNoComp = Object.assign({}, typeComplete)
   delete typeNoComp.eq
@@ -76,6 +81,7 @@ before(() => {
   typeFunnyFormat = { format: (a, b, c) => b + a.toString().split('').reverse().join(c) }
 
   unitDec = require('../index.js').config({ type: typeComplete })
+  
   // These will be tested below
   // unitDecNoPow = require('../index.js').config({ type: typeNoPow })
   // unitDecNoGt = require('../index.js').config({ type: typeNoGt })
@@ -1970,12 +1976,14 @@ describe('unitmath', () => {
 
       it('should throw if attempting to call a method that depends on a custom type function that was not provided', () => {
         let unitDecNoComp = require('../index.js').config({ type: typeNoComp, prefix: 'never' })
+        let unitDecNoRound = require('../index.js').config({ type: typeNoRound })
         assert.throws(() => unitDecNoComp('3 m').equals('4 m'), /When using custom types, equals requires a type.eq function/)
         assert.throws(() => unitDecNoComp('3 m').compare('4 m'), /When using custom types, compare requires a type.gt and a type.lt function/)
         assert.throws(() => unitDecNoComp('3 m').lessThan('4 m'), /When using custom types, lessThan requires a type.lt function/)
         assert.throws(() => unitDecNoComp('3 m').lessThanOrEqual('4 m'), /When using custom types, lessThanOrEqual requires a type.le function/)
         assert.throws(() => unitDecNoComp('3 m').greaterThan('4 m'), /When using custom types, greaterThan requires a type.gt function/)
         assert.throws(() => unitDecNoComp('3 m').greaterThanOrEqual('4 m'), /When using custom types, greaterThanOrEqual requires a type.ge function/)
+        assert.throws(() => unitDecNoRound('3 m').split(['ft'], ['in']), /When using custom types, split requires a type.round and a type.trunc function/)
       })
     })
 
@@ -2048,8 +2056,18 @@ describe('unitmath', () => {
         assert.strictEqual(unitDec('2 W').sqrt().format(), '1.4142135623730950488016887242097 W^0.5')
       })
 
-      it('split should throw because it is not implemented', () => {
-        assert.throws(() => unitDec('10 km').split(['mi', 'ft', 'in']), /split is not yet implemented for custom types/)
+      it('should do split', () => {
+        assert.strictEqual(unitDec(1, 'm').split(['ft', 'in']).join(','), '3 ft,3.3700787401574803149606299212595 in')
+        assert.strictEqual(unitDec(-1, 'm').split(['ft', 'in']).join(','), '-3 ft,-3.3700787401574803149606299212595 in')
+        assert.strictEqual(unitDec(1, 'm/s').split(['m/s']).join(','), '1 m / s')
+        assert.strictEqual(unitDec(1, 'm').split(['ft', 'ft']).join(','), '3 ft,0.28083989501312335958005249343829 ft')
+        assert.strictEqual(unitDec(1.23, 'm/s').split([]).join(','), '1.23 m / s')
+        assert.strictEqual(unitDec(1, 'm').split(['in', 'ft']).join(','), '39 in,0.03083989501312335958005249343832 ft')
+        assert.strictEqual(unitDec(10, 'km').split([ 'mi', 'ft', 'in' ]).join(','), '6 mi,1128 ft,4.7874015748031496062992125984252 in')
+        assert.strictEqual(unitDec(1, 'm').split([ unit(null, 'ft'), unit(null, 'in') ]).join(','), '3 ft,3.3700787401574803149606299212598 in')
+        assert.strictEqual(unitDec(100, 'in').split(['ft', 'in']).join(','), '8 ft,4 in')
+        // TODO: Try redefining deg using a more precise value of pi
+        assert.strictEqual(unitDec('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]).map(a => a.toString({ precision: 6 })).join(','), '51 deg,29 arcmin,36.240000000000072499200000000012 arcsec')
       })
 
       describe('equals', () => {

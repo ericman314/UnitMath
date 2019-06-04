@@ -886,8 +886,8 @@ let _config = function _config (options) {
      * @returns {Unit[]} An array of units
      */
   function _split (unit, units) {
-    if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION) {
-      throw new Error('split is not yet implemented for custom types')
+    if (!options.type.conv._IS_UNITMATH_DEFAULT_FUNCTION && (options.type.round._IS_UNITMATH_DEFAULT_FUNCTION || options.type.trunc._IS_UNITMATH_DEFAULT_FUNCTION)) {
+      throw new Error(`When using custom types, split requires a type.round and a type.trunc function`)
     }
     let x = _clone(unit)
     const result = []
@@ -897,15 +897,15 @@ let _config = function _config (options) {
       x = _to(x, _convertParamToUnit(units[i]))
       if (i === units.length - 1) break
 
-      // Check to see if xNumeric is nearly equal to an integer,
-      // since fix can incorrectly round down if there is round-off error
-      const xRounded = Math.round(x.value)
+      // Check to see if x.value is nearly equal to an integer,
+      // since trunc can incorrectly round down if there is round-off error
+      const xRounded = options.type.round(x.value)
       let xFixed
       const isNearlyEqual = options.type.eq(xRounded, x.value)
       if (isNearlyEqual) {
         xFixed = xRounded
       } else {
-        xFixed = Math.trunc(x.value)
+        xFixed = options.type.trunc(x.value)
       }
 
       const y = new Unit(xFixed, units[i].toString())
@@ -1306,7 +1306,9 @@ defaults.lt = (a, b) => a < b
 defaults.gt = (a, b) => a > b
 defaults.le = (a, b) => a <= b
 defaults.ge = (a, b) => a >= b
-defaults.conv = a => typeof a === 'string' ? parseFloat(a) : a
+defaults.round = (a) => Math.round(a)
+defaults.trunc = (a) => Math.trunc(a)
+defaults.conv = (a) => typeof a === 'string' ? parseFloat(a) : a
 defaults.clone = (a) => a
 defaults.format = (a) => a.toString()
 
