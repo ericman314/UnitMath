@@ -81,7 +81,7 @@ before(() => {
   typeFunnyFormat = { format: (a, b, c) => b + a.toString().split('').reverse().join(c) }
 
   unitDec = require('../index.js').config({ type: typeComplete })
-  
+
   // These will be tested below
   // unitDecNoPow = require('../index.js').config({ type: typeNoPow })
   // unitDecNoGt = require('../index.js').config({ type: typeNoGt })

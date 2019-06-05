@@ -1,5 +1,8 @@
 # History
 
+## 2019-06-04, v0.8.3
+- `split` now supports custom types
+
 ## 2019-06-01, v0.8.2
 - Fixed unit complexity calculation for deciding whether to simplify units
 - Added undocumented second parameter to `conv` function, which could be removed at any time
