@@ -1074,6 +1074,21 @@ describe('unitmath', () => {
       assert.strictEqual(unit(1000000, 'm').toString(), '1000 km')
       assert.strictEqual(unit(10000000, 'm').toString(), '10000 km')
       assert.strictEqual(unit(2000, 'ohm').toString(), '2 kohm')
+
+      assert.strictEqual(unit(-0.000001, 'm').format(8), '-1 um')
+      assert.strictEqual(unit(-0.00001, 'm').format(8), '-10 um')
+      assert.strictEqual(unit(-0.0001, 'm').format(8), '-0.1 mm')
+      assert.strictEqual(unit(-0.0005, 'm').format(8), '-0.5 mm')
+      assert.strictEqual(unit(-0.0006, 'm').toString(), '-0.6 mm')
+      assert.strictEqual(unit(-0.001, 'm').toString(), '-0.1 cm')
+      assert.strictEqual(unit(-0.01, 'm').toString(), '-1 cm')
+      assert.strictEqual(unit(-100000, 'm').toString(), '-100 km')
+      assert.strictEqual(unit(-300000, 'm').toString(), '-300 km')
+      assert.strictEqual(unit(-500000, 'm').toString(), '-500 km')
+      assert.strictEqual(unit(-600000, 'm').toString(), '-600 km')
+      assert.strictEqual(unit(-1000000, 'm').toString(), '-1000 km')
+      assert.strictEqual(unit(-10000000, 'm').toString(), '-10000 km')
+      assert.strictEqual(unit(-2000, 'ohm').toString(), '-2 kohm')
     })
 
     it('should keep the original prefix when in range', () => {

@@ -1009,22 +1009,33 @@ let _config = function _config (options) {
       )
     }
 
+    // TODO: Test this for negative numbers. Are we doing type.abs everywhere we need to be?
+    let unitValue = opts.type.abs(unit.value)
+    // console.log(`unitValue = ${unitValue}`)
     function calcScore (prefix) {
-      let thisValue = calcValue(prefix)
+      let thisValue = opts.type.abs(calcValue(prefix))
+      // console.log(`Calculating score for ${prefix}; thisValue = ${thisValue}`)
       if (opts.type.lt(thisValue, opts.prefixMin)) {
         // prefix makes the value too small
-        return opts.type.abs(opts.type.div(options.type.conv(opts.prefixMin, unit.value), thisValue))
+        // console.log(`Prefix makes thisValue too small`)
+        return opts.type.div(options.type.conv(opts.prefixMin, unitValue), thisValue)
       }
       if (opts.type.gt(thisValue, opts.prefixMax)) {
         // prefix makes the value too large
-        return opts.type.abs(opts.type.div(thisValue, options.type.conv(opts.prefixMax, unit.value)))
+        // console.log(`Prefix makes thisValue too large`)
+        return opts.type.div(thisValue, options.type.conv(opts.prefixMax, unitValue))
       }
 
       // The prefix is in range, but return a score that says how close it is to the original value.
-      if (opts.type.le(thisValue, unit.value)) {
-        return opts.type.mul(opts.type.abs(opts.type.div(thisValue, unit.value)), opts.type.conv(-1, unit.value))
+      if (opts.type.le(thisValue, unitValue)) {
+        // console.log(`thisValue <= unitValue, score = ${-thisValue / unitValue} (${1-thisValue/unitValue})`)
+
+        // return opts.type.mul(opts.type.div(thisValue, unitValue), opts.type.conv(-1, unitValue))
+        return opts.type.sub(opts.type.conv(1, unitValue), opts.type.div(thisValue, unitValue))
       } else {
-        return opts.type.mul(opts.type.abs(opts.type.div(unit.value, thisValue)), opts.type.conv(-1, unit.value))
+        // console.log(`thisValue > unitValue, score = ${-unitValue / thisValue} (${1-unitValue/thisValue})`)
+        // return opts.type.mul(opts.type.div(unitValue, thisValue), opts.type.conv(-1, unitValue))
+        return opts.type.sub(opts.type.conv(1, unitValue), opts.type.div(unitValue, thisValue))
       }
     }
 
@@ -1032,11 +1043,13 @@ let _config = function _config (options) {
     // Find the index to begin searching. This might be tricky because the unit could have a prefix that is *not* common.
     let bestPrefix = piece.prefix
     let bestScore = calcScore(bestPrefix)
+    // console.log(`The score was ${bestScore}`)
 
     for (let i = 0; i < prefixes.length; i++) {
       // What would the value of the unit be if this prefix were applied?
       let thisPrefix = prefixes[i]
       let thisScore = calcScore(thisPrefix)
+      // console.log(`The score was ${thisScore}`)
 
       if (opts.type.lt(thisScore, bestScore)) {
         bestScore = thisScore
