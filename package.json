@@ -44,7 +44,7 @@
     "codecov": "^3.5.0",
     "core-js": "3.0.1",
     "decimal.js": "^10.2.0",
-    "mocha": "^6.1.4",
+    "mocha": "^6.2.0",
     "nyc": "^14.1.1",
     "rollup": "1.11.3",
     "rollup-plugin-babel": "4.3.2",
