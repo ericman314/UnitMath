@@ -203,13 +203,161 @@ unit.config(options) // This has no effect
 
 #### Custom Units
 
-One of the best ways to learn how to add your own units is to inspect the object returned from `unit.definitions()`. This object contains all the built-in units, prefixes, unit systems, base quantities, and quantities. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
+To create a custom unit, pass a `definitions` object to `unit.config()`:
+
+  ```js
+  unit = unit.config({
+    definitions: {
+      units: {
+        lightyear: '9460730472580800 m'
+      }
+    }
+  })
+
+  unit('1 lightyear').to('km') // 5878625373183.608 mile
+  ```
+
+The `definitions` contains five keys which allow additional customization of the unit system. These are: `units`, `prefixes`, `unitSystems`, `baseQuantities`, and `quantities`.
+
+**definitions.units**
+
+This object contains the units that are made available by UnitMath. Each key in `definitions.units` becomes a new unit. The most common way to define a unit is in terms of other units:
+
+```js
+units: {
+  minute: '60 seconds',
+  newton: '1 kg m/s^2'
+}
+```
+
+Or:
+
+```js
+units: {
+  minute: { value: '60 seconds' },
+  newton: { value: '1 kg m/s^2' }
+}
+```
+
+Or:
+
+```js
+units: {
+  minute: { value: [ 60, 'seconds' ] },
+  newton: { value: [ 1, 'kg m/s^2' ] }
+}
+```
+
+When it is not possible to define a unit in terms of other units (such as for the base units `meter`, `second`, etc.), you may also specify a `quantity` and a numeric `value`:
+
+```js
+units: {
+  seconds: { quantity: 'TIME', value: 1 }
+}
+```
+
+A unit definition may have additional properties:
+- `prefixes`: Specifies which group of prefixes will be allowed when parsing the unit. The default is `'NONE'`.
+
+```js
+units: {
+  // Will parse 'nanometer', 'micrometer', 'millimeter', 'kilometer', 'megameter', etc.
+  meter: { prefixes: 'LONG', ... },
+
+  // Will parse 'nm', 'um', 'mm', 'km', 'Mm', etc.
+  m: { prefixes: 'SHORT', ... }
+}
+```
+
+- `commonPrefixes`: A string array that specifies which of the allowed prefixes will be used when formatting a unit.
+
+  ```js
+  units: {
+    L: {
+      prefixes: 'SHORT',
+      // Will format only as 'nL', 'uL', 'mL', and 'L'
+      commonPrefixes: ['n', 'u', 'm', ''],
+      value: '1e-3 m^3',
+    }
+  }
+  ```
+
+- `aliases`: Shortcut to create additional units with identical definitions.
+
+  ```js
+  units: {
+    meter: { ... , aliases: [ 'meters' ] }
+  }
+  ```
+
+- `offset`: Used when the zero-value of this unit is different from the zero-value of the base unit.
+
+  ```js
+  units: {
+    celsius: {
+      value: '1 K',
+      offset: 273.15
+    }
+  }
+  ```
+
+**definitions.prefixes**
+
+The `definitions.prefixes` object is used to define strings and associated multipliers that are prefixed to units to change their value. For example, the `'k'` prefix in `km` multiplies the value of the `m` unit by 1000.
+
+```js
+prefixes: {
+  NONE: { '': 1 },
+  SHORT: {
+    m: 0.001,
+    '': 1,
+    k: 1000
+  },
+  LONG: {
+    milli: 0.001,
+    '': 1,
+    kilo: 1000
+  }
+}
+```
+
+**definitions.unitSystems**
+
+The `definitions.unitSystems` object defines the "preferred" units to use with a particular unit system. Any or all of the `quantities` in a unit system may be assigned a single unit, optionally with a prefix, that will be used when formatting a matching unit in that system.
+
+```js
+unitSystems: {
+  si: {
+    AMOUNT_OF_SUBSTANCE: 'mol',
+    CAPACITANCE: 'F',
+    CURRENT: 'A',
+    MASS: 'kg',
+    ...
+  }
+}
+```
+
+The `definitions.baseQuantities` array defines the dimensionally-independent quantities (`LENGTH`, `MASS`, `LUMINOUS_INTENSITY`, etc.) that form the basis of all units. To add a new base quantity, supply the new base quantity or quantities in an array:
+
+```js
+baseQuantities: [ 'MY_NEW_BASE_QUANTITY' ]
+```
+
+The `quantities` object defines other quantities that are derived from the base quantities, such as `FORCE`. These are used in the `unitSystems` object to specify the preferred unit for that quantity. The syntax for defining a `quantity` is more strict than that used to parse units generally. The format of a quantity is: zero or more terms, separated by spaces, where each term comprises a `baseQuantity`, optionally followed by a caret `^` and a floating point number:
+
+```js
+quantities: {
+  ELECTRIC_POTENTIAL: 'MASS LENGTH^2 TIME^-3 CURRENT^-1'
+}
+```
+
+You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefixes, unit systems, base quantities, and quantities. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
 
 ```js
 unit.definitions()
 ```
 
-Before you read any further, take a glance at this abbreviated sample of the output from `unit.definitions()`:
+Below is an abbreviated sample output from `unit.definitions()`. It can serve as a starting point to create your own definitions.
 
 ```js
 { units:
@@ -273,86 +421,9 @@ Before you read any further, take a glance at this abbreviated sample of the out
 
 ```
 
-The object returned from `unit.definitions()` contains five keys. These are `units`, `prefixes`, `unitSystems`, `baseQuantities`, and `quantities`.
-
-`units` is an object that specifies the actual units that are made available by UnitMath. There are two methods to specify a unit's value. The first, which is usually used only with base units (`meter`, `second`, etc.) is to give a `quantity` and a numeric `value`:
-
-```js
-  seconds: { quantity: 'TIME', value: 1 }
-```
-
-The second method is more common, where a unit is defined in terms of other units:
-
-```js
-units: {  
-  minute: '60 seconds'
-}
-```
-
-Or
-
-```js
-units: {  
-  minute: { value: '60 seconds' }
-}
-```
-
-Or
-
-```js
-units: {
-  minute: { value: [60, 'seconds'] }
-}
-```
-
-The other properties in a unit definition are optional.
-- `prefixes`: Specifies which group of prefixes will be considered when parsing the unit. The default is `'NONE'`.
-- `commonPrefixes`: A string array that specifies which prefixes are allowed to be used when formatting the unit.
-
-  ```js
-  units: {
-    L: {
-      prefixes: 'SHORT',
-      commonPrefixes: ['n', 'u', 'm', ''],
-      value: '1e-3 m^3',
-    }
-  }
-  ```
-
-- `aliases`: Shortcut to create additional units with the same definition.
-- `offset`: Used when the zero-value of this unit is different from the zero-value of the base unit.
-
-  ```js
-  units: {
-    celsius: {
-      value: '1 K',
-      offset: 273.15,
-      aliases: ['degC']
-    }
-  }
-  ```
-
-The `prefixes` object is used to define strings and associated multipliers that are prefixed to units to change their value. For example, the `'k'` prefix in `km` multiplies the value of the `m` unit by 1000.
-
-The `unitSystems` object defines the "preferred" units to use with a particular unit system. Any or all of the `quantities` in a unit system may be assigned a single unit, optionally with a prefix, that will be used when formatting a matching unit in that system.
-
-The `baseQuantities` array defines the dimensionally-independent quantities (`LENGTH`, `MASS`, `LUMINOUS_INTENSITY`, etc.) that form the basis of all units. To add a new base quantity, supply the new base quantity or quantities in an array:
-
-```js
-baseQuantities: [ 'MY_NEW_BASE_QUANTITY' ]
-```
-
-The `quantities` object defines other quantities that are derived from the base quantities, such as `FORCE`. These are used in the `unitSystems` object to specify the preferred unit for that quantity. The syntax for defining a `quantity` is more strict than that used to parse units generally. The format of a quantity is: zero or more terms, separated by spaces, where each term comprises a `baseQuantity`, optionally followed by a caret `^` and a floating point number:
-
-```js
-quantities: {
-  ELECTRIC_POTENTIAL: 'MASS LENGTH^2 TIME^-3 CURRENT^-1'
-}
-```
-
 #### Custom Types
 
-You can easily extend UnitMath to work with custom types. The `type` option is an object containing several key/value pairs, where each value is a function that replaces the normal `+`, `-`, `*`, `/`, and other arithmetic operators used internally by UnitMath with functions you specify.
+You can easily extend UnitMath to work with custom types. The `type` option is an object containing several key/value pairs, where each value is a function that replaces the normal `+`, `-`, `*`, `/`, and other arithmetic operators used internally by UnitMath.
 
 Example using Decimal.js as the custom type:
 
@@ -415,7 +486,7 @@ The `conv` function must, at a minimum, be capable of converting both strings an
 UnitMath will also use the `conv` function when constructing units from numbers and strings. If your custom type is representable using decimal or scientific notation (such as `6.022e+23`), you can include both the value and the units in a single string:
 
 ```js
-// Supply a single string and the numeric portion will be parsed using type.conv
+// Supply a single string, and the numeric portion will be parsed using type.conv
 unit('3.1415926535897932384626433832795 rad')
 ```
 
