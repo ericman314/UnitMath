@@ -114,6 +114,7 @@ describe('unitmath', () => {
         prefix: 'auto',
         prefixMin: 0.1,
         prefixMax: 1000,
+        prefixesToChooseFrom: 'common',
         simplify: 'auto',
         simplifyThreshold: 2,
         system: 'auto',
@@ -1123,6 +1124,19 @@ describe('unitmath', () => {
       // newton has prefixes and commonPrefixes so its prefix should change
       assert.strictEqual(unit('4 micronewton').format(), '4 micronewton')
       assert.strictEqual(unit('4e-6 newton').format(), '4 micronewton')
+    })
+
+    it('should use the prefixesToChooseFrom option', () => {
+      assert.strictEqual(unit('4 microlumen').format({ prefixesToChooseFrom: 'all' }), '4 microlumen')
+      assert.strictEqual(unit('4e-6 lumen').format({ prefixesToChooseFrom: 'all' }), '4 microlumen')
+
+      assert.strictEqual(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'all' }), '4 piconewton')
+      assert.strictEqual(unit('4e-2 newton').format({ prefixesToChooseFrom: 'all' }), '0.4 decinewton')
+      assert.strictEqual(unit('4e+9 newton').format({ prefixesToChooseFrom: 'all' }), '4 giganewton')
+
+      assert.strictEqual(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'common' }), '0.000004 micronewton')
+      assert.strictEqual(unit('4e-2 newton').format({ prefixesToChooseFrom: 'common' }), '40 millinewton')
+      assert.strictEqual(unit('4e+9 newton').format({ prefixesToChooseFrom: 'common' }), '4000 meganewton')
     })
 
     it('should avoid division by zero by not choosing a prefix for very small values', () => {

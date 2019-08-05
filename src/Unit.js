@@ -990,12 +990,6 @@ let _config = function _config (options) {
       return unit
     }
 
-    const prefixes = piece.unit.commonPrefixes
-    if (!prefixes) {
-      // Unit does not have any common prefixes for formatting
-      return unit
-    }
-
     function calcValue (prefix) {
       return opts.type.div(
         unit.value,
@@ -1044,6 +1038,18 @@ let _config = function _config (options) {
     let bestPrefix = piece.prefix
     let bestScore = calcScore(bestPrefix)
     // console.log(`The score was ${bestScore}`)
+
+    let  prefixes
+    if (opts.prefixesToChooseFrom === 'all') {
+      prefixes = Object.keys(piece.unit.prefixes)
+    } else if (opts.prefixesToChooseFrom === 'common') {
+      prefixes = piece.unit.commonPrefixes
+    }
+
+    if (!prefixes) {
+      // Unit does not have any prefixes for formatting
+      return unit
+    }
 
     for (let i = 0; i < prefixes.length; i++) {
       // What would the value of the unit be if this prefix were applied?
@@ -1338,6 +1344,7 @@ let defaultOptions = {
   prefix: 'auto',
   prefixMin: 0.1,
   prefixMax: 1000,
+  prefixesToChooseFrom: 'common',
   simplify: 'auto',
   simplifyThreshold: 2,
   system: 'auto',

@@ -144,6 +144,8 @@ These are the available options and their defaults:
 
 - `prefixMax: 1000`. When choosing a prefix, the largest formatted value of a `unit` that is allowed.
 
+- `prefixesToChooseFrom: 'common'`. When choosing a prefix, whether to consider all allowed prefixes or just the common ones for that unit. Possible values are `'common'` and `'all'`.
+
 - `simplify: 'auto'`. Specifies if UnitMath should attempt to simplify the units before formatting as a string. Possible values are `'auto'`, `'always'`, or `'never'`. If `'auto'` or `'always'`, then `u.toString()` essentially becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. When `'auto'` is used, simplification is skipped if the unit is valueless or was constructed using the `to()` method.
 
 - `simplifyThreshold: 2`. A factor that affects whether the `format` method will output the original unit or a simplified version. The original unit will always be output unless the 'complexity' of the unit is reduced by an amount equal to or greater than the `simplifyThreshold`. A lower value results in more units being simplified, while a higher number results in fewer units being simplified. The complexity of a unit is roughly equal to the number of 'symbols' that are required to write the unit.
@@ -269,16 +271,21 @@ units: {
 }
 ```
 
-- `commonPrefixes`: A string array that specifies which of the allowed prefixes will be used when formatting a unit.
+- `commonPrefixes`: A string array that specifies which of the allowed prefixes will be used when formatting a unit. If this option is omitted, the unit will be formatted using the original prefix, or none at all.
 
   ```js
   units: {
     L: {
       prefixes: 'SHORT',
-      // Will format only as 'nL', 'uL', 'mL', and 'L'
+      // Will format only as 'nL', 'uL', 'mL', and 'L'.
       commonPrefixes: ['n', 'u', 'm', ''],
       value: '1e-3 m^3',
-    }
+    },
+    lumen: {
+      prefixes: 'LONG',
+      value: '1 cd sr'
+      // commonPrefixes not given, so lumen will only be formatted as "lumen", but could be parsed as "millilumen", etc.
+    },
   }
   ```
 
