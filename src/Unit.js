@@ -1039,7 +1039,7 @@ let _config = function _config (options) {
     let bestScore = calcScore(bestPrefix)
     // console.log(`The score was ${bestScore}`)
 
-    let  prefixes
+    let prefixes
     if (opts.prefixesToChooseFrom === 'all') {
       prefixes = Object.keys(piece.unit.prefixes)
     } else if (opts.prefixesToChooseFrom === 'common') {

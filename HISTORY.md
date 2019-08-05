@@ -1,5 +1,9 @@
 # History
 
+## 2019-08-05, v0.8.4
+- Added `prefixesToChooseFrom` option
+- Bugfix when auto-prefixing negative numbers
+
 ## 2019-06-04, v0.8.3
 - `split` now supports custom types
 
