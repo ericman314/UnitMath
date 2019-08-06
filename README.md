@@ -642,7 +642,7 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
 
   ```js
   let r = unit('10 kg / m^2 s^3 A^2')
-  r.format() // ohm
+  r.format() // 10 ohm
   r.to('kohm').format() // 0.01 kohm
   r.to().format() // 10 kg m^2 / s^3 A^2
   ```
