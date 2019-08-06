@@ -873,6 +873,11 @@ describe('unitmath', () => {
       const u8 = u7.clone()
       assert.notStrictEqual(u7, u8)
       assert.deepStrictEqual(u7, u8)
+
+      const u9 = unit(8.314, 'kg m^2 / s^2 K mol').to()
+      const u10 = u9.clone()
+      assert.notStrictEqual(u9, u10)
+      assert.deepStrictEqual(u9, u10)
     })
 
     it('should freeze the returned unit', () => {

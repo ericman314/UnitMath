@@ -667,6 +667,9 @@ let _config = function _config (options) {
     const result = new Unit()
     result.value = unit.value === null ? null : options.type.clone(unit.value)
     result.dimension = unit.dimension.slice(0)
+    if (unit.fixed) {
+      result.fixed = unit.fixed
+    }
     result.units = []
     for (let i = 0; i < unit.units.length; i++) {
       result.units[i] = {}
