@@ -1237,6 +1237,9 @@ describe('unitmath', () => {
 
       const nounit = unit('40m').mul('40N').div('40J')
       assert.strictEqual(nounit.toString(), '40')
+
+      const nounit2 = unit('2 hours').div('1 hour')
+      assert.strictEqual(nounit2.toString(), '2')
     })
 
     it('should simplify units according to chosen unit system', () => {

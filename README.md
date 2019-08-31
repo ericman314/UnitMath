@@ -344,13 +344,17 @@ unitSystems: {
 }
 ```
 
+**definitions.baseQuantities**
+
 The `definitions.baseQuantities` array defines the dimensionally-independent quantities (`LENGTH`, `MASS`, `LUMINOUS_INTENSITY`, etc.) that form the basis of all units. To add a new base quantity, supply the new base quantity or quantities in an array:
 
 ```js
 baseQuantities: [ 'MY_NEW_BASE_QUANTITY' ]
 ```
 
-The `quantities` object defines other quantities that are derived from the base quantities, such as `FORCE`. These are used in the `unitSystems` object to specify the preferred unit for that quantity. The syntax for defining a `quantity` is more strict than that used to parse units generally. The format of a quantity is: zero or more terms, separated by spaces, where each term comprises a `baseQuantity`, optionally followed by a caret `^` and a floating point number:
+**definitions.quantities**
+
+The `definitions.quantities` object defines other quantities that are derived from the base quantities, such as `FORCE`. These are used in the `unitSystems` object to specify the preferred unit for that quantity. The syntax for defining a `quantity` is more strict than that used to parse units generally. The format of a quantity is: zero or more terms, separated by spaces, where each term comprises a `baseQuantity`, optionally followed by a caret `^` and a floating point number:
 
 ```js
 quantities: {
