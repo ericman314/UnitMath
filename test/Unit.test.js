@@ -175,6 +175,31 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
       })
 
+      it('should use custom units when simplifying', () => {
+        let newUnit = configCustomUnits({
+          mph: { value: '1 mi/hr' }
+        })
+        assert.strictEqual(newUnit('5 mi').div('2 hr').toString(), '2.5 mph')
+      })
+
+      it('should use custom units derived from other custom units when simplifying', () => {
+        const newUnit = configCustomUnits({
+          widget: { value: '5 kg bytes' },
+          woggle: { value: '4 widget^2' },
+          gadget: { value: '5 N/woggle' },
+          whimsy: { value: '8 gadget hours' }
+        })
+        assert.strictEqual(newUnit(1000, 'N h kg^-2 bytes^-2').toString(), '2500 whimsy')
+      })
+
+      it('should apply prefixes and offset to custom units', () => {
+        const newUnit = configCustomUnits({
+          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG' }
+        })
+        assert.strictEqual(newUnit('8000 rad^2/s').toString(), '1 kilowiggle')
+      })
+
+
       it('should only allow valid names for units', () => {
         assert.throws(() => configCustomUnits({ 'not_a_valid_unit': '3.14 kg' }), /Unit name contains non-alpha/)
         assert.throws(() => configCustomUnits({ '5tartsWithNumber': '42 ft' }), /Unit name contains non-alpha/)
@@ -279,7 +304,7 @@ describe('unitmath', () => {
       it('should create new base quantities and derived quantities', () => {
         let newUnit = unit.config({
           definitions: {
-            baseQuantities: [ 'ESSENCE_OF_FOO' ],
+            baseQuantities: ['ESSENCE_OF_FOO'],
             quantities: {
               'FOOLUME': 'ESSENCE_OF_FOO^3',
               'FOOLOCITY': 'ESSENCE_OF_FOO TIME^-1'
@@ -303,8 +328,8 @@ describe('unitmath', () => {
           }
         })
 
-        assert.deepStrictEqual(newUnit('fib').getQuantities(), [ 'FOOLOCITY' ])
-        assert.deepStrictEqual(newUnit('flab').getQuantities(), [ 'FOOLUME' ])
+        assert.deepStrictEqual(newUnit('fib').getQuantities(), ['FOOLOCITY'])
+        assert.deepStrictEqual(newUnit('flab').getQuantities(), ['FOOLUME'])
         assert.strictEqual(newUnit('1 megafoo/s').simplify().toString(), '720000000 fib')
         assert.strictEqual(newUnit('1 megafoo/s').to('fib').toString(), '720000000 fib')
         assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
@@ -411,7 +436,7 @@ describe('unitmath', () => {
           prefixMax: 4.99999,
           definitions: {
             skipBuiltIns: true,
-            baseQuantities: [ 'ESSENCE_OF_FOO' ],
+            baseQuantities: ['ESSENCE_OF_FOO'],
             quantities: {
               'FOOLUME': 'ESSENCE_OF_FOO^3'
             },
@@ -1267,6 +1292,29 @@ describe('unitmath', () => {
       assert.strictEqual(unit('400 N').div('10 cm^2').toString(), '400 kPa')
     })
 
+    it('should infer the unit system when using non-preferred units which are members of that system', () => {
+      // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
+      let unit1 = unit('10 mile').mul('10 kip')
+      assert.strictEqual(unit1.toString(), '0.678515620705073 MMBTU')
+    })
+
+    it('should try to use preexisting units in the simplified expression', () => {
+      let unit1 = unit('10 ft hour / minute')
+      assert.strictEqual(unit1.toString(), '600 ft')
+
+      unit1 = unit('10 mile hour / minute')
+      assert.strictEqual(unit1.toString(), '600 mile')
+
+      unit1 = unit('10 mi hour / minute')
+      assert.strictEqual(unit1.toString(), '600 mi')
+
+      unit1 = unit('10 m hour / minute')
+      assert.strictEqual(unit1.toString(), '600 m')
+
+      unit1 = unit('10 meter hour / minute')
+      assert.strictEqual(unit1.toString(), '600 meter')
+    })
+
     it('should silently fail if the unit system does not specify a unit needed for a base quantity', () => {
       assert.strictEqual(unit('4 W / F').simplify().format(), '4 kg^2 m^4 / s^7 A^2')
 
@@ -1942,9 +1990,9 @@ describe('unitmath', () => {
       assert.strictEqual(unit(1, 'm').split(['ft', 'ft']).join(','), '3 ft,0.280839895013124 ft')
       assert.strictEqual(unit(1.23, 'm/s').split([]).join(','), '1.23 m / s')
       assert.strictEqual(unit(1, 'm').split(['in', 'ft']).join(','), '39 in,0.0308398950131236 ft')
-      assert.strictEqual(unit(10, 'km').split([ 'mi', 'ft', 'in' ]).join(','), '6 mi,1128 ft,4.78740157486361 in')
-      assert.strictEqual(unit(1, 'm').split([ unit(null, 'ft'), unit(null, 'in') ]).join(','), '3 ft,3.37007874015748 in')
-      assert.strictEqual(unit('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]).map(a => a.toString({ precision: 6 })).join(','), '51 deg,29 arcmin,36.24 arcsec')
+      assert.strictEqual(unit(10, 'km').split(['mi', 'ft', 'in']).join(','), '6 mi,1128 ft,4.78740157486361 in')
+      assert.strictEqual(unit(1, 'm').split([unit(null, 'ft'), unit(null, 'in')]).join(','), '3 ft,3.37007874015748 in')
+      assert.strictEqual(unit('51.4934 deg').split(['deg', 'arcmin', 'arcsec']).map(a => a.toString({ precision: 6 })).join(','), '51 deg,29 arcmin,36.24 arcsec')
     })
 
     it('should be resistant to round-off error', () => {
@@ -1987,7 +2035,7 @@ describe('unitmath', () => {
     it('should throw if custom unit not defined from existing units', () => {
       let newUnit = unit.config({
         definitions: {
-          baseQuantities: [ 'BAZINESS' ],
+          baseQuantities: ['BAZINESS'],
           units: {
             baz: {
               quantity: 'BAZINESS',
@@ -2100,11 +2148,11 @@ describe('unitmath', () => {
         assert.strictEqual(unitDec(1, 'm').split(['ft', 'ft']).join(','), '3 ft,0.28083989501312335958005249343829 ft')
         assert.strictEqual(unitDec(1.23, 'm/s').split([]).join(','), '1.23 m / s')
         assert.strictEqual(unitDec(1, 'm').split(['in', 'ft']).join(','), '39 in,0.03083989501312335958005249343832 ft')
-        assert.strictEqual(unitDec(10, 'km').split([ 'mi', 'ft', 'in' ]).join(','), '6 mi,1128 ft,4.7874015748031496062992125984252 in')
-        assert.strictEqual(unitDec(1, 'm').split([ unit(null, 'ft'), unit(null, 'in') ]).join(','), '3 ft,3.3700787401574803149606299212598 in')
+        assert.strictEqual(unitDec(10, 'km').split(['mi', 'ft', 'in']).join(','), '6 mi,1128 ft,4.7874015748031496062992125984252 in')
+        assert.strictEqual(unitDec(1, 'm').split([unit(null, 'ft'), unit(null, 'in')]).join(','), '3 ft,3.3700787401574803149606299212598 in')
         assert.strictEqual(unitDec(100, 'in').split(['ft', 'in']).join(','), '8 ft,4 in')
         // TODO: Try redefining deg using a more precise value of pi
-        assert.strictEqual(unitDec('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]).map(a => a.toString({ precision: 6 })).join(','), '51 deg,29 arcmin,36.240000000000072499200000000012 arcsec')
+        assert.strictEqual(unitDec('51.4934 deg').split(['deg', 'arcmin', 'arcsec']).map(a => a.toString({ precision: 6 })).join(','), '51 deg,29 arcmin,36.240000000000072499200000000012 arcsec')
       })
 
       describe('equals', () => {
