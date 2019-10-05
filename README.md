@@ -252,7 +252,7 @@ You can also supply an object for additional customization. These are all the op
   }
   ```
 
-- `quantity`: Specifies the type of quantity or dimension of the unit. Normally, this is determined from the `value` and so it is unnecessary. However, when it is not possible to define a unit in terms of other units (such as for the base units `meter`, `second`, etc.), it is necessary to specify the `quantity` and a numeric `value`:
+- `quantity`: This is required for base units that are not defined in terms of other units, such as `meter` and `second`. For derived units, such as `joule`, the `quantity` is determined automatically from the unit's `value`.
 
   ```js
   units: {
