@@ -216,14 +216,14 @@ To create a user-defined unit, pass a `definitions` object to `unit.config()`:
     }
   })
 
-  unit('1 lightyear').to('km') // 5878625373183.608 mile
+  unit('1 lightyear').to('mile') // 5878625373183.608 mile
   ```
 
 The `definitions` contains five keys which allow additional customization of the unit system. These are: `units`, `prefixes`, `unitSystems`, `baseQuantities`, and `quantities`.
 
 **definitions.units**
 
-This object contains the units that are made available by UnitMath. Each key in `definitions.units` becomes a new unit. The most common way to define a unit is in terms of other units:
+This object contains the units that are made available by UnitMath. Each key in `definitions.units` becomes a new unit. The easiest way to define a unit is to provide a string representation in terms of other units:
 
 ```js
 units: {
@@ -232,44 +232,45 @@ units: {
 }
 ```
 
-Or:
+You can also supply an object for additional customization. These are all the options you can specify:
 
-```js
-units: {
-  minute: { value: '60 seconds' },
-  newton: { value: '1 kg m/s^2' }
-}
-```
+- `value`: (Required) The value of the unit. It can be a string or an array containing two items:
 
-Or:
+  ```js
+  units: {
+    minute: { value: '60 seconds' },
+    newton: { value: '1 kg m/s^2' }
+  }
+  ```
 
-```js
-units: {
-  minute: { value: [ 60, 'seconds' ] },
-  newton: { value: [ 1, 'kg m/s^2' ] }
-}
-```
+  Or:
 
-When it is not possible to define a unit in terms of other units (such as for the base units `meter`, `second`, etc.), you may also specify a `quantity` and a numeric `value`:
+  ```js
+  units: {
+    minute: { value: [ 60, 'seconds' ] },
+    newton: { value: [ 1, 'kg m/s^2' ] }
+  }
+  ```
 
-```js
-units: {
-  seconds: { quantity: 'TIME', value: 1 }
-}
-```
+- `quantity`: Specifies the type of quantity or dimension of the unit. Normally, this is determined from the `value` and so it is unnecessary. However, when it is not possible to define a unit in terms of other units (such as for the base units `meter`, `second`, etc.), it is necessary to specify the `quantity` and a numeric `value`:
 
-A unit definition may have additional properties:
+  ```js
+  units: {
+    seconds: { quantity: 'TIME', value: 1 }
+  }
+  ```
+
 - `prefixes`: Specifies which group of prefixes will be allowed when parsing the unit. The default is `'NONE'`.
 
-```js
-units: {
-  // Will parse 'nanometer', 'micrometer', 'millimeter', 'kilometer', 'megameter', etc.
-  meter: { prefixes: 'LONG', ... },
+  ```js
+  units: {
+    // Will parse 'nanometer', 'micrometer', 'millimeter', 'kilometer', 'megameter', etc.
+    meter: { prefixes: 'LONG', ... },
 
-  // Will parse 'nm', 'um', 'mm', 'km', 'Mm', etc.
-  m: { prefixes: 'SHORT', ... }
-}
-```
+    // Will parse 'nm', 'um', 'mm', 'km', 'Mm', etc.
+    m: { prefixes: 'SHORT', ... }
+  }
+  ```
 
 - `commonPrefixes`: A string array that specifies which of the allowed prefixes will be used when formatting a unit. If this option is omitted, the unit will be formatted using the original prefix, or none at all.
 
