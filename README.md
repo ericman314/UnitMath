@@ -174,7 +174,7 @@ These are the available options and their defaults:
   unit('4000 kg').mul('9.8 m/s^2').mul('100 m').toString()  // "3.92 MJ"
   ```
 
-- `definitions`. An object that allows you to add to, modify, or remove the built-in units. See [Custom Units](#custom-units) for complete details.
+- `definitions`. An object that allows you to add to, modify, or remove the built-in units. See [User-Defined Units](#user-defined-units) for complete details.
 
   ```js
   unit = unit.config({
@@ -203,9 +203,9 @@ unit.config(options) // This has no effect
 
 ### Extending UnitMath
 
-#### Custom Units
+#### User-Defined Units
 
-To create a custom unit, pass a `definitions` object to `unit.config()`:
+To create a user-defined unit, pass a `definitions` object to `unit.config()`:
 
   ```js
   unit = unit.config({
@@ -308,6 +308,45 @@ units: {
   }
   ```
 
+- `system`: Providing the `system` option is a shortcut for making this unit a member of one of the built-in or user-defined systems: `si`, `us`, `cgs`, etc. It automatically sets `definitions.unitSystems` and `definitions.quantities` so that the new unit can be used when formatting the result of an expression. If `system` is `'auto'`, the system will be inferred from the unit's `value`.
+
+  For example, consider the following user-defined unit `snap`. The `system` option automatically adds the necessary entries to `definitions.unitSystems` and `definitions.quantities`:
+
+  ```js
+  definitions: {
+    units: {
+      snap: {
+        value: '1 m/s^4',
+        system: 'si' // or 'auto' to auto-select based on value
+      }
+    }
+  }
+  ```
+
+  The above is equivalent to the following: 
+
+  ```js
+  definitions: {
+    units: {
+      snap: '1 m/s^4'
+    },
+    unitSystems: {
+      si: {
+        snap_QUANTITY: 'snap'
+      }
+    },
+    quantities: {
+      snap_QUANTITY: 'LENGTH TIME^-4'
+    }
+  }
+  ```
+
+  In each case, `snap` becomes part of the `si` system, which means it may be used to format a Unit:
+
+  ```js
+  unit('1 m/s^2').div('2 s^2').format() // 0.5 snap
+  ```
+
 **definitions.prefixes**
 
 The `definitions.prefixes` object is used to define strings and associated multipliers that are prefixed to units to change their value. For example, the `'k'` prefix in `km` multiplies the value of the `m` unit by 1000.
@@ -324,22 +363,6 @@ prefixes: {
     milli: 0.001,
     '': 1,
     kilo: 1000
-  }
-}
-```
-
-**definitions.unitSystems**
-
-The `definitions.unitSystems` object defines the "preferred" units to use with a particular unit system. Any or all of the `quantities` in a unit system may be assigned a single unit, optionally with a prefix, that will be used when formatting a matching unit in that system.
-
-```js
-unitSystems: {
-  si: {
-    AMOUNT_OF_SUBSTANCE: 'mol',
-    CAPACITANCE: 'F',
-    CURRENT: 'A',
-    MASS: 'kg',
-    ...
   }
 }
 ```
@@ -361,6 +384,26 @@ quantities: {
   ELECTRIC_POTENTIAL: 'MASS LENGTH^2 TIME^-3 CURRENT^-1'
 }
 ```
+
+**definitions.unitSystems**
+
+The `definitions.unitSystems` object defines the "preferred" units to use with a particular unit system. Any or all of the `quantities` in a unit system may be assigned a single unit, optionally with a prefix, that will be used when formatting a matching unit in that system.
+
+```js
+unitSystems: {
+  si: {
+    AMOUNT_OF_SUBSTANCE: 'mol',
+    CAPACITANCE: 'F',
+    CURRENT: 'A',
+    MASS: 'kg',
+    ...
+  }
+}
+```
+
+**definitions.skipBuiltIns**
+
+A boolean value indicating whether to skip creation of the built-in units. If `true`, only units and quantities defined in `definitions` will be created.
 
 You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefixes, unit systems, base quantities, and quantities. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
 
