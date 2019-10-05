@@ -177,24 +177,24 @@ describe('unitmath', () => {
 
       it('should use custom units when simplifying', () => {
         let newUnit = configCustomUnits({
-          mph: { value: '1 mi/hr' }
+          mph: { value: '1 mi/hr', system: 'auto' }
         })
         assert.strictEqual(newUnit('5 mi').div('2 hr').toString(), '2.5 mph')
       })
 
       it('should use custom units derived from other custom units when simplifying', () => {
         const newUnit = configCustomUnits({
-          widget: { value: '5 kg bytes' },
-          woggle: { value: '4 widget^2' },
-          gadget: { value: '5 N/woggle' },
-          whimsy: { value: '8 gadget hours' }
+          widget: { value: '5 kg bytes', system: 'auto' },
+          woggle: { value: '4 widget^2', system: 'auto' },
+          gadget: { value: '5 N/woggle', system: 'auto' },
+          whimsy: { value: '8 gadget hours', system: 'auto' }
         })
         assert.strictEqual(newUnit(1000, 'N h kg^-2 bytes^-2').toString(), '2500 whimsy')
       })
 
       it('should apply prefixes and offset to custom units', () => {
         const newUnit = configCustomUnits({
-          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG' }
+          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', system: 'auto' }
         })
         assert.strictEqual(newUnit('8000 rad^2/s').toString(), '1 kilowiggle')
       })

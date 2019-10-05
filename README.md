@@ -308,27 +308,27 @@ units: {
   }
   ```
 
-- `system`: Providing the `system` option is a shortcut for making this unit a member of one of the built-in or user-defined systems: `si`, `us`, `cgs`, etc. It automatically sets `definitions.unitSystems` and `definitions.quantities` so that the new unit can be used when formatting the result of an expression. If `system` is `'auto'`, the system will be inferred from the unit's `value`.
-
-  For example, consider the following user-defined unit `snap`. The `system` option automatically adds the necessary entries to `definitions.unitSystems` and `definitions.quantities`:
+- `autoAddToSystem`: An optional string value, such as `'si'`, `'us'`, or `'auto'`. Causes this unit to automatically be added to the specified unit system. A value of `'auto'` will cause UnitMath to infer the system from the unit's `value`. This is a shortcut for setting `definitions.quantities` and `definitions.unitSystem` directly:
 
   ```js
   definitions: {
     units: {
       snap: {
         value: '1 m/s^4',
-        system: 'si' // or 'auto' to auto-select based on value
+        autoAddToUnitSystem: 'si'
       }
-    }
+    },
   }
   ```
 
-  The above is equivalent to the following: 
+  Which is equivalent to the following: 
 
   ```js
   definitions: {
     units: {
-      snap: '1 m/s^4'
+      snap: {
+        value: '1 m/s^4'
+      }
     },
     unitSystems: {
       si: {
@@ -341,11 +341,15 @@ units: {
   }
   ```
 
-  In each case, `snap` becomes part of the `si` system, which means it may be used to format a Unit:
+  This causes `snap` to become part of the `si` system, which means it may be used to simplify a Unit:
 
   ```js
-  unit('1 m/s^2').div('2 s^2').format() // 0.5 snap
+  unit('1 m/s^2').div('2 s^2').simplify() // 0.5 snap
   ```
+
+  You may also set the global option `definitions.autoAddToSystem` in order to set the same value for *all* user-defined units at the same time.
+
+  Behind the scenes, `autoAddToSystem` automatically adds the necessary entries to `definitions.quantities` and `definitions.unitSystem` so that the unit becomes a member of the specified unit system, allowing it to be used to simplify a Unit. If, however, existing values for `definitions.quantities` or `definitions.unitSystem` already exist in the user-defined or built-in units, `autoAddToSystem` will *not* override them. If you need more control over how your unit systems are set up, you should set `definitions.quantities` and `definitions.unitSystem` directly, rather than using `autoAddToSystem`.
 
 **definitions.prefixes**
 
@@ -387,7 +391,7 @@ quantities: {
 
 **definitions.unitSystems**
 
-The `definitions.unitSystems` object defines the "preferred" units to use with a particular unit system. Any or all of the `quantities` in a unit system may be assigned a single unit, optionally with a prefix, that will be used when formatting a matching unit in that system.
+The `definitions.unitSystems` object defines the preferred units to use with a particular unit system. Any or all of the `quantities` in a unit system may be assigned a single unit, optionally with a prefix, that will be used when formatting a matching unit in that system.
 
 ```js
 unitSystems: {
@@ -403,7 +407,35 @@ unitSystems: {
 
 **definitions.skipBuiltIns**
 
-A boolean value indicating whether to skip creation of the built-in units. If `true`, only units and quantities defined in `definitions` will be created.
+A boolean value indicating whether to skip creation of the built-in units. If `true`, only the user-defined units and quantities defined in `definitions` will be created.
+
+**definitions.autoAddToSystem**
+
+Global setting that applies `autoAddToSystem` to all user-defined units simultaneously. This means that the following two definitions are equivalent:
+
+```js
+definitions: {
+  units: {
+    snap: '1 m/s^4'
+  },
+  autoAddToUnitSystem: 'auto'
+}
+```
+
+```js
+definitions: {
+  units: {
+    snap: {
+      value: '1 m/s^4',
+      autoAddToUnitSystem: 'auto'
+    }
+  },
+}
+```
+
+For more information, see `definitions.units.autoAddToUnit`.
+
+#### Querying current unit definitions ####
 
 You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefixes, unit systems, base quantities, and quantities. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
 
