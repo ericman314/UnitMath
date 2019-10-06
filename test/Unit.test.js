@@ -177,28 +177,27 @@ describe('unitmath', () => {
 
       it('should use custom units when simplifying', () => {
         let newUnit = configCustomUnits({
-          mph: { value: '1 mi/hr', system: 'auto' }
+          mph: { value: '1 mi/hr', autoAddToSystem: 'auto' }
         })
         assert.strictEqual(newUnit('5 mi').div('2 hr').toString(), '2.5 mph')
       })
 
       it('should use custom units derived from other custom units when simplifying', () => {
         const newUnit = configCustomUnits({
-          widget: { value: '5 kg bytes', system: 'auto' },
-          woggle: { value: '4 widget^2', system: 'auto' },
-          gadget: { value: '5 N/woggle', system: 'auto' },
-          whimsy: { value: '8 gadget hours', system: 'auto' }
+          widget: { value: '5 kg bytes', autoAddToSystem: 'auto' },
+          woggle: { value: '4 widget^2', autoAddToSystem: 'auto' },
+          gadget: { value: '5 N/woggle', autoAddToSystem: 'auto' },
+          whimsy: { value: '8 gadget hours', autoAddToSystem: 'auto' }
         })
         assert.strictEqual(newUnit(1000, 'N h kg^-2 bytes^-2').toString(), '2500 whimsy')
       })
 
       it('should apply prefixes and offset to custom units', () => {
         const newUnit = configCustomUnits({
-          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', system: 'auto' }
+          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', autoAddToSystem: 'auto' }
         })
         assert.strictEqual(newUnit('8000 rad^2/s').toString(), '1 kilowiggle')
       })
-
 
       it('should only allow valid names for units', () => {
         assert.throws(() => configCustomUnits({ 'not_a_valid_unit': '3.14 kg' }), /Unit name contains non-alpha/)
@@ -471,6 +470,128 @@ describe('unitmath', () => {
         })
 
         assert.strictEqual(newUnit('40 fib').format(), '1.6 FFfib')
+      })
+
+      describe('autoAddToSystem', () => {
+        it('should add the unit to the specified system', () => {
+          let newUnit = unit.config({
+            system: 'us',
+            definitions: {
+              units: {
+                mph: {
+                  value: '1 mile/hour',
+                  autoAddToSystem: 'us'
+                }
+              }
+            }
+          })
+          assert.strictEqual(newUnit.definitions().unitSystems.us.VELOCITY, 'mph')
+        })
+
+        it('should auto-select system when \'auto\'', () => {
+          let newUnit = unit.config({
+            definitions: {
+              units: {
+                mph: {
+                  value: '1 mile/hour',
+                  autoAddToSystem: 'auto'
+                }
+              }
+            }
+          })
+          assert.strictEqual(newUnit.definitions().unitSystems.us.VELOCITY, 'mph')
+        })
+
+        it('should format matching Units using the newly added unit only if autoAddToSystem was set', () => {
+          let newUnit = unit.config({
+            definitions: {
+              units: {
+                mph: {
+                  value: '1 mile/hour',
+                  autoAddToSystem: 'us'
+                }
+              }
+            }
+          })
+          let newUnitNoAuto = unit.config({
+            definitions: {
+              units: {
+                mph: '1 mile/hour'
+              }
+            }
+          })
+          assert.strictEqual(unit('1 mile/hour').simplify().toString(), '1 mile/hour')
+          assert.strictEqual(newUnitNoAuto('1 mile/hour').simplify().toString(), '1 mile/hour')
+          assert.strictEqual(newUnit('1 mile/hour').simplify().toString(), '1 mph')
+        })
+
+        it('should create new quantities', () => {
+          let newUnit = unit.config({
+            definitions: {
+              units: {
+                snap: {
+                  value: '1 m/s^4',
+                  autoAddToSystem: 'auto'
+                }
+              }
+            }
+          })
+          assert.deepStrictEqual(newUnit('1 m/s^4').getQuantities(), ['snap_QUANTITY'])
+          assert.strictEqual(newUnit('1 m/s^4').simplify().toString(), '1 snap')
+        })
+
+        it('should not override existing quantities', () => {
+          let newUnit = unit.config({
+            definitions: {
+              units: {
+                snap: {
+                  value: '1 m/s^4',
+                  autoAddToSystem: 'auto'
+                }
+              },
+              quantities: {
+                JOUNCE: ['LENGTH/TIME^4']
+              }
+            }
+          })
+          assert.deepStrictEqual(newUnit('1 m/s^4').getQuantities(), ['JOUNCE'])
+          assert.strictEqual(newUnit('1 m/s^4').simplify().toString(), '1 snap')
+        })
+
+        it('should not override existing unitSystem', () => {
+          let newUnit = unit.config({
+            definitions: {
+              units: {
+                tenmeter: {
+                  value: '10 m',
+                  autoAddToSystem: 'si'
+                }
+              }
+            }
+          })
+          assert.strictEqual(newUnit('100 J').div('10 N').simplify().toString(), '10 m') // Not '1 tenmeter'
+        })
+
+        it('should work as global option: definitions.autoAddToSystem', () => {
+          let newUnit = unit.config({
+            definitions: {
+              units: {
+                mph: '1 mile/hour'
+              },
+              autoAddToSystem: 'us'
+            }
+          })
+          assert.strictEqual(newUnit('1 mile/hour').simplify().toString(), '1 mph')
+        })
+
+        it('should throw if autoAddToSystem is not a string or known unit system', () => {
+          assert.throws(() => {
+            unit.config({ definitions: { units: { mph: { value: '1 mile/hour', autoAddToSystem: false } } } })
+          }, /autoAddToSystem must be a string: either a known unit system or 'auto'/)
+          assert.throws(() => {
+            unit.config({ definitions: { units: { mph: { value: '1 mile/hour', autoAddToSystem: 'nervous' } } } })
+          }, /autoAddToSystem must be a string: either a known unit system or 'auto'/)
+        })
       })
     })
 
