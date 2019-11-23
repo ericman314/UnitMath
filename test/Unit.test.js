@@ -884,13 +884,13 @@ describe('unitmath', () => {
       const units = [
         unit(10, 'ft'),
         unit(Infinity, 'm'),
-        unit(NaN, 'km'),
+        unit(NaN, 'm'),
         unit(1, 'in'),
-        unit(-Infinity, 'nm'),
+        unit(-Infinity, 'm'),
         unit(1, 'ft'),
-        unit(Infinity, 'mm'),
-        unit(NaN, 'cm'),
-        unit(-Infinity, 'mi'),
+        unit(Infinity, 'm'),
+        unit(NaN, 'm'),
+        unit(-Infinity, 'm'),
         unit(10, 'in')
       ]
 
