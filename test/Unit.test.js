@@ -894,16 +894,15 @@ describe('unitmath', () => {
         unit(10, 'in')
       ]
 
-      // Note: Infinity m and Infinity mm are the same number
       units.sort((a, b) => a.compare(b))
       assert.deepStrictEqual(
         units.map(u => u.toString()),
         [
-          '-Infinity nm', '-Infinity mi',
+          '-Infinity m', '-Infinity m',
           '1 in', '10 in',
           '1 ft', '10 ft',
-          'Infinity m', 'Infinity mm',
-          'NaN km', 'NaN cm'
+          'Infinity m', 'Infinity m',
+          'NaN m', 'NaN m'
         ]
       )
     })
