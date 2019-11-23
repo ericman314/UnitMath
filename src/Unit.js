@@ -474,7 +474,12 @@ let _config = function _config (options) {
       }
       other = _convertParamToUnit(other)
       let { value1, value2 } = _comparePrepare(this, other, true)
-      if (options.type.lt(value1, value2)) {
+
+      if (isNaN(value1)) {
+        return 1
+      } else if (isNaN(value2)) {
+        return -1
+      } else if (options.type.lt(value1, value2)) {
         return -1
       } else if (options.type.gt(value1, value2)) {
         return 1

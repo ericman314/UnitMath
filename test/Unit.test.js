@@ -3,7 +3,7 @@ import approx from './approx'
 import unit from '../src/Unit.js'
 import Decimal from 'decimal.js'
 
-function configCustomUnits (units) {
+function configCustomUnits(units) {
   return unit.config({
     definitions: {
       units
@@ -872,6 +872,40 @@ describe('unitmath', () => {
     it('should convert parameter to a unit', () => {
       assert.strictEqual(unit(100, 'cm').compare('2 m'), -1)
       assert.strictEqual(unit('3 kg / kg').compare(2), 1)
+    })
+
+    it('should consistently compare NaNs', () => {
+      assert.strictEqual(unit(100, 'cm').compare(unit(NaN, 'cm')), -1)
+      assert.strictEqual(unit(NaN, 'cm').compare(unit(100, 'cm')), 1)
+      assert.strictEqual(unit(NaN, 'cm').compare(unit(NaN, 'cm')), 1)
+    })
+
+    it('should sort Infinities and NaNs correctly', () => {
+      const units = [
+        unit(10, 'ft'),
+        unit(Infinity, 'm'),
+        unit(NaN, 'km'),
+        unit(1, 'in'),
+        unit(-Infinity, 'nm'),
+        unit(1, 'ft'),
+        unit(Infinity, 'mm'),
+        unit(NaN, 'cm'),
+        unit(-Infinity, 'mi'),
+        unit(10, 'in'),
+      ]
+
+      // Note: Infinity m and Infinity mm are the same number
+      units.sort((a, b) => a.compare(b))
+      assert.deepStrictEqual(
+        units.map(u => u.toString()),
+        [
+          '-Infinity nm', '-Infinity mi',
+          '1 in', '10 in',
+          '1 ft', '10 ft',
+          'Infinity m', 'Infinity mm',
+          'NaN km', 'NaN cm'
+        ]
+      )
     })
   })
 
