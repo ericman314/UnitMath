@@ -98,7 +98,7 @@ Units are immutable, so every operation on a unit creates a new unit.
 
 ### Formatting
 
-Use either the `format` method to format a unit as a string. `toString` is an alias for `format`.
+Use the `format` method to format a unit as a string. `toString` is an alias for `format`.
 
 ```js
 unit('1 lb').to('kg').format() // '0.45359237 kg'
@@ -199,6 +199,8 @@ Because `unit.config(options)` returns a new instance of UnitMath, is is technic
 let unit = require('unitmath')
 
 unit.config(options) // This has no effect
+
+unit = unit.config(options) // Use this instead
 ```
 
 ### Extending UnitMath

@@ -6,7 +6,7 @@ import * as builtIns from './BuiltIns.js'
  * Creates a new unit store.
  * @param {Object} options
  */
-export default function createUnitStore (options) {
+export default function createUnitStore(options) {
   /* Units are defined by these objects:
    * defs.prefixes
    * defs.baseQuantities
@@ -81,7 +81,24 @@ export default function createUnitStore (options) {
    *
    * - Clone units that have aliases. Shallow copies are acceptable since the resulting defs.units object will be deep-immutable.
    *
+   * 
 */
+
+  /*
+   * We also need to handle the autoAddToSystem options for each of the user-defined units.
+   * 1. If the definitions.autoAddToSystem exists, we need to apply that option to each user-defined unit.
+   * 2. If the user-defined unit has a autoAddToSystem, use that instead.
+   * 3. For each user-defined unit that has a autoAddToSystem:
+   *   a. Ensure the system exists
+   *   b. Or, if auto, infer the system from the units that are present (there's a routine to do this in simplify, that should be broken out into its own function)
+   *   c. Determine if there exists a matching quantity for the unit's value
+   *   d. Add the quantity if there is no match
+   *   e. Determine if the unit system already has an entry for that quantity
+   *   f. If it does not, add the unit to that unit system under that quantity
+   * 
+   * Note: When adding the quantity, the quantity must be transformed--converted to an array of powers. We might want to break that transformation out into its own function?
+   * 
+   */
 
   // Sort base quantities and check for duplicates
   let sortedBases = defs.baseQuantities.slice()
@@ -183,6 +200,17 @@ export default function createUnitStore (options) {
           }
           unitValue = normalize(parsed.units, parsed.value, options.type)
           unitDimension = Object.freeze(parsed.dimension)
+
+          // If this unit is user-defined, and autoAddToSystem is 'auto', then infer the system here. This is the best place, since we have the parsing results in scope.
+          const isUserDefined = options.definitions.units.hasOwnProperty(unitDefKey)
+          if (isUserDefined && (unitDef.hasOwnProperty('autoAddToSystem') || options.definitions.hasOwnProperty('autoAddToSystem'))) {
+            let autoAddToSystem = unitDef.autoAddToSystem || options.definitions.autoAddToSystem
+            if (autoAddToSystem === 'auto') {
+              console.log(`Computing auto system for unit ${unitDefKey}` )
+              // TODO: This is getting complicated, it won't work for base units (meter, second, etc.), maybe we need to rethink this
+            }
+          }
+
         } catch (ex) {
           if (/Unit.*not found/.test(ex.toString())) {
             unitsSkipped.push(unitDefKey)
@@ -211,7 +239,10 @@ export default function createUnitStore (options) {
             dimension: unitDimension,
             prefixes: defs.prefixes[unitDef.prefixes] || { '': 1 },
             commonPrefixes: unitDef.commonPrefixes, // Default should be undefined
-            systems: []
+            systems: [],
+          }
+          if (unitDef.hasOwnProperty('autoAddToSystem')) {
+            newUnit.autoAddToSystem = unitDef.autoAddToSystem
           }
           Object.freeze(newUnit)
           defs.units[newUnitName] = newUnit
@@ -233,6 +264,24 @@ export default function createUnitStore (options) {
       throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.unitSystems).join(', ')} `)
     }
   }
+
+  // For each user-defined unit, handle the autoAddToSystem option
+  for (const key in options.definitions.units) {
+    const unit = defs.units[key]
+    if (!unit) continue
+    if (unit.hasOwnProperty('autoAddToSystem') || options.definitions.hasOwnProperty('autoAddToSystem')) {
+      let autoAddToSystem = unit.autoAddToSystem || options.definitions.autoAddToSystem
+      if (autoAddToSystem === 'auto') {
+        console.log('TODO: compute auto system')
+      }
+      console.log(`Using autoAddToSystem: ${autoAddToSystem} for unit ${key}`)
+      if (!defs.unitSystems.hasOwnProperty(autoAddToSystem)) {
+        throw new Error(`autoAddToSystem ${autoAddToSystem} not recognized. The value must either be a known unit system or 'auto'.`)
+      }
+
+    }
+  }
+
 
   // Convert unit systems from strings to unit/prefix pairs
   for (let sysKey in defs.unitSystems) {
@@ -280,7 +329,7 @@ export default function createUnitStore (options) {
    * Tests whether the given string exists as a known unit. The unit may have a prefix.
    * @param {string} singleUnitString The name of the unit, with optional prefix.
    */
-  function exists (singleUnitString) {
+  function exists(singleUnitString) {
     return findUnit(singleUnitString) !== null
   }
 
@@ -291,7 +340,7 @@ export default function createUnitStore (options) {
    *                                  prefix is returned. Else, null is returned.
    * @private
    */
-  function findUnit (unitString) {
+  function findUnit(unitString) {
     if (typeof unitString !== 'string') {
       throw new TypeError(`parameter must be a string (${unitString} given)`)
     }
