@@ -3,7 +3,7 @@ import approx from './approx'
 import unit from '../src/Unit.js'
 import Decimal from 'decimal.js'
 
-function configCustomUnits(units) {
+function configCustomUnits (units) {
   return unit.config({
     definitions: {
       units
@@ -175,14 +175,14 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
       })
 
-      it('should use custom units when simplifying', () => {
+      it.skip('should use custom units when simplifying', () => {
         let newUnit = configCustomUnits({
           mph: { value: '1 mi/hr', autoAddToSystem: 'auto' }
         })
         assert.strictEqual(newUnit('5 mi').div('2 hr').toString(), '2.5 mph')
       })
 
-      it('should use custom units derived from other custom units when simplifying', () => {
+      it.skip('should use custom units derived from other custom units when simplifying', () => {
         const newUnit = configCustomUnits({
           widget: { value: '5 kg bytes', autoAddToSystem: 'auto' },
           woggle: { value: '4 widget^2', autoAddToSystem: 'auto' },
@@ -192,7 +192,7 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit(1000, 'N h kg^-2 bytes^-2').toString(), '2500 whimsy')
       })
 
-      it('should apply prefixes and offset to custom units', () => {
+      it.skip('should apply prefixes and offset to custom units', () => {
         const newUnit = configCustomUnits({
           wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', autoAddToSystem: 'auto' }
         })
@@ -473,7 +473,7 @@ describe('unitmath', () => {
       })
 
       describe('autoAddToSystem', () => {
-        it('should add the unit to the specified system', () => {
+        it.skip('should add the unit to the specified system', () => {
           let newUnit = unit.config({
             system: 'us',
             definitions: {
@@ -488,7 +488,7 @@ describe('unitmath', () => {
           assert.strictEqual(newUnit.definitions().unitSystems.us.VELOCITY, 'mph')
         })
 
-        it('should auto-select system when \'auto\'', () => {
+        it.skip('should auto-select system when \'auto\'', () => {
           let newUnit = unit.config({
             definitions: {
               units: {
@@ -502,7 +502,7 @@ describe('unitmath', () => {
           assert.strictEqual(newUnit.definitions().unitSystems.us.VELOCITY, 'mph')
         })
 
-        it('should format matching Units using the newly added unit only if autoAddToSystem was set', () => {
+        it.skip('should format matching Units using the newly added unit only if autoAddToSystem was set', () => {
           let newUnit = unit.config({
             definitions: {
               units: {
@@ -525,7 +525,7 @@ describe('unitmath', () => {
           assert.strictEqual(newUnit('1 mile/hour').simplify().toString(), '1 mph')
         })
 
-        it('should create new quantities', () => {
+        it.skip('should create new quantities', () => {
           let newUnit = unit.config({
             definitions: {
               units: {
@@ -540,7 +540,7 @@ describe('unitmath', () => {
           assert.strictEqual(newUnit('1 m/s^4').simplify().toString(), '1 snap')
         })
 
-        it('should not override existing quantities', () => {
+        it.skip('should not override existing quantities', () => {
           let newUnit = unit.config({
             definitions: {
               units: {
@@ -572,7 +572,7 @@ describe('unitmath', () => {
           assert.strictEqual(newUnit('100 J').div('10 N').simplify().toString(), '10 m') // Not '1 tenmeter'
         })
 
-        it('should work as global option: definitions.autoAddToSystem', () => {
+        it.skip('should work as global option: definitions.autoAddToSystem', () => {
           let newUnit = unit.config({
             definitions: {
               units: {
@@ -584,7 +584,7 @@ describe('unitmath', () => {
           assert.strictEqual(newUnit('1 mile/hour').simplify().toString(), '1 mph')
         })
 
-        it('should throw if autoAddToSystem is not a string or known unit system', () => {
+        it.skip('should throw if autoAddToSystem is not a string or known unit system', () => {
           assert.throws(() => {
             unit.config({ definitions: { units: { mph: { value: '1 mile/hour', autoAddToSystem: false } } } })
           }, /autoAddToSystem must be a string: either a known unit system or 'auto'/)
@@ -891,7 +891,7 @@ describe('unitmath', () => {
         unit(Infinity, 'mm'),
         unit(NaN, 'cm'),
         unit(-Infinity, 'mi'),
-        unit(10, 'in'),
+        unit(10, 'in')
       ]
 
       // Note: Infinity m and Infinity mm are the same number
@@ -1447,13 +1447,13 @@ describe('unitmath', () => {
       assert.strictEqual(unit('400 N').div('10 cm^2').toString(), '400 kPa')
     })
 
-    it('should infer the unit system when using non-preferred units which are members of that system', () => {
+    it.skip('should infer the unit system when using non-preferred units which are members of that system', () => {
       // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
       let unit1 = unit('10 mile').mul('10 kip')
       assert.strictEqual(unit1.toString(), '0.678515620705073 MMBTU')
     })
 
-    it('should try to use preexisting units in the simplified expression', () => {
+    it.skip('should try to use preexisting units in the simplified expression', () => {
       let unit1 = unit('10 ft hour / minute')
       assert.strictEqual(unit1.toString(), '600 ft')
 

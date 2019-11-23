@@ -1,5 +1,8 @@
 # History
 
+## 2019-11-23, v0.8.5
+- `compare` now handles NaNs consistently
+
 ## 2019-08-05, v0.8.4
 - Added `prefixesToChooseFrom` option
 - Bugfix when auto-prefixing negative numbers
