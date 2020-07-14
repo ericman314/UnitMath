@@ -1,5 +1,5 @@
 import createUnitStore from './UnitStore.js'
-import { normalize, denormalize, isCompound as _isCompound } from './utils.js'
+import { normalize, denormalize, isCompound as _isCompound, simplifyUnits } from './utils.js'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
@@ -296,6 +296,9 @@ let _config = function _config (options) {
       // console.log(this)
       const result = _clone(this)
 
+      let proposedUnitList = simplifyUnits(this.units, unitStore, options)
+
+      /*
       let systemStr = options.system
       if (systemStr === 'auto') {
         // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
@@ -357,8 +360,8 @@ let _config = function _config (options) {
       }
 
       // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
-
-      if (ok) {
+*/
+      if (proposedUnitList) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList
         if (this.value !== null) {

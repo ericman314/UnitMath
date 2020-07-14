@@ -82,3 +82,76 @@ export function isCompound (units) {
   }
   return units.length > 1 || Math.abs(units[0].power - 1.0) > 1e-15
 }
+
+export function simplifyUnits(units, unitStore, options) {
+    // console.log(this)
+    // const result = _clone(this)
+
+    let systemStr = options.system
+    if (systemStr === 'auto') {
+      // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
+
+      // TODO: Object key order might not be consistent across platforms
+      let firstAvailableSystem = Object.keys(unitStore.defs.unitSystems)[0]
+      let identifiedSystems = { [firstAvailableSystem]: 0.1 }
+      for (let i = 0; i < units.length; i++) {
+        units[i].unit.systems.forEach(sys => {
+          identifiedSystems[sys] = (identifiedSystems[sys] || 0) + 1
+        })
+      }
+      let ids = Object.keys(identifiedSystems)
+      ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
+      // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+      systemStr = ids[0]
+    }
+
+    let system = unitStore.defs.unitSystems[systemStr]
+
+    const proposedUnitList = []
+
+    // Search for a matching dimension in the given unit system
+    let matchingDim
+    for (const key in system) {
+      if (result.hasQuantity(key)) {
+        // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
+        matchingDim = key
+        break
+      }
+    }
+
+    let ok = true
+    if (matchingDim) {
+      // console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix}${system[matchingDim].unit.name}`)
+      proposedUnitList.push({
+        unit: system[matchingDim].unit,
+        prefix: system[matchingDim].prefix,
+        power: 1.0
+      })
+    } else {
+      // Multiple units or units with powers are formatted like this:
+      // 5 kg m^2 / s^3 mol
+      // Build a representation from the base units of the current unit system
+      for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+        const baseDim = unitStore.defs.baseQuantities[i]
+        if (Math.abs(result.dimension[i] || 0) > 1e-12) {
+          if (system.hasOwnProperty(baseDim)) {
+            proposedUnitList.push({
+              unit: system[baseDim].unit,
+              prefix: system[baseDim].prefix,
+              power: result.dimension[i]
+            })
+          } else {
+            ok = false
+          }
+        }
+      }
+    }
+
+    // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
+
+    if (ok) {
+      return proposedUnitList
+    } else {
+      return units
+    }
+}
