@@ -2376,4 +2376,17 @@ describe('unitmath', () => {
       })
     })
   })
+
+  describe('built-in units', () => {
+    describe('us customary liquid units', () => {
+      assert.strictEqual(unit('1 cup').to('mL').toString(), '236.5882365 mL')
+      assert.strictEqual(unit('1 cup').to('gallons').toString(), '0.0625 gallons')
+      assert.strictEqual(unit('1 cup').to('quarts').toString(), '0.25 quarts')
+      assert.strictEqual(unit('1 cup').to('pints').toString(), '0.5 pints')
+      assert.strictEqual(unit('1 cup').to('floz').toString(), '8 floz')
+      assert.strictEqual(unit('1 cup').to('tablespoons').toString(), '16 tablespoons')
+      assert.strictEqual(unit('1 cup').to('teaspoons').toString(), '48 teaspoons')
+      assert.strictEqual(unit('1 cup').to('fluiddrams').toString(), '64 fluiddrams')
+    })
+  })
 })

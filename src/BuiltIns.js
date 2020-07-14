@@ -369,7 +369,7 @@ export const units = {
   cuft: '1 ft^3',
   cuyd: '1 yd^3',
   teaspoon: {
-    value: '5 mL',
+    value: '4.92892159375 mL',
     aliases: ['teaspoons', 'tsp']
   },
   tablespoon: {
@@ -385,7 +385,7 @@ export const units = {
     aliases: ['minims']
   },
   fluidounce: {
-    value: '0.00002957353 mL',
+    value: '0.125 cups',
     aliases: ['floz', 'fluidounces']
   },
   fluiddram: {
