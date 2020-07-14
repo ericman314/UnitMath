@@ -1,6 +1,6 @@
 {
   "name": "unitmath",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "JavaScript library for unit conversion and arithmetic",
   "main": "index.js",
   "module": "src/Unit.js",

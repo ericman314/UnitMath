@@ -1,5 +1,9 @@
 # History
 
+## 2020-07-13, v0.8.6
+- Standardized on US customary fluid volumes
+- Corrected values for `teaspoon` and `fluidounce`
+
 ## 2019-11-23, v0.8.5
 - `compare` now handles NaNs consistently
 

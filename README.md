@@ -977,6 +977,7 @@ Many thanks to Jos de Jong (@josdejong), the original author of `Unit.js`, who s
 ### Contributors
 
 - Harry Sarson (https://github.com/harrysarson)
+- Nick Ewing (https://github.com/nickewing)
 
 ## License
 
