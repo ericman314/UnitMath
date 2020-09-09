@@ -318,7 +318,7 @@ You can also supply an object for additional customization. These are all the op
     units: {
       snap: {
         value: '1 m/s^4',
-        autoAddToUnitSystem: 'si'
+        autoAddToSystem: 'si'
       }
     },
   }
@@ -421,7 +421,7 @@ definitions: {
   units: {
     snap: '1 m/s^4'
   },
-  autoAddToUnitSystem: 'auto'
+  autoAddToSystem: 'auto'
 }
 ```
 
@@ -430,13 +430,11 @@ definitions: {
   units: {
     snap: {
       value: '1 m/s^4',
-      autoAddToUnitSystem: 'auto'
+      autoAddToSystem: 'auto'
     }
   },
 }
 ```
-
-For more information, see `definitions.units.autoAddToUnit`.
 
 #### Querying current unit definitions ####
 
@@ -544,7 +542,7 @@ let u = unit('2.74518864784926316174649567946 m')
 
 Below is a list of functions, their signatures, and when they are required.
 
-Required always:
+Required for all custom types:
   - `clone: (a: T) => T`          
   - `conv: (a: number | string | T) => T` 
   - `add: (a: T, b: T) => T`     
