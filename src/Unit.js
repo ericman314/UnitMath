@@ -296,37 +296,37 @@ let _config = function _config (options) {
       // console.log(this)
       const result = _clone(this)
 
-      let systemStr = options.system
-      if (systemStr === 'auto') {
-        // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
+      // let systemStr = options.system
+      // if (systemStr === 'auto') {
+      //   // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
 
-        // TODO: Object key order might not be consistent across platforms
-        let firstAvailableSystem = Object.keys(unitStore.defs.unitSystems)[0]
-        let identifiedSystems = { [firstAvailableSystem]: 0.1 }
-        for (let i = 0; i < this.units.length; i++) {
-          this.units[i].unit.systems.forEach(sys => {
-            identifiedSystems[sys] = (identifiedSystems[sys] || 0) + 1
-          })
-        }
-        let ids = Object.keys(identifiedSystems)
-        ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
-        // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
-        systemStr = ids[0]
-      }
+      //   // TODO: Object key order might not be consistent across platforms
+      //   let firstAvailableSystem = Object.keys(unitStore.defs.unitSystems)[0]
+      //   let identifiedSystems = { [firstAvailableSystem]: 0.1 }
+      //   for (let i = 0; i < this.units.length; i++) {
+      //     this.units[i].unit.systems.forEach(sys => {
+      //       identifiedSystems[sys] = (identifiedSystems[sys] || 0) + 1
+      //     })
+      //   }
+      //   let ids = Object.keys(identifiedSystems)
+      //   ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
+      //   // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+      //   systemStr = ids[0]
+      // }
 
-      let system = unitStore.defs.unitSystems[systemStr]
+      // let system = unitStore.defs.unitSystems[systemStr]
 
       const proposedUnitList = []
 
       // Search for a matching dimension in the given unit system
       let matchingDim
-      for (const key in system) {
-        if (result.hasQuantity(key)) {
-          // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
-          matchingDim = key
-          break
-        }
-      }
+      // for (const key in system) {
+      //   if (result.hasQuantity(key)) {
+      //     // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
+      //     matchingDim = key
+      //     break
+      //   }
+      // }
 
       let ok = true
       if (matchingDim) {
@@ -340,20 +340,25 @@ let _config = function _config (options) {
         // Multiple units or units with powers are formatted like this:
         // 5 kg m^2 / s^3 mol
         // Build a representation from the base units of the current unit system
-        for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
-          const baseDim = unitStore.defs.baseQuantities[i]
-          if (Math.abs(result.dimension[i] || 0) > 1e-12) {
-            if (system.hasOwnProperty(baseDim)) {
-              proposedUnitList.push({
-                unit: system[baseDim].unit,
-                prefix: system[baseDim].prefix,
-                power: result.dimension[i]
-              })
-            } else {
-              ok = false
+
+        for (let dim in result.dimension) {
+          if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
+            let found = false
+            for (let unit in unitStore.defs.units) {
+              if (unit.quantity === dim) {
+                proposedUnitList.push({
+                  unit,
+                  prefix: '',
+                  power: result.dimension[dim]
+                })
+                found = true
+                break
+              }
             }
+            if (!found) ok = false
           }
         }
+
       }
 
       // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
@@ -422,8 +427,8 @@ let _config = function _config (options) {
     equalQuantity (other) {
       other = _convertParamToUnit(other)
       // All dimensions must be the same
-      for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
-        if (Math.abs(this.dimension[i] - other.dimension[i]) > 1e-12) {
+      for (let dim in { ...this.dimension, ...other.dimension }) {
+        if (Math.abs((this.dimension[dim] || 0) - (other.dimension[dim] || 0)) > 1e-12) {
           return false
         }
       }
@@ -671,7 +676,7 @@ let _config = function _config (options) {
   function _clone (unit) {
     const result = new Unit()
     result.value = unit.value === null ? null : options.type.clone(unit.value)
-    result.dimension = unit.dimension.slice(0)
+    result.dimension = { ...unit.dimension }
     if (unit.fixed) {
       result.fixed = unit.fixed
     }
@@ -792,9 +797,9 @@ let _config = function _config (options) {
   function _mul (unit1, unit2) {
     const result = _clone(unit1)
 
-    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
-      // dimension arrays may be of different lengths. Default to 0.
-      result.dimension[i] = unit1.dimension[i] + unit2.dimension[i]
+    for (let dim in { ...unit1.dimension, ...unit2.dimension }) {
+      result.dimension[dim] = (unit1.dimension[dim] || 0) + (unit2.dimension[dim] || 0)
+      if (Math.abs(result.dimension[dim]) < 1e-15) delete result.dimension[dim]
     }
 
     // Append other's units list onto result
@@ -829,8 +834,9 @@ let _config = function _config (options) {
   function _div (unit1, unit2) {
     const result = _clone(unit1)
 
-    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
-      result.dimension[i] = unit1.dimension[i] - unit2.dimension[i]
+    for (let dim in { ...unit1.dimension, ...unit2.dimension }) {
+      result.dimension[dim] = (unit1.dimension[dim] || 0) - (unit2.dimension[dim] || 0)
+      if (Math.abs(result.dimension[dim]) < 1e-15) delete result.dimension[dim]
     }
 
     // Invert and append other's units list onto result
@@ -866,8 +872,8 @@ let _config = function _config (options) {
   function _pow (unit, p) {
     // TODO: combineDuplicateUnits
     const result = _clone(unit)
-    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
-      result.dimension[i] = unit.dimension[i] * p
+    for (let dim in result.dimension) {
+      result.dimension[dim] = unit.dimension[dim] * p
     }
 
     // Adjust the power of each unit in the list
@@ -1090,20 +1096,39 @@ let _config = function _config (options) {
     // Multiple units or units with powers are formatted like this:
     // 5 (kg m^2) / (s^3 mol)
     // Build an representation from the base units of the SI unit system
-    for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
-      const baseDim = unitStore.defs.baseQuantities[i]
-      if (Math.abs(result.dimension[i] || 0) > 1e-12) {
-        if (unitStore.defs.unitSystems['si'].hasOwnProperty(baseDim)) {
-          proposedUnitList.push({
-            unit: unitStore.defs.unitSystems['si'][baseDim].unit,
-            prefix: unitStore.defs.unitSystems['si'][baseDim].prefix,
-            power: result.dimension[i]
-          })
-        } else {
-          throw new Error(`Cannot express unit '${unit.format()}' in SI units. System 'si' does not contain a unit for base quantity '${baseDim}'`)
+
+
+    for (let dim in result.dimension) {
+      if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
+        for (let unit in unitStore.defs.units) {
+          console.log(unitStore.defs.units[unit])
+          if (unitStore.defs.units[unit].quantity === dim) {
+            proposedUnitList.push({
+              unit: unitStore.defs.units[unit],
+              prefix: '',
+              power: result.dimension[dim]
+            })
+            break
+          }
         }
       }
     }
+
+
+    // for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
+    //   const baseDim = unitStore.defs.baseQuantities[i]
+    //   if (Math.abs(result.dimension[i] || 0) > 1e-12) {
+    //     if (unitStore.defs.unitSystems['si'].hasOwnProperty(baseDim)) {
+    //       proposedUnitList.push({
+    //         unit: unitStore.defs.unitSystems['si'][baseDim].unit,
+    //         prefix: unitStore.defs.unitSystems['si'][baseDim].prefix,
+    //         power: result.dimension[i]
+    //       })
+    //     } else {
+    //       throw new Error(`Cannot express unit '${unit.format()}' in SI units. System 'si' does not contain a unit for base quantity '${baseDim}'`)
+    //     }
+    //   }
+    // }
 
     // Replace this unit list with the proposed list
     result.units = proposedUnitList

@@ -211,15 +211,6 @@ describe('unitmath', () => {
         assert.throws(() => configCustomUnits({ myUnit: { value: 42 } }), /Unit definition for 'myUnit' must be a string/)
       })
 
-      it('should throw on invalid unit quantity', () => {
-        assert.throws(() => configCustomUnits({
-          myUnit: {
-            quantity: 'ESSENCE_OF_FOO',
-            value: 100
-          }
-        }), /Unknown quantity specified for unit myUnit: ESSENCE_OF_FOO/)
-      })
-
       it('should override existing units', () => {
         let newUnit = configCustomUnits({
           poundmass: {
@@ -303,11 +294,6 @@ describe('unitmath', () => {
       it('should create new base quantities and derived quantities', () => {
         let newUnit = unit.config({
           definitions: {
-            baseQuantities: ['ESSENCE_OF_FOO'],
-            quantities: {
-              'FOOLUME': 'ESSENCE_OF_FOO^3',
-              'FOOLOCITY': 'ESSENCE_OF_FOO TIME^-1'
-            },
             units: {
               foo: {
                 quantity: 'ESSENCE_OF_FOO',
@@ -317,47 +303,12 @@ describe('unitmath', () => {
               fib: '5 foo/hr',
               flab: '1 foo^3'
             },
-            unitSystems: {
-              si: {
-                ESSENCE_OF_FOO: 'foo',
-                FOOLUME: 'flab',
-                FOOLOCITY: 'fib'
-              }
-            }
           }
         })
 
-        assert.deepStrictEqual(newUnit('fib').getQuantities(), ['FOOLOCITY'])
-        assert.deepStrictEqual(newUnit('flab').getQuantities(), ['FOOLUME'])
         assert.strictEqual(newUnit('1 megafoo/s').simplify().toString(), '720000000 fib')
         assert.strictEqual(newUnit('1 megafoo/s').to('fib').toString(), '720000000 fib')
         assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
-      })
-
-      it('should throw on duplicate base quantities', () => {
-        assert.throws(() => unit.config({
-          definitions: {
-            baseQuantities: ['MASS']
-          }
-        }), /Duplicate base quantity: MASS/)
-      })
-
-      it('should throw on invalid quantity definitions', () => {
-        assert.throws(() => unit.config({
-          definitions: {
-            quantities: {
-              'FOONESS': 'LENGTH^UMPTEENTHPOWER'
-            }
-          }
-        }), /Error processing quantity FOONESS: could not determine value of the exponent in string LENGTH\^UMPTEENTHPOWER/)
-
-        assert.throws(() => unit.config({
-          definitions: {
-            quantities: {
-              'AWESOME': 'SAUCE'
-            }
-          }
-        }), /Error processing quantity AWESOME: base quantity SAUCE not found/)
       })
 
       it('should extend, but not replace, individual unit systems', () => {
@@ -372,61 +323,6 @@ describe('unitmath', () => {
         })
         assert.deepStrictEqual(newUnit('70 mi').div('60 min').toString(), '70 mph')
         assert.deepStrictEqual(newUnit.definitions().unitSystems.us.MASS, 'lbm')
-      })
-
-      it('should throw on unknown unit systems', () => {
-        assert.throws(() => {
-          unit.config({ system: 'nervous' })
-        }, /Unknown unit system/)
-      })
-
-      it('should not allow unknown units in unit systems', () => {
-        assert.throws(() => {
-          unit.config({
-            definitions: {
-              unitSystems: { si: { LENGTH: 'fiddlesticks' } }
-            }
-          })
-        }, /Unknown unit.*for quantity.*in unit system/)
-        assert.doesNotThrow(() => {
-          unit.config({
-            definitions: {
-              unitSystems: { si: { LENGTH: 'chain' } }
-            }
-          })
-        })
-      })
-
-      it('should not allow unknown quantities in unit systems', () => {
-        assert.throws(() => {
-          unit.config({
-            definitions: {
-              unitSystems: { si: { ESSENCE_OF_FOO: 'meter' } }
-            }
-          })
-        }, /Unit system.*mentions quantity.*which does not exist/)
-      })
-
-      it('should not allow inconsistent units/quantities in unit systems', () => {
-        assert.throws(() => {
-          unit.config({
-            definitions: {
-              unitSystems: { si: { LENGTH: 'day' } }
-            }
-          })
-        }, /In system.*quantity.*is inconsistent with unit/)
-      })
-
-      it('should add new unit systems', () => {
-        let newUnit = unit.config({
-          system: 'custom',
-          definitions: {
-            unitSystems: {
-              custom: { LENGTH: 'rod' }
-            }
-          }
-        })
-        assert.strictEqual(newUnit('66 ft').simplify().toString(), '4 rod')
       })
 
       it('should skip builtins if so desired', () => {
@@ -620,9 +516,9 @@ describe('unitmath', () => {
       assert.strictEqual(defs.units.kelvin.prefixes, 'LONG')
       assert.strictEqual(defs.prefixes.LONG.giga, 1e9)
       assert.strictEqual(defs.prefixes.SHORT_LONG.giga, 1e9)
-      assert.strictEqual(defs.unitSystems.si.FORCE, 'N')
-      assert.strictEqual(defs.baseQuantities[0], 'MASS')
-      assert.strictEqual(defs.quantities.AREA, 'LENGTH^2')
+      // assert.strictEqual(defs.unitSystems.si.FORCE, 'N')
+      // assert.strictEqual(defs.baseQuantities[0], 'MASS')
+      // assert.strictEqual(defs.quantities.AREA, 'LENGTH^2')
 
       // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
       let defs2 = unit.config({}).definitions()
@@ -632,9 +528,9 @@ describe('unitmath', () => {
       assert.strictEqual(defs2.units.kelvin.prefixes, 'LONG')
       assert.strictEqual(defs2.prefixes.LONG.giga, 1e9)
       assert.strictEqual(defs2.prefixes.SHORT_LONG.giga, 1e9)
-      assert.strictEqual(defs2.unitSystems.si.FORCE, 'N')
-      assert.strictEqual(defs2.baseQuantities[0], 'MASS')
-      assert.strictEqual(defs2.quantities.AREA, 'LENGTH^2')
+      // assert.strictEqual(defs2.unitSystems.si.FORCE, 'N')
+      // assert.strictEqual(defs2.baseQuantities[0], 'MASS')
+      // assert.strictEqual(defs2.quantities.AREA, 'LENGTH^2')
     })
   })
 
@@ -731,89 +627,73 @@ describe('unitmath', () => {
     })
   })
 
-  describe('getQuantity', () => {
-    it('should return the QUANTITY matching this unit', () => {
-      assert.deepStrictEqual(unit(5, 'kg m s K A rad bits').getQuantities(), [])
-      assert.deepStrictEqual(unit(5).getQuantities(), ['UNITLESS'])
-      assert.deepStrictEqual(unit(5, 'm s').getQuantities(), ['ABSEMENT'])
-      assert.deepStrictEqual(unit(5, 'm/s^2').getQuantities(), ['ACCELERATION'])
-      assert.deepStrictEqual(unit(5, 'deg').getQuantities(), ['ANGLE'])
-      assert.deepStrictEqual(unit(5, 'rad/s^2').getQuantities(), ['ANGULAR_ACCELERATION'])
-      assert.deepStrictEqual(unit(5, '5 kg m^2 rad/s').getQuantities(), ['ANGULAR_MOMENTUM'])
-      assert.deepStrictEqual(unit(5, '5 rad/s').getQuantities(), ['ANGULAR_VELOCITY'])
-      assert.deepStrictEqual(unit(5, 'mol').getQuantities(), ['AMOUNT_OF_SUBSTANCE'])
-      assert.deepStrictEqual(unit(5, 'm^2').getQuantities(), ['AREA'])
-      assert.deepStrictEqual(unit(5, 'kg/m^2').getQuantities(), ['AREA_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'kb').getQuantities(), ['BIT'])
-      assert.deepStrictEqual(unit(5, 'Gb/s').getQuantities(), ['BIT_RATE'])
-      assert.deepStrictEqual(unit(5, 'C/V').getQuantities(), ['CAPACITANCE'])
-      assert.deepStrictEqual(unit(5, 'A/m^2').getQuantities(), ['CURRENT_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'A').getQuantities(), ['CURRENT'])
-      assert.deepStrictEqual(unit(5, 'Pa s').getQuantities(), ['DYNAMIC_VISCOSITY'])
-      assert.deepStrictEqual(unit(5, 'C').getQuantities(), ['ELECTRIC_CHARGE'])
-      assert.deepStrictEqual(unit(5, 'C/m^3').getQuantities(), ['ELECTRIC_CHARGE_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'C/m^2').getQuantities(), ['ELECTRIC_DISPLACEMENT'])
-      assert.deepStrictEqual(unit(5, 'V/m').getQuantities(), ['ELECTRIC_FIELD_STRENGTH'])
-      assert.deepStrictEqual(unit(5, 'siemens').getQuantities(), ['ELECTRICAL_CONDUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'siemens/m').getQuantities(), ['ELECTRICAL_CONDUCTIVITY'])
-      assert.deepStrictEqual(unit(5, 'V').getQuantities(), ['ELECTRIC_POTENTIAL'])
-      assert.deepStrictEqual(unit(5, 'ohm').getQuantities(), ['RESISTANCE', 'IMPEDANCE'])
-      assert.deepStrictEqual(unit(5, 'ohm m').getQuantities(), ['ELECTRICAL_RESISTIVITY'])
-      assert.deepStrictEqual(unit(5, 'kg m^2 / s^2').getQuantities(), ['ENERGY', 'TORQUE'])
-      assert.deepStrictEqual(unit(5, 'J / K').getQuantities(), ['ENTROPY', 'HEAT_CAPACITY'])
-      assert.deepStrictEqual(unit(5, 'kg m / s^2').getQuantities(), ['FORCE'])
-      assert.deepStrictEqual(unit(5, 's^-1').getQuantities(), ['FREQUENCY'])
-      assert.deepStrictEqual(unit(5, 'W/m^2').getQuantities(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE'])
-      assert.deepStrictEqual(unit(5, 'N s').getQuantities(), ['IMPULSE', 'MOMENTUM'])
-      assert.deepStrictEqual(unit(5, 'henry').getQuantities(), ['INDUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'm/s^3').getQuantities(), ['JERK'])
-      assert.deepStrictEqual(unit(5, 'm^2/s').getQuantities(), ['KINEMATIC_VISCOSITY'])
-      assert.deepStrictEqual(unit(5, 'cm').getQuantities(), ['LENGTH'])
-      assert.deepStrictEqual(unit(5, 'kg/m').getQuantities(), ['LINEAR_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'candela').getQuantities(), ['LUMINOUS_INTENSITY'])
-      assert.deepStrictEqual(unit(5, 'A/m').getQuantities(), ['MAGNETIC_FIELD_STRENGTH'])
-      assert.deepStrictEqual(unit(5, 'tesla m^2').getQuantities(), ['MAGNETIC_FLUX'])
-      assert.deepStrictEqual(unit(5, 'tesla').getQuantities(), ['MAGNETIC_FLUX_DENSITY'])
-      assert.deepStrictEqual(unit(5, 'lbm').getQuantities(), ['MASS'])
-      assert.deepStrictEqual(unit(5, 'mol/m^3').getQuantities(), ['MOLAR_CONCENTRATION'])
-      assert.deepStrictEqual(unit(5, 'J/mol').getQuantities(), ['MOLAR_ENERGY'])
-      assert.deepStrictEqual(unit(5, 'J/mol K').getQuantities(), ['MOLAR_ENTROPY', 'MOLAR_HEAT_CAPACITY'])
-      assert.deepStrictEqual(unit(5, 'H/m').getQuantities(), ['PERMEABILITY'])
-      assert.deepStrictEqual(unit(5, 'F/m').getQuantities(), ['PERMITTIVITY'])
-      assert.deepStrictEqual(unit(5, 'kg m^2 / s^3').getQuantities(), ['POWER'])
-      assert.deepStrictEqual(unit(5, 'kg / m s^2').getQuantities(), ['PRESSURE'])
-      assert.deepStrictEqual(unit(5, 'H^-1').getQuantities(), ['RELUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'H^-1').getQuantities(), ['RELUCTANCE'])
-      assert.deepStrictEqual(unit(5, 'J/kg').getQuantities(), ['SPECIFIC_ENERGY'])
-      assert.deepStrictEqual(unit(5, 'J/kg K').getQuantities(), ['SPECIFIC_HEAT_CAPACITY'])
-      assert.deepStrictEqual(unit(5, 'm^3/kg').getQuantities(), ['SPECIFIC_VOLUME'])
-      assert.deepStrictEqual(unit(5, 'kg m^2/s').getQuantities(), ['SPIN'])
-      assert.deepStrictEqual(unit(5, 'J/m^2').getQuantities(), ['SURFACE_TENSION'])
-      assert.deepStrictEqual(unit(5, 'K').getQuantities(), ['TEMPERATURE'])
-      assert.deepStrictEqual(unit(5, 'K/m').getQuantities(), ['TEMPERATURE_GRADIENT'])
-      assert.deepStrictEqual(unit(5, 'W/m K').getQuantities(), ['THERMAL_CONDUCTIVITY'])
-      assert.deepStrictEqual(unit(5, 'day').getQuantities(), ['TIME'])
-      assert.deepStrictEqual(unit(5, 'm/s').getQuantities(), ['VELOCITY'])
-      assert.deepStrictEqual(unit(5, 'm^3').getQuantities(), ['VOLUME'])
-      assert.deepStrictEqual(unit(5, 'm^3/s').getQuantities(), ['VOLUMETRIC_FLOW_RATE'])
-    })
-  })
-
-  describe('hasQuantity', () => {
-    it('should test whether a unit has a certain dimension', () => {
-      assert.strictEqual(unit(5, 'cm').hasQuantity('ANGLE'), false)
-      assert.strictEqual(unit(5, 'cm').hasQuantity('LENGTH'), true)
-      assert.strictEqual(unit(5, 'kg m / s ^ 2').hasQuantity('FORCE'), true)
-    })
-
-    it('should return false for an unknown quantity', () => {
-      assert.strictEqual(unit(5, 'cm').hasQuantity('FOOLOCITY'), false)
-    })
-
-    it('should work if passed a quantity array directly from the compiled definitions', () => {
-      assert.strictEqual(unit(5, 'kg m / s ^ 2').hasQuantity(unit._unitStore.defs.quantities['FORCE']), true)
-    })
-  })
+  // describe('getQuantity', () => {
+  //   it('should return the QUANTITY matching this unit', () => {
+  //     assert.deepStrictEqual(unit(5, 'kg m s K A rad bits').getQuantities(), [])
+  //     assert.deepStrictEqual(unit(5).getQuantities(), ['UNITLESS'])
+  //     assert.deepStrictEqual(unit(5, 'm s').getQuantities(), ['ABSEMENT'])
+  //     assert.deepStrictEqual(unit(5, 'm/s^2').getQuantities(), ['ACCELERATION'])
+  //     assert.deepStrictEqual(unit(5, 'deg').getQuantities(), ['ANGLE'])
+  //     assert.deepStrictEqual(unit(5, 'rad/s^2').getQuantities(), ['ANGULAR_ACCELERATION'])
+  //     assert.deepStrictEqual(unit(5, '5 kg m^2 rad/s').getQuantities(), ['ANGULAR_MOMENTUM'])
+  //     assert.deepStrictEqual(unit(5, '5 rad/s').getQuantities(), ['ANGULAR_VELOCITY'])
+  //     assert.deepStrictEqual(unit(5, 'mol').getQuantities(), ['AMOUNT_OF_SUBSTANCE'])
+  //     assert.deepStrictEqual(unit(5, 'm^2').getQuantities(), ['AREA'])
+  //     assert.deepStrictEqual(unit(5, 'kg/m^2').getQuantities(), ['AREA_DENSITY'])
+  //     assert.deepStrictEqual(unit(5, 'kb').getQuantities(), ['BIT'])
+  //     assert.deepStrictEqual(unit(5, 'Gb/s').getQuantities(), ['BIT_RATE'])
+  //     assert.deepStrictEqual(unit(5, 'C/V').getQuantities(), ['CAPACITANCE'])
+  //     assert.deepStrictEqual(unit(5, 'A/m^2').getQuantities(), ['CURRENT_DENSITY'])
+  //     assert.deepStrictEqual(unit(5, 'A').getQuantities(), ['CURRENT'])
+  //     assert.deepStrictEqual(unit(5, 'Pa s').getQuantities(), ['DYNAMIC_VISCOSITY'])
+  //     assert.deepStrictEqual(unit(5, 'C').getQuantities(), ['ELECTRIC_CHARGE'])
+  //     assert.deepStrictEqual(unit(5, 'C/m^3').getQuantities(), ['ELECTRIC_CHARGE_DENSITY'])
+  //     assert.deepStrictEqual(unit(5, 'C/m^2').getQuantities(), ['ELECTRIC_DISPLACEMENT'])
+  //     assert.deepStrictEqual(unit(5, 'V/m').getQuantities(), ['ELECTRIC_FIELD_STRENGTH'])
+  //     assert.deepStrictEqual(unit(5, 'siemens').getQuantities(), ['ELECTRICAL_CONDUCTANCE'])
+  //     assert.deepStrictEqual(unit(5, 'siemens/m').getQuantities(), ['ELECTRICAL_CONDUCTIVITY'])
+  //     assert.deepStrictEqual(unit(5, 'V').getQuantities(), ['ELECTRIC_POTENTIAL'])
+  //     assert.deepStrictEqual(unit(5, 'ohm').getQuantities(), ['RESISTANCE', 'IMPEDANCE'])
+  //     assert.deepStrictEqual(unit(5, 'ohm m').getQuantities(), ['ELECTRICAL_RESISTIVITY'])
+  //     assert.deepStrictEqual(unit(5, 'kg m^2 / s^2').getQuantities(), ['ENERGY', 'TORQUE'])
+  //     assert.deepStrictEqual(unit(5, 'J / K').getQuantities(), ['ENTROPY', 'HEAT_CAPACITY'])
+  //     assert.deepStrictEqual(unit(5, 'kg m / s^2').getQuantities(), ['FORCE'])
+  //     assert.deepStrictEqual(unit(5, 's^-1').getQuantities(), ['FREQUENCY'])
+  //     assert.deepStrictEqual(unit(5, 'W/m^2').getQuantities(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE'])
+  //     assert.deepStrictEqual(unit(5, 'N s').getQuantities(), ['IMPULSE', 'MOMENTUM'])
+  //     assert.deepStrictEqual(unit(5, 'henry').getQuantities(), ['INDUCTANCE'])
+  //     assert.deepStrictEqual(unit(5, 'm/s^3').getQuantities(), ['JERK'])
+  //     assert.deepStrictEqual(unit(5, 'm^2/s').getQuantities(), ['KINEMATIC_VISCOSITY'])
+  //     assert.deepStrictEqual(unit(5, 'cm').getQuantities(), ['LENGTH'])
+  //     assert.deepStrictEqual(unit(5, 'kg/m').getQuantities(), ['LINEAR_DENSITY'])
+  //     assert.deepStrictEqual(unit(5, 'candela').getQuantities(), ['LUMINOUS_INTENSITY'])
+  //     assert.deepStrictEqual(unit(5, 'A/m').getQuantities(), ['MAGNETIC_FIELD_STRENGTH'])
+  //     assert.deepStrictEqual(unit(5, 'tesla m^2').getQuantities(), ['MAGNETIC_FLUX'])
+  //     assert.deepStrictEqual(unit(5, 'tesla').getQuantities(), ['MAGNETIC_FLUX_DENSITY'])
+  //     assert.deepStrictEqual(unit(5, 'lbm').getQuantities(), ['MASS'])
+  //     assert.deepStrictEqual(unit(5, 'mol/m^3').getQuantities(), ['MOLAR_CONCENTRATION'])
+  //     assert.deepStrictEqual(unit(5, 'J/mol').getQuantities(), ['MOLAR_ENERGY'])
+  //     assert.deepStrictEqual(unit(5, 'J/mol K').getQuantities(), ['MOLAR_ENTROPY', 'MOLAR_HEAT_CAPACITY'])
+  //     assert.deepStrictEqual(unit(5, 'H/m').getQuantities(), ['PERMEABILITY'])
+  //     assert.deepStrictEqual(unit(5, 'F/m').getQuantities(), ['PERMITTIVITY'])
+  //     assert.deepStrictEqual(unit(5, 'kg m^2 / s^3').getQuantities(), ['POWER'])
+  //     assert.deepStrictEqual(unit(5, 'kg / m s^2').getQuantities(), ['PRESSURE'])
+  //     assert.deepStrictEqual(unit(5, 'H^-1').getQuantities(), ['RELUCTANCE'])
+  //     assert.deepStrictEqual(unit(5, 'H^-1').getQuantities(), ['RELUCTANCE'])
+  //     assert.deepStrictEqual(unit(5, 'J/kg').getQuantities(), ['SPECIFIC_ENERGY'])
+  //     assert.deepStrictEqual(unit(5, 'J/kg K').getQuantities(), ['SPECIFIC_HEAT_CAPACITY'])
+  //     assert.deepStrictEqual(unit(5, 'm^3/kg').getQuantities(), ['SPECIFIC_VOLUME'])
+  //     assert.deepStrictEqual(unit(5, 'kg m^2/s').getQuantities(), ['SPIN'])
+  //     assert.deepStrictEqual(unit(5, 'J/m^2').getQuantities(), ['SURFACE_TENSION'])
+  //     assert.deepStrictEqual(unit(5, 'K').getQuantities(), ['TEMPERATURE'])
+  //     assert.deepStrictEqual(unit(5, 'K/m').getQuantities(), ['TEMPERATURE_GRADIENT'])
+  //     assert.deepStrictEqual(unit(5, 'W/m K').getQuantities(), ['THERMAL_CONDUCTIVITY'])
+  //     assert.deepStrictEqual(unit(5, 'day').getQuantities(), ['TIME'])
+  //     assert.deepStrictEqual(unit(5, 'm/s').getQuantities(), ['VELOCITY'])
+  //     assert.deepStrictEqual(unit(5, 'm^3').getQuantities(), ['VOLUME'])
+  //     assert.deepStrictEqual(unit(5, 'm^3/s').getQuantities(), ['VOLUMETRIC_FLOW_RATE'])
+  //   })
+  // })
 
   describe('equalQuantity', () => {
     it('should test whether two units are of the same quantity', () => {
@@ -1994,82 +1874,7 @@ describe('unitmath', () => {
   })
 
   describe('unitStore', () => {
-    describe('defs.quantities', () => {
-      it('should contain the correct dimension for each quantity', () => {
-        assert.strictEqual(unit._unitStore.defs.baseQuantities.length, 10)
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['UNITLESS'], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['LENGTH'], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['TIME'], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['CURRENT'], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['TEMPERATURE'], [0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['LUMINOUS_INTENSITY'], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['AMOUNT_OF_SUBSTANCE'], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGLE'], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['BIT'], [0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['SOLID_ANGLE'], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ABSEMENT'], [0, 1, 1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ACCELERATION'], [0, 1, -2, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGULAR_ACCELERATION'], [0, 0, -2, 0, 0, 0, 0, 1, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGULAR_MOMENTUM'], [1, 2, -1, 0, 0, 0, 0, 1, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ANGULAR_VELOCITY'], [0, 0, -1, 0, 0, 0, 0, 1, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['AREA'], [0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['AREA_DENSITY'], [1, -2, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['BIT_RATE'], [0, 0, -1, 0, 0, 0, 0, 0, 1, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['CAPACITANCE'], [-1, -2, 4, 2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['CURRENT_DENSITY'], [0, -2, 0, 1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['DYNAMIC_VISCOSITY'], [1, -1, -1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_CHARGE'], [0, 0, 1, 1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_CHARGE_DENSITY'], [0, -3, 1, 1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_DISPLACEMENT'], [0, -2, 1, 1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_FIELD_STRENGTH'], [1, 1, -3, -1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRICAL_CONDUCTANCE'], [-1, -2, 3, 2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRICAL_CONDUCTIVITY'], [-1, -3, 3, 2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRIC_POTENTIAL'], [1, 2, -3, -1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['RESISTANCE'], [1, 2, -3, -2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ELECTRICAL_RESISTIVITY'], [1, 3, -3, -2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ENERGY'], [1, 2, -2, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ENTROPY'], [1, 2, -2, 0, -1, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['FORCE'], [1, 1, -2, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['FREQUENCY'], [0, 0, -1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['HEAT_CAPACITY'], [1, 2, -2, 0, -1, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['HEAT_FLUX_DENSITY'], [1, 0, -3, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['ILLUMINANCE'], [0, -2, 0, 0, 0, 1, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['IMPEDANCE'], [1, 2, -3, -2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['IMPULSE'], [1, 1, -1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['INDUCTANCE'], [1, 2, -2, -2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['IRRADIANCE'], [1, 0, -3, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['JERK'], [0, 1, -3, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['KINEMATIC_VISCOSITY'], [0, 2, -1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['LINEAR_DENSITY'], [1, -1, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['LUMINOUS_FLUX'], [0, 0, 0, 0, 0, 1, 0, 0, 0, 1])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MAGNETIC_FIELD_STRENGTH'], [0, -1, 0, 1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MAGNETIC_FLUX'], [1, 2, -2, -1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MAGNETIC_FLUX_DENSITY'], [1, 0, -2, -1, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_CONCENTRATION'], [0, -3, 0, 0, 0, 0, 1, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_ENERGY'], [1, 2, -2, 0, 0, 0, -1, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_ENTROPY'], [1, 2, -2, 0, -1, 0, -1, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOLAR_HEAT_CAPACITY'], [1, 2, -2, 0, -1, 0, -1, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOMENT_OF_INERTIA'], [1, 2, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['MOMENTUM'], [1, 1, -1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['PERMEABILITY'], [1, 1, -2, -2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['PERMITTIVITY'], [-1, -3, 4, 2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['POWER'], [1, 2, -3, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['PRESSURE'], [1, -1, -2, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['RELUCTANCE'], [-1, -2, 2, 2, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPECIFIC_ENERGY'], [0, 2, -2, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPECIFIC_HEAT_CAPACITY'], [0, 2, -2, 0, -1, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPECIFIC_VOLUME'], [-1, 3, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['SPIN'], [1, 2, -1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['SURFACE_TENSION'], [1, 0, -2, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['TEMPERATURE_GRADIENT'], [0, -1, 0, 0, 1, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['THERMAL_CONDUCTIVITY'], [1, 1, -3, 0, -1, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['TORQUE'], [1, 2, -2, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['VELOCITY'], [0, 1, -1, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['VOLUME'], [0, 3, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert.deepStrictEqual(unit._unitStore.defs.quantities['VOLUMETRIC_FLOW_RATE'], [0, 3, -1, 0, 0, 0, 0, 0, 0, 0])
-      })
-    })
-
+    
     describe('defs.units', () => {
       it('built-in units should be of the correct value and dimension', () => {
         assert.strictEqual(unit(1, 's A').equals(unit(1, 'C')), true)
@@ -2087,17 +1892,6 @@ describe('unitmath', () => {
         assert(unit._unitStore.defs.hasOwnProperty('units'))
         for (const key in unit._unitStore.defs.units) {
           assert.strictEqual(key, unit._unitStore.defs.units[key].name)
-        }
-      })
-    })
-
-    describe('defs.unitSystems', () => {
-      it('should not have any dimensions that are not present in DIMENSIONS', () => {
-        assert(unit._unitStore.defs.hasOwnProperty('unitSystems'))
-        for (let sys in unit._unitStore.defs.unitSystems) {
-          for (let dim in unit._unitStore.defs.unitSystems[sys]) {
-            assert(unit._unitStore.defs.quantities.hasOwnProperty(dim), `${dim} not found in defs.quantities`)
-          }
         }
       })
     })

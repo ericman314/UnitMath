@@ -219,7 +219,7 @@ To create a user-defined unit, pass a `definitions` object to `unit.config()`:
   unit('1 lightyear').to('mile') // 5878625373183.608 mile
   ```
 
-The `definitions` contains five keys which allow additional customization of the unit system. These are: `units`, `prefixes`, `unitSystems`, `baseQuantities`, and `quantities`.
+The `definitions` contains two properties which allow additional customization of the unit system: `units` and `prefixes`.
 
 **definitions.units**
 
@@ -252,11 +252,27 @@ You can also supply an object for additional customization. These are all the op
   }
   ```
 
-- `quantity`: This is required for base units that are not defined in terms of other units, such as `meter` and `second`. For derived units, such as `joule`, the `quantity` is determined automatically from the unit's `value`.
+- `quantity`: Specifying a `quantity` will create a _base unit_. This is required for units that are not defined in terms of other units, such as `meter` and `second`:
 
   ```js
   units: {
     seconds: { quantity: 'TIME', value: 1 }
+  }
+  ```
+
+  Only use `quantity` to define _base units_. Do **not** use `quantity` to define a derived unit:
+
+  ```js
+  // Incorrect
+  units: {
+    meter: { quantity: 'LENGTH', value: 1 }
+    square_meter: { quantity: 'LENGTH^2', value: 1 }
+  }
+
+  // Correct
+  units: {
+    meter: { quantity: 'LENGTH', value: 1 }
+    square_meter: { value: '1 meter^2' }  
   }
   ```
 
@@ -309,49 +325,6 @@ You can also supply an object for additional customization. These are all the op
   }
   ```
 
-- `autoAddToSystem`: An optional string value, such as `'si'`, `'us'`, or `'auto'`. Causes this unit to automatically be added to the specified unit system. A value of `'auto'` will cause UnitMath to infer the system from the unit's `value`. This is a shortcut for setting `definitions.quantities` and `definitions.unitSystem` directly:
-
-  ```js
-  definitions: {
-    units: {
-      snap: {
-        value: '1 m/s^4',
-        autoAddToUnitSystem: 'si'
-      }
-    },
-  }
-  ```
-
-  Which is equivalent to the following: 
-
-  ```js
-  definitions: {
-    units: {
-      snap: {
-        value: '1 m/s^4'
-      }
-    },
-    unitSystems: {
-      si: {
-        snap_QUANTITY: 'snap'
-      }
-    },
-    quantities: {
-      snap_QUANTITY: 'LENGTH TIME^-4'
-    }
-  }
-  ```
-
-  This causes `snap` to become part of the `si` system, which means it may be used to simplify a Unit:
-
-  ```js
-  unit('1 m/s^2').div('2 s^2').simplify() // 0.5 snap
-  ```
-
-  You may also set the global option `definitions.autoAddToSystem` in order to set the same value for *all* user-defined units at the same time.
-
-  Behind the scenes, `autoAddToSystem` automatically adds the necessary entries to `definitions.quantities` and `definitions.unitSystem` so that the unit becomes a member of the specified unit system, allowing it to be used to simplify a Unit. If, however, existing values for `definitions.quantities` or `definitions.unitSystem` already exist in the user-defined or built-in units, `autoAddToSystem` will *not* override them. If you need more control over how your unit systems are set up, you should set `definitions.quantities` and `definitions.unitSystem` directly, rather than using `autoAddToSystem`.
-
 **definitions.prefixes**
 
 The `definitions.prefixes` object is used to define strings and associated multipliers that are prefixed to units to change their value. For example, the `'k'` prefix in `km` multiplies the value of the `m` unit by 1000.
@@ -372,69 +345,9 @@ prefixes: {
 }
 ```
 
-**definitions.baseQuantities**
-
-The `definitions.baseQuantities` array defines the dimensionally-independent quantities (`LENGTH`, `MASS`, `LUMINOUS_INTENSITY`, etc.) that form the basis of all units. To add a new base quantity, supply the new base quantity or quantities in an array:
-
-```js
-baseQuantities: [ 'MY_NEW_BASE_QUANTITY' ]
-```
-
-**definitions.quantities**
-
-The `definitions.quantities` object defines other quantities that are derived from the base quantities, such as `FORCE`. These are used in the `unitSystems` object to specify the preferred unit for that quantity. The syntax for defining a `quantity` is more strict than that used to parse units generally. The format of a quantity is: zero or more terms, separated by spaces, where each term comprises a `baseQuantity`, optionally followed by a caret `^` and a floating point number:
-
-```js
-quantities: {
-  ELECTRIC_POTENTIAL: 'MASS LENGTH^2 TIME^-3 CURRENT^-1'
-}
-```
-
-**definitions.unitSystems**
-
-The `definitions.unitSystems` object defines the preferred units to use with a particular unit system. Any or all of the `quantities` in a unit system may be assigned a single unit, optionally with a prefix, that will be used when formatting a matching unit in that system.
-
-```js
-unitSystems: {
-  si: {
-    AMOUNT_OF_SUBSTANCE: 'mol',
-    CAPACITANCE: 'F',
-    CURRENT: 'A',
-    MASS: 'kg',
-    ...
-  }
-}
-```
-
 **definitions.skipBuiltIns**
 
 A boolean value indicating whether to skip creation of the built-in units. If `true`, only the user-defined units and quantities defined in `definitions` will be created.
-
-**definitions.autoAddToSystem**
-
-Global setting that applies `autoAddToSystem` to all user-defined units simultaneously. This means that the following two definitions are equivalent:
-
-```js
-definitions: {
-  units: {
-    snap: '1 m/s^4'
-  },
-  autoAddToUnitSystem: 'auto'
-}
-```
-
-```js
-definitions: {
-  units: {
-    snap: {
-      value: '1 m/s^4',
-      autoAddToUnitSystem: 'auto'
-    }
-  },
-}
-```
-
-For more information, see `definitions.units.autoAddToUnit`.
 
 #### Querying current unit definitions ####
 
@@ -447,65 +360,40 @@ unit.definitions()
 Below is an abbreviated sample output from `unit.definitions()`. It can serve as a starting point to create your own definitions.
 
 ```js
-{ units:
-   { '': { quantity: 'UNITLESS', value: 1 },
-     meter:
-      { quantity: 'LENGTH',
-        prefixes: 'LONG',
-        commonPrefixes: [ 'nano', 'micro', 'milli', 'centi', '', 'kilo' ],
-        value: 1,
-        aliases: [ 'meters' ] },
-     m:
-      { prefixes: 'SHORT',
-        commonPrefixes: [ 'n', 'u', 'm', 'c', '', 'k' ],
-        value: '1 meter' },
-     inch: { value: '0.0254 meter', aliases: [ 'inches', 'in' ] },
-     foot: { value: '12 inch', aliases: [ 'ft', 'feet' ] },
-     yard: { value: '3 foot', aliases: [ 'yd', 'yards' ] },
-     mile: { value: '5280 ft', aliases: [ 'mi', 'miles' ] },
-     ... },
-  prefixes:
-   { NONE: { '': 1 },
-     SHORT:
-      { '': 1,
-        da: 10,
-        h: 100,
-        k: 1000,
-        ...
-        d: 0.1,
-        c: 0.01,
-        m: 0.001,
-        ... },
-     ... },
-  unitSystems:
-   { si:
-      { AMOUNT_OF_SUBSTANCE: 'mol',
-        CAPACITANCE: 'F',
-        CURRENT: 'A',
-        MASS: 'kg'
-        ... },
-     ... },
-  baseQuantities:
-   [ 'MASS',
-     'LENGTH',
-     'TIME',
-     'CURRENT',
-     'TEMPERATURE',
-     'LUMINOUS_INTENSITY',
-     'AMOUNT_OF_SUBSTANCE',
-     'ANGLE',
-     'BIT',
-     'SOLID_ANGLE' ],
-  quantities:
-   { UNITLESS: '',
-     ABSEMENT: 'LENGTH TIME',
-     ACCELERATION: 'LENGTH TIME^-2',
-     ANGULAR_ACCELERATION: 'TIME^-2 ANGLE',
-     ANGULAR_MOMENTUM: 'MASS LENGTH^2 TIME^-1 ANGLE',
-     ANGULAR_VELOCITY: 'TIME^-1 ANGLE',
-     AREA: 'LENGTH^2',
-     ... } }
-
+{ 
+  units: {
+    '': { quantity: 'UNITLESS', value: 1 },
+    meter: {
+      quantity: 'LENGTH',
+      prefixes: 'LONG',
+      commonPrefixes: [ 'nano', 'micro', 'milli', 'centi', '', 'kilo' ],
+      value: 1,
+      aliases: [ 'meters' ]
+    },
+    m: {
+      prefixes: 'SHORT',
+      commonPrefixes: [ 'n', 'u', 'm', 'c', '', 'k' ],
+      value: '1 meter'
+    },
+    inch: { value: '0.0254 meter', aliases: [ 'inches', 'in' ] },
+    foot: { value: '12 inch', aliases: [ 'ft', 'feet' ] },
+    yard: { value: '3 foot', aliases: [ 'yd', 'yards' ] },
+    mile: { value: '5280 ft', aliases: [ 'mi', 'miles' ] },
+    ... },
+  prefixes: {
+    NONE: { '': 1 },
+    SHORT: {
+      '': 1,
+      da: 10,
+      h: 100,
+      k: 1000,
+      ...
+      d: 0.1,
+      c: 0.01,
+      m: 0.001,
+      ... },
+    ... },
+  }
 ```
 
 #### Custom Types

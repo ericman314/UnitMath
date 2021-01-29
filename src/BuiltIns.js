@@ -1,118 +1,118 @@
 // A base quantity is a physical quantity in a subset of a given system of quantities that is chosen by convention, where no quantity in the set can be expressed in terms of the others.
-export const baseQuantities = ['MASS', 'LENGTH', 'TIME', 'CURRENT', 'TEMPERATURE', 'LUMINOUS_INTENSITY', 'AMOUNT_OF_SUBSTANCE', 'ANGLE', 'BIT', 'SOLID_ANGLE']
+// export const baseQuantities = ['MASS', 'LENGTH', 'TIME', 'CURRENT', 'TEMPERATURE', 'LUMINOUS_INTENSITY', 'AMOUNT_OF_SUBSTANCE', 'ANGLE', 'BIT', 'SOLID_ANGLE']
 
 // A derived quantity is a quantity in a system of quantities that is a defined in terms of the base quantities of that system.
-export const quantities = {
-  UNITLESS: '',
-  ABSEMENT: 'LENGTH TIME',
-  ACCELERATION: 'LENGTH TIME^-2',
-  ANGULAR_ACCELERATION: 'TIME^-2 ANGLE',
-  ANGULAR_MOMENTUM: 'MASS LENGTH^2 TIME^-1 ANGLE',
-  ANGULAR_VELOCITY: 'TIME^-1 ANGLE',
-  AREA: 'LENGTH^2',
-  AREA_DENSITY: 'MASS LENGTH^-2',
-  BIT_RATE: 'TIME^-1 BIT',
-  CAPACITANCE: 'MASS^-1 LENGTH^-2 TIME^4 CURRENT^2',
-  CURRENT_DENSITY: 'LENGTH^-2 CURRENT',
-  DYNAMIC_VISCOSITY: 'MASS LENGTH^-1 TIME^-1',
-  ELECTRIC_CHARGE: 'TIME CURRENT',
-  ELECTRIC_CHARGE_DENSITY: 'LENGTH^-3 TIME CURRENT',
-  ELECTRIC_DISPLACEMENT: 'LENGTH^-2 TIME CURRENT',
-  ELECTRIC_FIELD_STRENGTH: 'MASS LENGTH TIME^-3 CURRENT^-1',
-  ELECTRICAL_CONDUCTANCE: 'MASS^-1 LENGTH^-2 TIME^3 CURRENT^2',
-  ELECTRICAL_CONDUCTIVITY: 'MASS^-1 LENGTH^-3 TIME^3 CURRENT^2',
-  ELECTRIC_POTENTIAL: 'MASS LENGTH^2 TIME^-3 CURRENT^-1',
-  RESISTANCE: 'MASS LENGTH^2 TIME^-3 CURRENT^-2',
-  ELECTRICAL_RESISTIVITY: 'MASS LENGTH^3 TIME^-3 CURRENT^-2',
-  ENERGY: 'MASS LENGTH^2 TIME^-2',
-  ENTROPY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1',
-  FORCE: 'MASS LENGTH TIME^-2',
-  FREQUENCY: 'TIME^-1',
-  HEAT_CAPACITY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1',
-  HEAT_FLUX_DENSITY: 'MASS TIME^-3',
-  ILLUMINANCE: 'LENGTH^-2 LUMINOUS_INTENSITY',
-  IMPEDANCE: 'MASS LENGTH^2 TIME^-3 CURRENT^-2',
-  IMPULSE: 'MASS LENGTH TIME^-1',
-  INDUCTANCE: 'MASS LENGTH^2 TIME^-2 CURRENT^-2',
-  IRRADIANCE: 'MASS TIME^-3',
-  JERK: 'LENGTH TIME^-3',
-  KINEMATIC_VISCOSITY: 'LENGTH^2 TIME^-1',
-  LINEAR_DENSITY: 'MASS LENGTH^-1',
-  LUMINOUS_FLUX: 'LUMINOUS_INTENSITY SOLID_ANGLE',
-  MAGNETIC_FIELD_STRENGTH: 'LENGTH^-1 CURRENT',
-  MAGNETIC_FLUX: 'MASS LENGTH^2 TIME^-2 CURRENT^-1',
-  MAGNETIC_FLUX_DENSITY: 'MASS TIME^-2 CURRENT^-1',
-  MOLAR_CONCENTRATION: 'LENGTH^-3 AMOUNT_OF_SUBSTANCE',
-  MOLAR_ENERGY: 'MASS LENGTH^2 TIME^-2 AMOUNT_OF_SUBSTANCE^-1',
-  MOLAR_ENTROPY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1 AMOUNT_OF_SUBSTANCE^-1',
-  MOLAR_HEAT_CAPACITY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1 AMOUNT_OF_SUBSTANCE^-1',
-  MOMENT_OF_INERTIA: 'MASS LENGTH^2',
-  MOMENTUM: 'MASS LENGTH TIME^-1',
-  PERMEABILITY: 'MASS LENGTH TIME^-2 CURRENT^-2',
-  PERMITTIVITY: 'MASS^-1 LENGTH^-3 TIME^4 CURRENT^2 ',
-  POWER: 'MASS LENGTH^2 TIME^-3',
-  PRESSURE: 'MASS LENGTH^-1 TIME^-2',
-  RELUCTANCE: 'MASS^-1 LENGTH^-2 TIME^2 CURRENT^2',
-  SPECIFIC_ENERGY: 'LENGTH^2 TIME^-2',
-  SPECIFIC_HEAT_CAPACITY: 'LENGTH^2 TIME^-2 TEMPERATURE^-1',
-  SPECIFIC_VOLUME: 'MASS^-1 LENGTH^3',
-  SPIN: 'MASS LENGTH^2 TIME^-1',
-  SURFACE_TENSION: 'MASS TIME^-2',
-  TEMPERATURE_GRADIENT: 'LENGTH^-1 TEMPERATURE',
-  THERMAL_CONDUCTIVITY: 'MASS LENGTH TIME^-3 TEMPERATURE^-1',
-  TORQUE: 'MASS LENGTH^2 TIME^-2', // TODO: Should this have a radian in it somewhere?
-  VELOCITY: 'LENGTH TIME^-1',
-  VOLUME: 'LENGTH^3',
-  VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
-}
+// export const quantities = {
+//   UNITLESS: '',
+//   ABSEMENT: 'LENGTH TIME',
+//   ACCELERATION: 'LENGTH TIME^-2',
+//   ANGULAR_ACCELERATION: 'TIME^-2 ANGLE',
+//   ANGULAR_MOMENTUM: 'MASS LENGTH^2 TIME^-1 ANGLE',
+//   ANGULAR_VELOCITY: 'TIME^-1 ANGLE',
+//   AREA: 'LENGTH^2',
+//   AREA_DENSITY: 'MASS LENGTH^-2',
+//   BIT_RATE: 'TIME^-1 BIT',
+//   CAPACITANCE: 'MASS^-1 LENGTH^-2 TIME^4 CURRENT^2',
+//   CURRENT_DENSITY: 'LENGTH^-2 CURRENT',
+//   DYNAMIC_VISCOSITY: 'MASS LENGTH^-1 TIME^-1',
+//   ELECTRIC_CHARGE: 'TIME CURRENT',
+//   ELECTRIC_CHARGE_DENSITY: 'LENGTH^-3 TIME CURRENT',
+//   ELECTRIC_DISPLACEMENT: 'LENGTH^-2 TIME CURRENT',
+//   ELECTRIC_FIELD_STRENGTH: 'MASS LENGTH TIME^-3 CURRENT^-1',
+//   ELECTRICAL_CONDUCTANCE: 'MASS^-1 LENGTH^-2 TIME^3 CURRENT^2',
+//   ELECTRICAL_CONDUCTIVITY: 'MASS^-1 LENGTH^-3 TIME^3 CURRENT^2',
+//   ELECTRIC_POTENTIAL: 'MASS LENGTH^2 TIME^-3 CURRENT^-1',
+//   RESISTANCE: 'MASS LENGTH^2 TIME^-3 CURRENT^-2',
+//   ELECTRICAL_RESISTIVITY: 'MASS LENGTH^3 TIME^-3 CURRENT^-2',
+//   ENERGY: 'MASS LENGTH^2 TIME^-2',
+//   ENTROPY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1',
+//   FORCE: 'MASS LENGTH TIME^-2',
+//   FREQUENCY: 'TIME^-1',
+//   HEAT_CAPACITY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1',
+//   HEAT_FLUX_DENSITY: 'MASS TIME^-3',
+//   ILLUMINANCE: 'LENGTH^-2 LUMINOUS_INTENSITY',
+//   IMPEDANCE: 'MASS LENGTH^2 TIME^-3 CURRENT^-2',
+//   IMPULSE: 'MASS LENGTH TIME^-1',
+//   INDUCTANCE: 'MASS LENGTH^2 TIME^-2 CURRENT^-2',
+//   IRRADIANCE: 'MASS TIME^-3',
+//   JERK: 'LENGTH TIME^-3',
+//   KINEMATIC_VISCOSITY: 'LENGTH^2 TIME^-1',
+//   LINEAR_DENSITY: 'MASS LENGTH^-1',
+//   LUMINOUS_FLUX: 'LUMINOUS_INTENSITY SOLID_ANGLE',
+//   MAGNETIC_FIELD_STRENGTH: 'LENGTH^-1 CURRENT',
+//   MAGNETIC_FLUX: 'MASS LENGTH^2 TIME^-2 CURRENT^-1',
+//   MAGNETIC_FLUX_DENSITY: 'MASS TIME^-2 CURRENT^-1',
+//   MOLAR_CONCENTRATION: 'LENGTH^-3 AMOUNT_OF_SUBSTANCE',
+//   MOLAR_ENERGY: 'MASS LENGTH^2 TIME^-2 AMOUNT_OF_SUBSTANCE^-1',
+//   MOLAR_ENTROPY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1 AMOUNT_OF_SUBSTANCE^-1',
+//   MOLAR_HEAT_CAPACITY: 'MASS LENGTH^2 TIME^-2 TEMPERATURE^-1 AMOUNT_OF_SUBSTANCE^-1',
+//   MOMENT_OF_INERTIA: 'MASS LENGTH^2',
+//   MOMENTUM: 'MASS LENGTH TIME^-1',
+//   PERMEABILITY: 'MASS LENGTH TIME^-2 CURRENT^-2',
+//   PERMITTIVITY: 'MASS^-1 LENGTH^-3 TIME^4 CURRENT^2 ',
+//   POWER: 'MASS LENGTH^2 TIME^-3',
+//   PRESSURE: 'MASS LENGTH^-1 TIME^-2',
+//   RELUCTANCE: 'MASS^-1 LENGTH^-2 TIME^2 CURRENT^2',
+//   SPECIFIC_ENERGY: 'LENGTH^2 TIME^-2',
+//   SPECIFIC_HEAT_CAPACITY: 'LENGTH^2 TIME^-2 TEMPERATURE^-1',
+//   SPECIFIC_VOLUME: 'MASS^-1 LENGTH^3',
+//   SPIN: 'MASS LENGTH^2 TIME^-1',
+//   SURFACE_TENSION: 'MASS TIME^-2',
+//   TEMPERATURE_GRADIENT: 'LENGTH^-1 TEMPERATURE',
+//   THERMAL_CONDUCTIVITY: 'MASS LENGTH TIME^-3 TEMPERATURE^-1',
+//   TORQUE: 'MASS LENGTH^2 TIME^-2', // TODO: Should this have a radian in it somewhere?
+//   VELOCITY: 'LENGTH TIME^-1',
+//   VOLUME: 'LENGTH^3',
+//   VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
+// }
 
 // A unit system is a set of dimensionally independent base units plus a set of derived units, formed by multiplication and division of the base units, that are by convention used with the unit system.
-export const unitSystems = {
-  si: {
-    AMOUNT_OF_SUBSTANCE: 'mol',
-    ANGLE: 'rad',
-    BIT: 'b',
-    CAPACITANCE: 'F',
-    CURRENT: 'A',
-    ELECTRIC_CHARGE: 'C',
-    ELECTRICAL_CONDUCTANCE: 'S',
-    ELECTRIC_POTENTIAL: 'V',
-    ENERGY: 'J',
-    FORCE: 'N',
-    FREQUENCY: 'Hz',
-    IMPEDANCE: 'ohm',
-    INDUCTANCE: 'H',
-    LENGTH: 'm',
-    LUMINOUS_INTENSITY: 'cd',
-    LUMINOUS_FLUX: 'lm',
-    ILLUMINANCE: 'lx',
-    MAGNETIC_FLUX: 'Wb',
-    MAGNETIC_FLUX_DENSITY: 'T',
-    MASS: 'kg',
-    POWER: 'W',
-    PRESSURE: 'Pa',
-    RESISTANCE: 'ohm',
-    SOLID_ANGLE: 'sr',
-    TEMPERATURE: 'K',
-    TIME: 's'
-  }
-}
+// export const unitSystems = {
+//   si: {
+//     AMOUNT_OF_SUBSTANCE: 'mol',
+//     ANGLE: 'rad',
+//     BIT: 'b',
+//     CAPACITANCE: 'F',
+//     CURRENT: 'A',
+//     ELECTRIC_CHARGE: 'C',
+//     ELECTRICAL_CONDUCTANCE: 'S',
+//     ELECTRIC_POTENTIAL: 'V',
+//     ENERGY: 'J',
+//     FORCE: 'N',
+//     FREQUENCY: 'Hz',
+//     IMPEDANCE: 'ohm',
+//     INDUCTANCE: 'H',
+//     LENGTH: 'm',
+//     LUMINOUS_INTENSITY: 'cd',
+//     LUMINOUS_FLUX: 'lm',
+//     ILLUMINANCE: 'lx',
+//     MAGNETIC_FLUX: 'Wb',
+//     MAGNETIC_FLUX_DENSITY: 'T',
+//     MASS: 'kg',
+//     POWER: 'W',
+//     PRESSURE: 'Pa',
+//     RESISTANCE: 'ohm',
+//     SOLID_ANGLE: 'sr',
+//     TEMPERATURE: 'K',
+//     TIME: 's'
+//   }
+// }
 
-unitSystems.cgs = Object.assign({}, unitSystems.si)
-unitSystems.cgs.LENGTH = 'cm'
-unitSystems.cgs.MASS = 'g'
-unitSystems.cgs.FORCE = 'dyn'
-unitSystems.cgs.ENERGY = 'erg'
+// unitSystems.cgs = Object.assign({}, unitSystems.si)
+// unitSystems.cgs.LENGTH = 'cm'
+// unitSystems.cgs.MASS = 'g'
+// unitSystems.cgs.FORCE = 'dyn'
+// unitSystems.cgs.ENERGY = 'erg'
 
-// These maybe are not canonical
-unitSystems.us = Object.assign({}, unitSystems.si)
-unitSystems.us.LENGTH = 'ft'
-unitSystems.us.MASS = 'lbm'
-unitSystems.us.TEMPERATURE = 'degF'
-unitSystems.us.FORCE = 'lbf'
-unitSystems.us.ENERGY = 'BTU'
-unitSystems.us.POWER = 'hp'
-unitSystems.us.PRESSURE = 'psi'
+// // These maybe are not canonical
+// unitSystems.us = Object.assign({}, unitSystems.si)
+// unitSystems.us.LENGTH = 'ft'
+// unitSystems.us.MASS = 'lbm'
+// unitSystems.us.TEMPERATURE = 'degF'
+// unitSystems.us.FORCE = 'lbf'
+// unitSystems.us.ENERGY = 'BTU'
+// unitSystems.us.POWER = 'hp'
+// unitSystems.us.PRESSURE = 'psi'
 
 // Units may or may not use one of the prefix sets (SHORT, LONG, etc).
 export const prefixes = {
@@ -274,7 +274,10 @@ prefixes.SHORT_LONG = Object.assign({}, prefixes.SHORT, prefixes.LONG)
 prefixes.BINARY_SHORT = Object.assign({}, prefixes.BINARY_SHORT_SI, prefixes.BINARY_SHORT_IEC)
 prefixes.BINARY_LONG = Object.assign({}, prefixes.BINARY_LONG_SI, prefixes.BINARY_LONG_IEC)
 
-// Units are a set measure of a particular quantity. Below, each key of UNITS is a different unit. Each unit may either included a specified `quantity`, taken from the list of QUANTITIES above, or it may be defined in terms of other units, in which case the quantity is determined from the definition. The unit may also include `prefixes`, which specify which prefix set will be used for parsing the unit, and `commonPrefixes`, which specifies which prefixes will be used when formatting that unit.
+// Units are a set measure of a particular quantity. Below, each key of UNITS is a different unit. Each unit may be
+// defined using a base quantity, such as LENGTH, or it may be defined in terms of other units. The unit may also
+// include `prefixes`, which specify which prefix set will be used for parsing the unit, and `commonPrefixes`, which
+// specifies which prefixes will be used when formatting that unit.
 export const units = {
   '': {
     quantity: 'UNITLESS',

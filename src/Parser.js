@@ -1,7 +1,7 @@
 /**
  * Returns a new Parser.
  */
-export default function createParser (options, findUnit, nBaseQuantities) {
+export default function createParser(options, findUnit) {
   // private variables and functions for the Unit parser
   let text, index, c
 
@@ -160,11 +160,8 @@ export default function createParser (options, findUnit, nBaseQuantities) {
 
     unit.units = []
 
-    // Initialize this unit's dimension array
-    unit.dimension = []
-    for (let i = 0; i < nBaseQuantities; i++) {
-      unit.dimension[i] = 0
-    }
+    // Initialize this unit's dimensions
+    unit.dimension = {}
 
     let powerMultiplierCurrent = 1
     let expectingUnit = false
@@ -252,8 +249,8 @@ export default function createParser (options, findUnit, nBaseQuantities) {
         power: power
       })
 
-      for (let i = 0; i < unit.dimension.length; i++) {
-        unit.dimension[i] += (found.unit.dimension[i] || 0) * power
+      for (let dim in found.unit.dimension) {
+        unit.dimension[dim] = (unit.dimension[dim] || 0) + (found.unit.dimension[dim] || 0) * power
       }
 
       skipWhitespace()
