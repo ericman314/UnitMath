@@ -66,7 +66,20 @@ export const quantities = {
   VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
 }
 
+/**
+ * Problem is--a unit can belong to multiple unit systems (such as s) and a unit system may prefer several units for a
+ * given quantity (inch, foot). Also, a unit may appear in different systems with a different prefix (si: kg and m, cgs:
+ * g and cm) So what we need is a many-to-many mapping from systems to units. Why do we need this? It's just for
+ * simplifying. To be able to say, of the units having a certain quantity, which one is the most related to some other
+ * units. So we should be able to score a unit/system pair from 0 to 1 (or something) depending on how well the two
+ * match. Using that function, we can find the best system for a given list of units (by summing the unit/system score
+ * for each unit in the list). Then, we test each unit against that system to find the best one. The score also depends
+ * on the prefix of the unit, so it is actually a prefix/unit/system triple.
+
+ */
+
 // A unit system is a set of dimensionally independent base units plus a set of derived units, formed by multiplication and division of the base units, that are by convention used with the unit system.
+/*
 export const unitSystems = {
   si: {
     AMOUNT_OF_SUBSTANCE: 'mol',
@@ -113,6 +126,7 @@ unitSystems.us.FORCE = 'lbf'
 unitSystems.us.ENERGY = 'BTU'
 unitSystems.us.POWER = 'hp'
 unitSystems.us.PRESSURE = 'psi'
+*/
 
 // Units may or may not use one of the prefix sets (SHORT, LONG, etc).
 export const prefixes = {
@@ -274,7 +288,11 @@ prefixes.SHORT_LONG = Object.assign({}, prefixes.SHORT, prefixes.LONG)
 prefixes.BINARY_SHORT = Object.assign({}, prefixes.BINARY_SHORT_SI, prefixes.BINARY_SHORT_IEC)
 prefixes.BINARY_LONG = Object.assign({}, prefixes.BINARY_LONG_SI, prefixes.BINARY_LONG_IEC)
 
-// Units are a set measure of a particular quantity. Below, each key of UNITS is a different unit. Each unit may either included a specified `quantity`, taken from the list of QUANTITIES above, or it may be defined in terms of other units, in which case the quantity is determined from the definition. The unit may also include `prefixes`, which specify which prefix set will be used for parsing the unit, and `commonPrefixes`, which specifies which prefixes will be used when formatting that unit.
+// Units are a set measure of a particular quantity. Below, each key of UNITS is a different unit. Each unit may either
+// included a specified `quantity`, taken from the list of QUANTITIES above, or it may be defined in terms of other
+// units, in which case the quantity is determined from the definition. The unit may also include `prefixes`, which
+// specify which prefix set will be used for parsing the unit, and `commonPrefixes`, which specifies which prefixes will
+// be used when formatting that unit.
 export const units = {
   '': {
     quantity: 'UNITLESS',
@@ -287,23 +305,25 @@ export const units = {
     prefixes: 'LONG',
     commonPrefixes: ['nano', 'micro', 'milli', 'centi', '', 'kilo'],
     value: 1,
-    aliases: ['meters']
+    aliases: ['meters'],
+    systems: ['si']
   },
   inch: {
     value: '0.0254 meter',
-    aliases: ['inches', 'in']
+    aliases: ['inches', 'in'],
+    systems: ['us']
   },
   foot: {
     value: '12 inch',
-    aliases: ['ft', 'feet']
+    aliases: ['ft', 'feet'],
   },
   yard: {
     value: '3 foot',
-    aliases: ['yd', 'yards']
+    aliases: ['yd', 'yards'],
   },
   mile: {
     value: '5280 ft',
-    aliases: ['mi', 'miles']
+    aliases: ['mi', 'miles'],
   },
   link: {
     value: '7.92 in',
@@ -320,22 +340,25 @@ export const units = {
   m: {
     prefixes: 'SHORT',
     commonPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
-    value: '1 meter'
+    value: '1 meter',
+    systems: ['si']
   },
   angstrom: {
     value: '1e-10 m',
-    aliases: ['angstroms']
+    aliases: ['angstroms'],
+    systems: ['si']
   },
 
   mil: {
-    value: '1e-3 inch'
+    value: '1e-3 inch',
+    systems: ['us']
   },
 
   // Area
   m2: {
     prefixes: 'SQUARED',
     commonPrefixes: ['m', 'c', '', 'k'],
-    value: '1 m^2'
+    value: '1 m^2',
   },
   sqin: '1 in^2',
   sqft: '1 ft^2',
@@ -370,7 +393,8 @@ export const units = {
   cuyd: '1 yd^3',
   teaspoon: {
     value: '5 mL',
-    aliases: ['teaspoons', 'tsp']
+    aliases: ['teaspoons', 'tsp'],
+    systems: ['us']
   },
   tablespoon: {
     value: '3 teaspoon',
@@ -386,7 +410,8 @@ export const units = {
   },
   fluidounce: {
     value: '0.00002957353 mL',
-    aliases: ['floz', 'fluidounces']
+    aliases: ['floz', 'fluidounces'],
+    systems: ['us']
   },
   fluiddram: {
     value: '0.125 floz',
@@ -395,7 +420,8 @@ export const units = {
   cc: '1 cm^3',
   cup: {
     value: '236.5882365 mL',
-    aliases: ['cp', 'cups']
+    aliases: ['cp', 'cups'],
+    systems: ['us']
   },
   pint: {
     value: '2 cup',
@@ -419,7 +445,8 @@ export const units = {
     quantity: 'MASS',
     prefixes: 'SHORT',
     commonPrefixes: ['n', 'u', 'm', '', 'k'],
-    value: 0.001
+    value: 0.001,
+    systems: ['si']
   },
   gram: {
     prefixes: 'LONG',
@@ -429,7 +456,8 @@ export const units = {
 
   poundmass: {
     value: '0.45359237 kg',
-    aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
+    aliases: ['lb', 'lbs', 'lbm', 'poundmasses'],
+    systems: ['us']
   },
   ton: '2000 lbm',
   tonne: {
@@ -444,7 +472,8 @@ export const units = {
   },
   grain: {
     value: '64.79891 mg',
-    aliases: ['gr']
+    aliases: ['gr'],
+    systems: ['us']
   },
   ounce: {
     value: '0.0625 lbm',
@@ -470,7 +499,8 @@ export const units = {
     prefixes: 'SHORT',
     commonPrefixes: ['f', 'p', 'n', 'u', 'm', ''],
     value: 1,
-    aliases: ['sec']
+    aliases: ['sec'],
+    systems: ['si', 'us', 'cgs']
   },
   min: {
     value: '60 s',
@@ -532,7 +562,8 @@ export const units = {
     quantity: 'ANGLE',
     prefixes: 'SHORT',
     commonPrefixes: ['m', ''],
-    value: 1
+    value: 1,
+    systems: ['si']
   },
   radian: {
     prefixes: 'LONG',
@@ -544,7 +575,8 @@ export const units = {
     quantity: 'SOLID_ANGLE',
     prefixes: 'SHORT',
     commonPrefixes: ['u', 'm', ''],
-    value: 1
+    value: 1,
+    systems: ['si']
   },
   steradian: {
     prefixes: 'LONG',
@@ -585,7 +617,8 @@ export const units = {
     quantity: 'CURRENT',
     prefixes: 'SHORT',
     commonPrefixes: ['u', 'm', '', 'k'],
-    value: 1
+    value: 1,
+    systems: ['si']
   },
   ampere: {
     prefixes: 'LONG',
@@ -602,7 +635,8 @@ export const units = {
     quantity: 'TEMPERATURE',
     prefixes: 'SHORT',
     commonPrefixes: ['n', 'u', 'm', ''],
-    value: 1
+    value: 1,
+    systems: ['si']
   },
   kelvin: {
     prefixes: 'LONG',
@@ -616,12 +650,13 @@ export const units = {
   },
   degR: {
     value: [1 / 1.8, 'K'],
-    aliases: ['rankine', 'R']
+    aliases: ['rankine', 'R'],
+    systems: ['us']
   },
   degF: {
     value: '1 R',
     offset: 459.67,
-    aliases: ['fahrenheit']
+    aliases: ['fahrenheit'],
   },
 
   // amount of substance
@@ -629,7 +664,8 @@ export const units = {
     quantity: 'AMOUNT_OF_SUBSTANCE',
     prefixes: 'SHORT',
     commonPrefixes: ['', 'k'],
-    value: 1
+    value: 1,
+    systems: ['si']
   },
   mole: {
     prefixes: 'LONG',
@@ -643,7 +679,8 @@ export const units = {
     quantity: 'LUMINOUS_INTENSITY',
     value: 1,
     prefixes: 'SHORT',
-    commonPrefixes: ['', 'm']
+    commonPrefixes: ['', 'm'],
+    systems: ['si']
   },
   candela: {
     value: '1 cd',
@@ -696,7 +733,8 @@ export const units = {
   },
   lbf: {
     value: '4.4482216152605 N',
-    aliases: ['poundforce']
+    aliases: ['poundforce'],
+    systems: ['us']
   },
   kip: {
     value: '1000 lbf',
@@ -716,7 +754,8 @@ export const units = {
     aliases: ['joules']
   },
   erg: {
-    value: '1 dyn cm'
+    value: '1 dyn cm',
+    systems: ['cgs']
   },
   Wh: {
     prefixes: 'SHORT',
@@ -727,7 +766,8 @@ export const units = {
     prefixes: 'BTU',
     commonPrefixes: ['', 'MM'],
     value: '1055.05585262 J',
-    aliases: ['BTUs']
+    aliases: ['BTUs'],
+    systems: ['us']
   },
   eV: {
     prefixes: 'SHORT',

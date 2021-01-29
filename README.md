@@ -311,6 +311,10 @@ You can also supply an object for additional customization. These are all the op
   }
   ```
 
+- `systems`: Array of system identifiers, such as `'si'`, `'us'`, and `'cgs'`, to which this unit will belong. The system(s) are used when simplifying units, as a heuristic to determine the most appropriate units to use for simplification. Custom systems can also be provided. If `systems` is omitted, the systems will be inheritted from the individual units contained in the `value`. To set no systems for a unit, supply an empty array `[]`. 
+
+Old stuff:
+
 - `autoAddToSystem`: An optional string value, such as `'si'`, `'us'`, or `'auto'`. Causes this unit to automatically be added to the specified unit system. A value of `'auto'` will cause UnitMath to infer the system from the unit's `value`. This is a shortcut for setting `definitions.quantities` and `definitions.unitSystem` directly:
 
   ```js
@@ -353,6 +357,8 @@ You can also supply an object for additional customization. These are all the op
   You may also set the global option `definitions.autoAddToSystem` in order to set the same value for *all* user-defined units at the same time.
 
   Behind the scenes, `autoAddToSystem` automatically adds the necessary entries to `definitions.quantities` and `definitions.unitSystem` so that the unit becomes a member of the specified unit system, allowing it to be used to simplify a Unit. If, however, existing values for `definitions.quantities` or `definitions.unitSystem` already exist in the user-defined or built-in units, `autoAddToSystem` will *not* override them. If you need more control over how your unit systems are set up, you should set `definitions.quantities` and `definitions.unitSystem` directly, rather than using `autoAddToSystem`.
+
+End of old stuff
 
 **definitions.prefixes**
 

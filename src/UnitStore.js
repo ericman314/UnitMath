@@ -276,7 +276,7 @@ export default function createUnitStore(options) {
       }
       console.log(`Using autoAddToSystem: ${autoAddToSystem} for unit ${key}`)
       if (!defs.unitSystems.hasOwnProperty(autoAddToSystem)) {
-        throw new Error(`autoAddToSystem ${autoAddToSystem} not recognized. The value must either be a known unit system or 'auto'.`)
+        // throw new Error(`autoAddToSystem ${autoAddToSystem} not recognized. The value must either be a known unit system or 'auto'.`)
       }
 
     }

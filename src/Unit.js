@@ -296,9 +296,9 @@ let _config = function _config (options) {
       // console.log(this)
       const result = _clone(this)
 
-      let proposedUnitList = simplifyUnits(this.units, unitStore, options)
+      // let proposedUnitList = simplifyUnits(result.units, unitStore, options)
 
-      /*
+      
       let systemStr = options.system
       if (systemStr === 'auto') {
         // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
@@ -313,7 +313,7 @@ let _config = function _config (options) {
         }
         let ids = Object.keys(identifiedSystems)
         ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
-        // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+        console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
         systemStr = ids[0]
       }
 
@@ -360,7 +360,7 @@ let _config = function _config (options) {
       }
 
       // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
-*/
+
       if (proposedUnitList) {
         // Replace this unit list with the proposed list
         result.units = proposedUnitList

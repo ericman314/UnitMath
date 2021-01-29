@@ -3,7 +3,7 @@ import approx from './approx'
 import unit from '../src/Unit.js'
 import Decimal from 'decimal.js'
 
-function configCustomUnits (units) {
+function configCustomUnits(units) {
   return unit.config({
     definitions: {
       units
@@ -175,7 +175,29 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
       })
 
-      it('should use custom units when simplifying', () => {
+      it('should use custom units when simplifying (explicit system definition)', () => {
+
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              mph: { value: '1 mi/hr' }
+            },
+            unitSystems: {
+              us: {
+                VELOCITY: 'mph'
+              },
+              si: {
+                VELOCITY: 'mph'
+              }
+            }
+          }
+        })
+
+        assert.strictEqual(newUnit('5 mi').div('2 hr').toString(), '2.5 mph')
+
+      })
+
+      it('should use custom units when simplifying (autoAddToSystem)', () => {
         let newUnit = configCustomUnits({
           mph: { value: '1 mi/hr', autoAddToSystem: 'auto' }
         })
