@@ -296,7 +296,7 @@ let _config = function _config (options) {
       // console.log(this)
       const result = _clone(this)
 
-      // let systemStr = options.system
+      let systemStr = options.system
       // if (systemStr === 'auto') {
       //   // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
 
@@ -314,28 +314,22 @@ let _config = function _config (options) {
       //   systemStr = ids[0]
       // }
 
-      // let system = unitStore.defs.unitSystems[systemStr]
+      let system = unitStore.defs.systems[systemStr] || []
 
       const proposedUnitList = []
 
       // Search for a matching dimension in the given unit system
-      let matchingDim
-      // for (const key in system) {
-      //   if (result.hasQuantity(key)) {
-      //     // console.log(`Found a matching dimension in system ${systemStr}: ${result.to().format()} has a dimension of ${key}, unit is ${system[key].unit.name}`)
-      //     matchingDim = key
-      //     break
-      //   }
-      // }
+      let matchingUnit
+      for (let unit of system) {
+        if (result.equalQuantity(unit)) {
+          matchingUnit = unit
+          break
+        }
+      }
 
       let ok = true
-      if (matchingDim) {
-        // console.log(`Pushing onto proposed unit list: ${system[matchingDim].prefix}${system[matchingDim].unit.name}`)
-        proposedUnitList.push({
-          unit: system[matchingDim].unit,
-          prefix: system[matchingDim].prefix,
-          power: 1.0
-        })
+      if (matchingUnit) {
+        proposedUnitList.push(...matchingUnit.units)
       } else {
         // Multiple units or units with powers are formatted like this:
         // 5 kg m^2 / s^3 mol
@@ -1101,7 +1095,7 @@ let _config = function _config (options) {
     for (let dim in result.dimension) {
       if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
         for (let unit in unitStore.defs.units) {
-          console.log(unitStore.defs.units[unit])
+          // console.log(unitStore.defs.units[unit])
           if (unitStore.defs.units[unit].quantity === dim) {
             proposedUnitList.push({
               unit: unitStore.defs.units[unit],

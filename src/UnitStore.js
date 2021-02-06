@@ -191,7 +191,8 @@ export default function createUnitStore (options) {
   for (let system in defs.systems) {
     let sys = defs.systems[system]
     for (let i = 0; i < sys.length; i++) {
-      let unit = parser(sys[i])
+      // Important! The unit below is not a real unit, but for now it is-close enough
+      let unit = { ...parser(sys[i]), type: 'Unit' }
       if (unit) {
         sys[i] = unit
       } else {
