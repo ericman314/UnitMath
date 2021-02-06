@@ -100,7 +100,7 @@ let _config = function _config (options) {
         throw new TypeError('To construct a unit, you must supply a single string, two strings, a number and a string, or a custom type and a string.')
       }
       this.type = 'Unit'
-      this.dimension = parseResult.dimension
+      this.dimension = _removeZeroDimensions(parseResult.dimension)
       this.units = _combineDuplicateUnits(parseResult.units)
       this.value = (parseResult.value === undefined || parseResult.value === null) ? null : denormalize(this.units, normalize(parseResult.units, parseResult.value, options.type), options.type)
     }
@@ -297,22 +297,26 @@ let _config = function _config (options) {
       const result = _clone(this)
 
       let systemStr = options.system
-      // if (systemStr === 'auto') {
-      //   // If unit system is 'auto', then examine the existing units to infer which system is preferred. Favor 'si', or the first available system, in the event of a tie.
-
-      //   // TODO: Object key order might not be consistent across platforms
-      //   let firstAvailableSystem = Object.keys(unitStore.defs.unitSystems)[0]
-      //   let identifiedSystems = { [firstAvailableSystem]: 0.1 }
-      //   for (let i = 0; i < this.units.length; i++) {
-      //     this.units[i].unit.systems.forEach(sys => {
-      //       identifiedSystems[sys] = (identifiedSystems[sys] || 0) + 1
-      //     })
-      //   }
-      //   let ids = Object.keys(identifiedSystems)
-      //   ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
-      //   // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
-      //   systemStr = ids[0]
-      // }
+      if (systemStr === 'auto') {
+        // If unit system is 'auto', then examine the existing units to infer which system is preferred.
+        let identifiedSystems = {}
+        for (let unit of this.units) {
+          for (let system in unitStore.defs.systems) {
+            if (!unitStore.defs.systems.hasOwnProperty(system)) continue
+            for (let systemUnit of unitStore.defs.systems[system]) {
+              let systemUnitString = `${systemUnit.units[0].prefix}${systemUnit.units[0].unit.name}`
+              let unitString = `${unit.prefix}${unit.unit.name}`
+              if (systemUnit.units.length === 1 && systemUnitString === unitString) {
+                identifiedSystems[system] = (identifiedSystems[system] || 0) + 1
+              }
+            }
+          }
+        }
+        let ids = Object.keys(identifiedSystems)
+        ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
+        // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+        systemStr = ids[0]
+      }
 
       let system = unitStore.defs.systems[systemStr] || []
 
@@ -331,10 +335,8 @@ let _config = function _config (options) {
       if (matchingUnit) {
         proposedUnitList.push(...matchingUnit.units)
       } else {
-        // Multiple units or units with powers are formatted like this:
-        // 5 kg m^2 / s^3 mol
+        // Did not find a matching unit in the system
         // Build a representation from the base units of the current unit system
-
         for (let dim in result.dimension) {
           if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
             let found = false
@@ -352,10 +354,7 @@ let _config = function _config (options) {
             if (!found) ok = false
           }
         }
-
       }
-
-      // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
 
       if (ok) {
         // Replace this unit list with the proposed list
@@ -725,6 +724,21 @@ let _config = function _config (options) {
 
     return result
   }
+  
+  /**
+   * Private function _removeZeroDimensions removes dimensions that have zero exponent
+   * @param {object} dimensions The dimensions to process
+   * @returns {object} A new object with the zero dimensions removed
+   */
+  function _removeZeroDimensions(dimensions) {
+    let result = { ...dimensions }
+    for (let dim in result) {
+      if (Math.abs(result[dim]) < 1e-15) {
+        delete result[dim]
+      }
+    }
+    return result
+  }
 
   function _comparePrepare (unit1, unit2, requireMatchingDimensions) {
     if (requireMatchingDimensions && !unit1.equalQuantity(unit2)) {
@@ -807,6 +821,7 @@ let _config = function _config (options) {
     }
 
     result.units = _combineDuplicateUnits(result.units)
+    result.dimension = _removeZeroDimensions(result.dimension)
 
     // If at least one operand has a value, then the result should also have a value
     if (unit1.value !== null || unit2.value !== null) {
@@ -845,6 +860,7 @@ let _config = function _config (options) {
     }
 
     result.units = _combineDuplicateUnits(result.units)
+    result.dimension = _removeZeroDimensions(result.dimension)
 
     // If at least one operand has a value, the result should have a value
     if (unit1.value !== null || unit2.value !== null) {
