@@ -66,11 +66,13 @@
 //   VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
 // }
 
-// A unit system is a set of units that are by convention used with the unit system.
+// A unit system is a set of units that are by convention used with the unit system. 
+// Units listed here will be treated as explicitly belonging to the specified system.
+// All other units' systems will be inferred.
 export const systems = {
-  si: ['m', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr'],
+  si: ['m', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr', 'm^2'],
   cgs: ['cm', 's', 'A', 'g', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'erg', 'dyn', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'Pa', 'ohm', 'sr'],
-  us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp']
+  us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp', 'mi', 'mile']
 }
 
 // Units may or may not use one of the prefix sets (SHORT, LONG, etc).
@@ -244,11 +246,16 @@ export const units = {
   },
 
   // length
-  meter: {
+  m: {
     quantity: 'LENGTH',
+    prefixes: 'SHORT',
+    commonPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
+    value: 1
+  },
+  meter: {
     prefixes: 'LONG',
     commonPrefixes: ['nano', 'micro', 'milli', 'centi', '', 'kilo'],
-    value: 1,
+    value: '1 m',
     aliases: ['meters']
   },
   inch: {
@@ -279,11 +286,7 @@ export const units = {
     value: '100 link',
     aliases: ['ch', 'chains']
   },
-  m: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
-    value: '1 meter'
-  },
+
   angstrom: {
     value: '1e-10 m',
     aliases: ['angstroms']

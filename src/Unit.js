@@ -99,6 +99,7 @@ let _config = function _config (options) {
       } else {
         throw new TypeError('To construct a unit, you must supply a single string, two strings, a number and a string, or a custom type and a string.')
       }
+      // console.log(require('util').inspect(parseResult, false, 4, true))
       this.type = 'Unit'
       this.dimension = _removeZeroDimensions(parseResult.dimension)
       this.units = _combineDuplicateUnits(parseResult.units)
@@ -314,7 +315,7 @@ let _config = function _config (options) {
         }
         let ids = Object.keys(identifiedSystems)
         ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
-        // console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+        console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
         systemStr = ids[0]
       }
 
@@ -322,12 +323,38 @@ let _config = function _config (options) {
 
       const proposedUnitList = []
 
-      // Search for a matching dimension in the given unit system
       let matchingUnit
-      for (let unit of system) {
-        if (result.equalQuantity(unit)) {
-          matchingUnit = unit
-          break
+
+      // TODO: Decide how to simplify: 10 mile hour / minute. miles should be acceptable, but foot is chosen instead
+
+      // Search for a matching dimension in the given unit system
+      if (!matchingUnit) {
+        for (let unit of system) {
+          if (result.equalQuantity(unit)) {
+            matchingUnit = unit
+            break
+          }
+        }
+      }
+
+      // Search for a matching unit in the current units
+      if (!matchingUnit) {
+        for (let unit of result.units) {
+          if (result.equalQuantity(unit.unit.name)) {
+            matchingUnit = new Unit(unit.unit.name)
+            break
+          }
+        }
+      }
+
+      // Search for a matching dimension in all units
+      if (!matchingUnit) {
+        for (let unit in unitStore.defs.units) {
+          if (result.equalQuantity(unit)) {
+            matchingUnit = new Unit(unit)
+            console.log(matchingUnit)
+            break
+          }
         }
       }
 
@@ -336,7 +363,7 @@ let _config = function _config (options) {
         proposedUnitList.push(...matchingUnit.units)
       } else {
         // Did not find a matching unit in the system
-        // Build a representation from the base units of the current unit system
+        // Build a representation from the base units of all defined units
         for (let dim in result.dimension) {
           if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
             let found = false
@@ -842,7 +869,6 @@ let _config = function _config (options) {
    */
   function _div (unit1, unit2) {
     const result = _clone(unit1)
-
     for (let dim in { ...unit1.dimension, ...unit2.dimension }) {
       result.dimension[dim] = (unit1.dimension[dim] || 0) - (unit2.dimension[dim] || 0)
       if (Math.abs(result.dimension[dim]) < 1e-15) delete result.dimension[dim]
