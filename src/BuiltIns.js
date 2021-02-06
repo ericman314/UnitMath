@@ -66,53 +66,12 @@
 //   VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
 // }
 
-// A unit system is a set of dimensionally independent base units plus a set of derived units, formed by multiplication and division of the base units, that are by convention used with the unit system.
-// export const unitSystems = {
-//   si: {
-//     AMOUNT_OF_SUBSTANCE: 'mol',
-//     ANGLE: 'rad',
-//     BIT: 'b',
-//     CAPACITANCE: 'F',
-//     CURRENT: 'A',
-//     ELECTRIC_CHARGE: 'C',
-//     ELECTRICAL_CONDUCTANCE: 'S',
-//     ELECTRIC_POTENTIAL: 'V',
-//     ENERGY: 'J',
-//     FORCE: 'N',
-//     FREQUENCY: 'Hz',
-//     IMPEDANCE: 'ohm',
-//     INDUCTANCE: 'H',
-//     LENGTH: 'm',
-//     LUMINOUS_INTENSITY: 'cd',
-//     LUMINOUS_FLUX: 'lm',
-//     ILLUMINANCE: 'lx',
-//     MAGNETIC_FLUX: 'Wb',
-//     MAGNETIC_FLUX_DENSITY: 'T',
-//     MASS: 'kg',
-//     POWER: 'W',
-//     PRESSURE: 'Pa',
-//     RESISTANCE: 'ohm',
-//     SOLID_ANGLE: 'sr',
-//     TEMPERATURE: 'K',
-//     TIME: 's'
-//   }
-// }
-
-// unitSystems.cgs = Object.assign({}, unitSystems.si)
-// unitSystems.cgs.LENGTH = 'cm'
-// unitSystems.cgs.MASS = 'g'
-// unitSystems.cgs.FORCE = 'dyn'
-// unitSystems.cgs.ENERGY = 'erg'
-
-// // These maybe are not canonical
-// unitSystems.us = Object.assign({}, unitSystems.si)
-// unitSystems.us.LENGTH = 'ft'
-// unitSystems.us.MASS = 'lbm'
-// unitSystems.us.TEMPERATURE = 'degF'
-// unitSystems.us.FORCE = 'lbf'
-// unitSystems.us.ENERGY = 'BTU'
-// unitSystems.us.POWER = 'hp'
-// unitSystems.us.PRESSURE = 'psi'
+// A unit system is a set of units that are by convention used with the unit system.
+export const systems = {
+  si: ['m', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr'],
+  cgs: ['cm', 's', 'A', 'g', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'erg', 'dyn', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'Pa', 'ohm', 'sr'],
+  us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp']
+}
 
 // Units may or may not use one of the prefix sets (SHORT, LONG, etc).
 export const prefixes = {

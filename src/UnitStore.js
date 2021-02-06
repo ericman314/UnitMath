@@ -18,50 +18,68 @@ export default function createUnitStore (options) {
   // These will contain the built-in units extended with the user's definitions
   const originalDefinitions = {}
 
-  // These will contain copies we can mutate without affecting the originals
-  const defs = {}
+  
 
   if (options.definitions.skipBuiltIns) {
     originalDefinitions.prefixes = { ...options.definitions.prefixes }
     originalDefinitions.units = { ...options.definitions.units }
+    originalDefinitions.systems = { ...options.definitions.systems }
+
   } else {
     originalDefinitions.prefixes = { ...builtIns.prefixes, ...options.definitions.prefixes }
     originalDefinitions.units = { ...builtIns.units, ...options.definitions.units }
+    originalDefinitions.systems = { ...builtIns.systems }
+
+    // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
+    for (let system in options.definitions.systems) {
+      if (originalDefinitions.systems.hasOwnProperty(system)) {
+        originalDefinitions.systems[system] = [...options.definitions.systems[system], ...originalDefinitions.systems[system]]
+      } else {
+        originalDefinitions.systems[system] = [...options.definitions.systems[system]]
+      }
+    }
   }
-  defs.prefixes = { ...originalDefinitions.prefixes }
 
-  /**
-   * A unit system is a set of dimensionally independent base units plus a set of derived units, formed by
-   * multiplication and division of the base units, that are by convention used with the unit system.
-   */
+  // These will contain copies we can mutate without affecting the originals
+  const defs = {
+    units: {},
+    prefixes: { ...originalDefinitions.prefixes },
+    systems: {}
+  }
+  for (let system in originalDefinitions.systems) {
+    defs.systems[system] = originalDefinitions.systems[system].slice()
+  }
 
-  // Add additional unit systems here.
 
-  /* All of the prefixes, base quantities, quantities, units, and unit systems have now been defined.
+  /* All of the prefixes, units, and systems have now been defined.
    *
    * We will perform the following processing steps to prepare the UnitStore for use:
    *
-   * - For each QUANTITY, parse its value and replace it with a dimension array, where each index of the array corresponds to the base quantity's index in defs.baseQuantities, and the value of each element is the power (exponent) of that base in the dimension.
+   * - For each QUANTITY, parse its value and replace it with a dimension array, where each index of the array
+   *   corresponds to the base quantity's index in defs.baseQuantities, and the value of each element is the power
+   *   (exponent) of that base in the dimension.
    *
    * - Initialize the parser with an empty set of units.
    *
-   * - Loop through the units. If the unit has a `quantity` property, initialize that unit with the quantity's dimension, and the given value property. If the unit does not, then parse the unit's value property (which is either a string or an two-element array) using the parser, and create the dimension and value from the resulting Unit. Create the unit with the name, dimension, value, offset, prefixes, and commonPrefixes properties. Convert the prefixes from a string to the associated object from the defs.prefixes object.
+   * - Loop through the units. If the unit has a `quantity` property, initialize that unit with the quantity's
+   *   dimension, and the given value property. If the unit does not, then parse the unit's value property (which is
+   *   either a string or an two-element array) using the parser, and create the dimension and value from the resulting
+   *   Unit. Create the unit with the name, dimension, value, offset, prefixes, and commonPrefixes properties. Convert
+   *   the prefixes from a string to the associated object from the defs.prefixes object.
    *
-   * - Some units will fail to be parsed if the defs.units object keys are not enumerated in the optimal order. Repeat the loop until all units have been converted.
+   * - Some units will fail to be parsed if the defs.units object keys are not enumerated in the optimal order. Repeat
+   *   the loop until all units have been converted.
    *
    * - Verify that each unit's commonPrefixes are contained in prefixes.
    *
-   * - Loop through the defs.unitSystems and converts the strings into unit/prefix pairs.
+   * - Loop through the defs.systems and convert the strings into valueless units.
    *
    * - Add the unit system names to each unit (as an array) for reverse lookup.
    *
-   * - Clone units that have aliases. Shallow copies are acceptable since the resulting defs.units object will be deep-immutable.
+   * - Clone units that have aliases. Shallow copies are acceptable since the resulting defs.units object will be
+   *   deep-immutable.
    *
 */
-
- 
-  // Begin with an empty object of units
-  defs.units = {}
 
   // Create a parser configured for these options, and also supply it with the findUnit function
   const parser = createParser(options, findUnit)
@@ -145,7 +163,7 @@ export default function createUnitStore (options) {
             dimension: unitDimension,
             prefixes: defs.prefixes[unitDef.prefixes] || { '': 1 },
             commonPrefixes: unitDef.commonPrefixes, // Default should be undefined
-            systems: []
+            // systems: []
           }
           if (unitQuantity) newUnit.quantity = unitQuantity
           Object.freeze(newUnit)
@@ -163,39 +181,24 @@ export default function createUnitStore (options) {
   }
 
   // Check to make sure config options has selected a unit system that exists.
-  // if (options.system !== 'auto') {
-  //   if (!defs.unitSystems.hasOwnProperty(options.system)) {
-  //     throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.unitSystems).join(', ')} `)
-  //   }
-  // }
+  if (options.system !== 'auto') {
+    if (!defs.systems.hasOwnProperty(options.system)) {
+      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.systems).join(', ')} `)
+    }
+  }
 
-  // Convert unit systems from strings to unit/prefix pairs
-  // for (let sysKey in defs.unitSystems) {
-  //   // Clone the individual system before mutating its properties
-  //   defs.unitSystems[sysKey] = Object.assign({}, defs.unitSystems[sysKey])
-  //   let sys = defs.unitSystems[sysKey]
-  //   for (let quantKey in sys) {
-  //     if (!defs.quantities.hasOwnProperty(quantKey)) {
-  //       throw new Error(`Unit system ${sysKey} mentions quantity ${quantKey}, which does not exist`)
-  //     }
-  //     let unitPrefixPair = findUnit(sys[quantKey])
-  //     if (unitPrefixPair) {
-  //       // Check to make this unit is consistent with this quantity in the unit system
-  //       for (let i = 0; i < defs.quantities[quantKey].length; i++) {
-  //         if (defs.quantities[quantKey][i] !== unitPrefixPair.unit.dimension[i]) {
-  //           throw new Error(`In system '${sysKey}', quantity '${quantKey}' is inconsistent with unit '${sys[quantKey]}'`)
-  //         }
-  //       }
-
-  //       sys[quantKey] = unitPrefixPair
-
-  //       // Add the system's name to the unit (for reverse lookup) so we can infer unit systems just by inspecting the individual units
-  //       unitPrefixPair.unit.systems.push(sysKey)
-  //     } else {
-  //       throw new Error(`Unknown unit '${sys[quantKey]}' for quantity '${quantKey}' in unit system '${sysKey}'`)
-  //     }
-  //   }
-  // }
+  // Convert unit system strings to valueless units
+  for (let system in defs.systems) {
+    let sys = defs.systems[system]
+    for (let i = 0; i < sys.length; i++) {
+      let unit = parser(sys[i])
+      if (unit) {
+        sys[i] = unit
+      } else {
+        throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
+      }
+    }
+  }
 
   // Final setup for units
   for (let key in defs.units) {
