@@ -318,6 +318,20 @@ You can also supply an object for additional customization. These are all the op
   }
   ```
 
+- `basePrefix`: Optional. The prefix to use for a _base unit_, if the base unit has one. This is necessary for units such as kilogram, which is a base unit but has a prefix.
+
+  ```js
+  units: {
+    g: {
+      quantity: 'MASS',
+      prefixes: 'SHORT',
+      commonPrefixes: ['n', 'u', 'm', '', 'k'],
+      value: 0.001,
+      basePrefix: 'k' // Treat as if 'kg' is the base unit, not 'g'
+    },
+  }
+  ```
+
 - `aliases`: Shortcut to create additional units with identical definitions.
 
   ```js
@@ -641,12 +655,12 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
   r.to().format() // 10 kg m^2 / s^3 A^2
   ```
 
-- `#toSI()`
+- `#toBaseUnits()`
 
-  Returns a new unit that is the SI representation of this unit.
+  Returns a new unit in the base representation.
 
   ```js
-  unit('10 ft/s').toSI() // 3.048 m / s
+  unit('10 ft/s').toBaseUnits() // 3.048 m / s
   ```
 
 - `getValue()`

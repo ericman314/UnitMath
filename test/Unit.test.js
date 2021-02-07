@@ -177,26 +177,27 @@ describe('unitmath', () => {
 
       it('should use custom units when simplifying', () => {
         let newUnit = configCustomUnits({
-          mph: { value: '1 mi/hr', autoAddToSystem: 'auto' }
+          mph: { value: '1 mi/hr' }
         })
         assert.strictEqual(newUnit('5 mi').div('2 hr').toString(), '2.5 mph')
       })
 
       it('should use custom units derived from other custom units when simplifying', () => {
         const newUnit = configCustomUnits({
-          widget: { value: '5 kg bytes', autoAddToSystem: 'auto' },
-          woggle: { value: '4 widget^2', autoAddToSystem: 'auto' },
-          gadget: { value: '5 N/woggle', autoAddToSystem: 'auto' },
-          whimsy: { value: '8 gadget hours', autoAddToSystem: 'auto' }
+          widget: { value: '5 kg bytes' },
+          woggle: { value: '4 widget^2' },
+          gadget: { value: '5 N/woggle' },
+          whimsy: { value: '8 gadget hours' }
         })
         assert.strictEqual(newUnit(1000, 'N h kg^-2 bytes^-2').toString(), '2500 whimsy')
       })
 
       it('should apply prefixes and offset to custom units', () => {
         const newUnit = configCustomUnits({
-          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', autoAddToSystem: 'auto' }
+          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', commonPrefixes: ['', 'kilo'] }
         })
-        assert.strictEqual(newUnit('8000 rad^2/s').toString(), '1 kilowiggle')
+        let unit1 = newUnit('8000 rad^2/s')
+        assert.strictEqual(unit1.toString(), '1.999 kilowiggle')
       })
 
       it('should only allow valid names for units', () => {
@@ -1944,45 +1945,30 @@ describe('unitmath', () => {
     })
   })
 
-  describe('toSI', () => {
+  describe('toBaseUnits', () => {
     it('should return a clone of the unit', () => {
       const u1 = unit('3 ft')
-      const u2 = u1.toSI()
+      const u2 = u1.toBaseUnits()
       assert.strictEqual(u1 === u2, false)
     })
 
     it('should return the unit in SI units', () => {
-      approx.deepEqual(unit('4 ft').toSI(), unit('1.2192 m').to())
-      approx.deepEqual(unit('0.111 ft^2').toSI(), unit('0.01031223744 m^2').to())
+      approx.deepEqual(unit('4 ft').toBaseUnits(), unit('1.2192 m').to())
+      approx.deepEqual(unit('0.111 ft^2').toBaseUnits(), unit('0.01031223744 m^2').to())
     })
 
     it('should return SI units for valueless units', () => {
-      assert.deepStrictEqual(unit('ft/minute').toSI(), unit('m / s').to())
+      assert.deepStrictEqual(unit('ft/minute').toBaseUnits(), unit('m / s').to())
     })
 
     it('alterate api syntax should work too', () => {
-      approx.deepEqual(unit.toSI(unit('4 ft')), unit('1.2192 m').to())
-      approx.deepEqual(unit.toSI('4 ft'), unit('1.2192 m').to())
+      approx.deepEqual(unit.toBaseUnits(unit('4 ft')), unit('1.2192 m').to())
+      approx.deepEqual(unit.toBaseUnits('4 ft'), unit('1.2192 m').to())
     })
 
     it('should return SI units for custom units defined from other units', () => {
       let newUnit = configCustomUnits({ foo: '3 kW' })
-      assert.strictEqual(newUnit('42 foo').toSI().format(), '126000 kg m^2 / s^3')
-    })
-
-    it('should throw if custom unit not defined from existing units', () => {
-      let newUnit = unit.config({
-        definitions: {
-          baseQuantities: ['BAZINESS'],
-          units: {
-            baz: {
-              quantity: 'BAZINESS',
-              value: 1
-            }
-          }
-        }
-      })
-      assert.throws(() => { newUnit('10 baz').toSI() }, /Cannot express unit '10 baz' in SI units. System 'si' does not contain a unit for base quantity 'BAZINESS'/)
+      assert.strictEqual(newUnit('42 foo').toBaseUnits().format(), '126000 kg m^2 / s^3')
     })
   })
 
@@ -2162,7 +2148,7 @@ describe('unitmath', () => {
   })
 
   describe('built-in units', () => {
-    describe('us customary liquid units', () => {
+    it('us customary liquid units', () => {
       assert.strictEqual(unit('1 cup').to('mL').toString(), '236.5882365 mL')
       assert.strictEqual(unit('1 cup').to('gallons').toString(), '0.0625 gallons')
       assert.strictEqual(unit('1 cup').to('quarts').toString(), '0.25 quarts')

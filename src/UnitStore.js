@@ -166,6 +166,7 @@ export default function createUnitStore (options) {
             // systems: []
           }
           if (unitQuantity) newUnit.quantity = unitQuantity
+          if (unitDef.basePrefix) newUnit.basePrefix = unitDef.basePrefix 
           Object.freeze(newUnit)
           defs.units[newUnitName] = newUnit
           unitsAdded++
@@ -187,13 +188,15 @@ export default function createUnitStore (options) {
     }
   }
 
-  // Convert unit system strings to valueless units
+  // Replace unit system strings with valueless units
   for (let system in defs.systems) {
     let sys = defs.systems[system]
     for (let i = 0; i < sys.length; i++) {
       // Important! The unit below is not a real unit, but for now it is-close enough
-      let unit = { ...parser(sys[i]), type: 'Unit' }
+      let unit = parser(sys[i])
       if (unit) {
+        unit.type = 'Unit'
+        Object.freeze(unit)
         sys[i] = unit
       } else {
         throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
@@ -265,9 +268,7 @@ export default function createUnitStore (options) {
   }
 
   Object.freeze(defs.prefixes)
-  Object.freeze(defs.baseQuantities)
-  Object.freeze(defs.quantities)
-  Object.freeze(defs.unitSystems)
+  Object.freeze(defs.systems)
   Object.freeze(defs.units)
 
   return { originalDefinitions, defs, exists, findUnit, parser }

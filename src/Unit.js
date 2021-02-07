@@ -244,8 +244,8 @@ let _config = function _config (options) {
      * @memberof Unit
      * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
      */
-    toSI () {
-      let unit = _toSI(this)
+    toBaseUnits() {
+      let unit = _toBaseUnits(this)
       Object.freeze(unit)
       return unit
     }
@@ -314,8 +314,9 @@ let _config = function _config (options) {
           }
         }
         let ids = Object.keys(identifiedSystems)
+        // TODO: No need to sort this, can just pick the best
         ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
-        console.log(`Identified the following systems when examining unit ${result.to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+        // console.log(`Identified the following systems when examining unit ${result.clone().to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
         systemStr = ids[0]
       }
 
@@ -325,34 +326,50 @@ let _config = function _config (options) {
 
       let matchingUnit
 
-      // TODO: Decide how to simplify: 10 mile hour / minute. miles should be acceptable, but foot is chosen instead
-
-      // Search for a matching dimension in the given unit system
+      // Several methods to decide on the best unit for simplifying
+     
+      // 1. Search for a matching dimension in the given unit system
       if (!matchingUnit) {
+        let matchingUnitsOfSystem = []
         for (let unit of system) {
-          if (result.equalQuantity(unit)) {
-            matchingUnit = unit
-            break
+          if (this.equalQuantity(unit)) {
+            matchingUnitsOfSystem.push(unit)
+          }
+        }
+
+        // Default to the first matching unit of the system
+        if (matchingUnitsOfSystem.length > 0) {
+          matchingUnit = matchingUnitsOfSystem[0]
+        }
+
+        // If one of our current units matches one in the system, use that instead
+        for (let unit of this.units) {
+          for (let systemUnit of matchingUnitsOfSystem) {
+            let systemUnitString = `${systemUnit.units[0].prefix}${systemUnit.units[0].unit.name}`
+            let unitString = `${unit.prefix}${unit.unit.name}`
+            if (systemUnit.units.length === 1 && systemUnitString === unitString) {
+              matchingUnit = systemUnit
+              break
+            }
           }
         }
       }
 
-      // Search for a matching unit in the current units
+      // 2. Search for a matching unit in the current units
       if (!matchingUnit) {
-        for (let unit of result.units) {
-          if (result.equalQuantity(unit.unit.name)) {
+        for (let unit of this.units) {
+          if (this.equalQuantity(unit.unit.name)) {
             matchingUnit = new Unit(unit.unit.name)
             break
           }
         }
       }
 
-      // Search for a matching dimension in all units
+      // 3. Search for a matching dimension in all units
       if (!matchingUnit) {
         for (let unit in unitStore.defs.units) {
-          if (result.equalQuantity(unit)) {
+          if (this.equalQuantity(unit)) {
             matchingUnit = new Unit(unit)
-            console.log(matchingUnit)
             break
           }
         }
@@ -363,15 +380,16 @@ let _config = function _config (options) {
         proposedUnitList.push(...matchingUnit.units)
       } else {
         // Did not find a matching unit in the system
-        // Build a representation from the base units of all defined units
+        // 4. Build a representation from the base units of all defined units
         for (let dim in result.dimension) {
           if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
             let found = false
             for (let unit in unitStore.defs.units) {
               if (unit.quantity === dim) {
+                // TODO: Try to use a matching unit from the specified system, instead of the base unit that was just found
                 proposedUnitList.push({
                   unit,
-                  prefix: '',
+                  prefix: unit.basePrefix || '',
                   power: result.dimension[dim]
                 })
                 found = true
@@ -599,7 +617,7 @@ let _config = function _config (options) {
      */
     format (...userOpts) {
       let simp = this.clone()
-
+      
       // A bit of clarification:
       // options is the original options
       // userOpts is a user-supplied argument
@@ -651,7 +669,7 @@ let _config = function _config (options) {
           simp = simp2
         }
       }
-
+      
       if (_opts.prefix === 'always' || (_opts.prefix === 'auto' && !this.fixed)) {
         simp = _choosePrefix(simp, _opts)
       }
@@ -1121,10 +1139,10 @@ let _config = function _config (options) {
   }
 
   /**
-   * Private function _toSI
+   * Private function _toBaseUnits
    * @param {Unit} unit The unit to convert to SI.
    */
-  function _toSI (unit) {
+  function _toBaseUnits(unit) {
     const result = _clone(unit)
 
     const proposedUnitList = []
@@ -1141,7 +1159,7 @@ let _config = function _config (options) {
           if (unitStore.defs.units[unit].quantity === dim) {
             proposedUnitList.push({
               unit: unitStore.defs.units[unit],
-              prefix: '',
+              prefix: unitStore.defs.units[unit].basePrefix || '',
               power: result.dimension[dim]
             })
             break
@@ -1363,12 +1381,12 @@ let _config = function _config (options) {
   }
 
   /**
-  * Convert a unit to SI.
+  * Convert a unit to base units.
   * @param {Unit|string|number} unit The unit to convert.
-  * @returns {Unit} The result of converting the unit to SI.
+  * @returns {Unit} The result of converting the unit to base units.
   */
-  unitmath.toSI = function toSI (unit) {
-    return _convertParamToUnit(unit).toSI()
+  unitmath.toBaseUnits = function toBaseUnits(unit) {
+    return _convertParamToUnit(unit).toBaseUnits()
   }
 
   unitmath.exists = unitStore.exists

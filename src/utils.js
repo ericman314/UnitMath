@@ -30,7 +30,9 @@ export function normalize (unitPieces, value, type) {
     unitValue = type.conv(unitPieces[0].unit.value, value)
     unitOffset = type.conv(unitPieces[0].unit.offset, value)
     unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix], value)
-    return type.mul(type.add(value, unitOffset), type.mul(unitValue, unitPrefixValue))
+
+    return type.mul(type.add(type.mul(value, unitPrefixValue), unitOffset), unitValue)
+    // (value*unitPrefixValue+unitOffset)*unitValue
   }
 }
 
@@ -67,7 +69,8 @@ export function denormalize (unitPieces, value, type) {
     unitPrefixValue = type.conv(unitPieces[0].unit.prefixes[unitPieces[0].prefix], value)
     unitOffset = type.conv(unitPieces[0].unit.offset, value)
 
-    return type.sub(type.div(type.div(value, unitValue), unitPrefixValue), unitOffset)
+    return type.div(type.sub(type.div(value, unitValue), unitOffset), unitPrefixValue)
+    // (value/unitValue-unitOffset)/unitPrefixValue
   }
 }
 
