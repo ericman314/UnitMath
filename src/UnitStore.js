@@ -7,7 +7,6 @@ import * as builtIns from './BuiltIns.js'
  * @param {Object} options
  */
 export default function createUnitStore (options) {
-
   /* Units are defined by these objects:
    * defs.prefixes
    * defs.units
@@ -18,13 +17,10 @@ export default function createUnitStore (options) {
   // These will contain the built-in units extended with the user's definitions
   const originalDefinitions = {}
 
-  
-
   if (options.definitions.skipBuiltIns) {
     originalDefinitions.prefixes = { ...options.definitions.prefixes }
     originalDefinitions.units = { ...options.definitions.units }
     originalDefinitions.systems = { ...options.definitions.systems }
-
   } else {
     originalDefinitions.prefixes = { ...builtIns.prefixes, ...options.definitions.prefixes }
     originalDefinitions.units = { ...builtIns.units, ...options.definitions.units }
@@ -49,7 +45,6 @@ export default function createUnitStore (options) {
   for (let system in originalDefinitions.systems) {
     defs.systems[system] = originalDefinitions.systems[system].slice()
   }
-
 
   /* All of the prefixes, units, and systems have now been defined.
    *
@@ -162,11 +157,11 @@ export default function createUnitStore (options) {
             offset: unitDef.offset || 0,
             dimension: unitDimension,
             prefixes: defs.prefixes[unitDef.prefixes] || { '': 1 },
-            commonPrefixes: unitDef.commonPrefixes, // Default should be undefined
+            commonPrefixes: unitDef.commonPrefixes // Default should be undefined
             // systems: []
           }
           if (unitQuantity) newUnit.quantity = unitQuantity
-          if (unitDef.basePrefix) newUnit.basePrefix = unitDef.basePrefix 
+          if (unitDef.basePrefix) newUnit.basePrefix = unitDef.basePrefix
           Object.freeze(newUnit)
           defs.units[newUnitName] = newUnit
           unitsAdded++

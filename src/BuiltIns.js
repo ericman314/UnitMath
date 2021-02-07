@@ -66,7 +66,7 @@
 //   VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
 // }
 
-// A unit system is a set of units that are by convention used with the unit system. 
+// A unit system is a set of units that are by convention used with the unit system.
 // Units listed here will be treated as belonging to the specified system.
 // TODO: We need a better way to add all of the units which possibly might show up and need to be parsed.
 export const systems = {

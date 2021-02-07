@@ -303,7 +303,7 @@ describe('unitmath', () => {
               },
               fib: '5 foo/hr',
               flab: '1 foo^3'
-            },
+            }
           }
         })
 
@@ -488,7 +488,7 @@ describe('unitmath', () => {
       //   })
       // })
     })
-  
+
     describe('newly returned namespace', () => {
       it('should be a new unitmath namespace', () => {
         let newUnit = unit.config({})
@@ -1331,14 +1331,14 @@ describe('unitmath', () => {
     })
 
     it('it should correctly differentiate between si and cgs units when unit system is "auto"', () => {
-      let unit1_cgs = unit('5 cm')
-      let unit2_cgs = unit('10 g')
-      let unit1_si = unit('5 m')
-      let unit2_si = unit('10 kg')
+      let unit1Cgs = unit('5 cm')
+      let unit2Cgs = unit('10 g')
+      let unit1Si = unit('5 m')
+      let unit2Si = unit('10 kg')
       let unit3 = unit('2 s')
 
-      assert.strictEqual(unit2_cgs.mul(unit1_cgs).div(unit3.pow(2)).toString(), '12.5 dyn')
-      assert.strictEqual(unit2_si.mul(unit1_si).div(unit3.pow(2)).toString(), '12.5 N')
+      assert.strictEqual(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString(), '12.5 dyn')
+      assert.strictEqual(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString(), '12.5 N')
     })
 
     it('should try to use preexisting units in the simplified expression', () => {
@@ -1865,7 +1865,6 @@ describe('unitmath', () => {
   })
 
   describe('unitStore', () => {
-    
     describe('defs.units', () => {
       it('built-in units should be of the correct value and dimension', () => {
         assert.strictEqual(unit(1, 's A').equals(unit(1, 'C')), true)

@@ -1,7 +1,7 @@
 /**
  * Returns a new Parser.
  */
-export default function createParser(options, findUnit) {
+export default function createParser (options, findUnit) {
   // private variables and functions for the Unit parser
   let text, index, c
 

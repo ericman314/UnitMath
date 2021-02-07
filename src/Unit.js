@@ -244,7 +244,7 @@ let _config = function _config (options) {
      * @memberof Unit
      * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
      */
-    toBaseUnits() {
+    toBaseUnits () {
       let unit = _toBaseUnits(this)
       Object.freeze(unit)
       return unit
@@ -327,7 +327,7 @@ let _config = function _config (options) {
       let matchingUnit
 
       // Several methods to decide on the best unit for simplifying
-     
+
       // 1. Search for a matching dimension in the given unit system
       if (!matchingUnit) {
         let matchingUnitsOfSystem = []
@@ -617,7 +617,7 @@ let _config = function _config (options) {
      */
     format (...userOpts) {
       let simp = this.clone()
-      
+
       // A bit of clarification:
       // options is the original options
       // userOpts is a user-supplied argument
@@ -669,7 +669,7 @@ let _config = function _config (options) {
           simp = simp2
         }
       }
-      
+
       if (_opts.prefix === 'always' || (_opts.prefix === 'auto' && !this.fixed)) {
         simp = _choosePrefix(simp, _opts)
       }
@@ -769,13 +769,13 @@ let _config = function _config (options) {
 
     return result
   }
-  
+
   /**
    * Private function _removeZeroDimensions removes dimensions that have zero exponent
    * @param {object} dimensions The dimensions to process
    * @returns {object} A new object with the zero dimensions removed
    */
-  function _removeZeroDimensions(dimensions) {
+  function _removeZeroDimensions (dimensions) {
     let result = { ...dimensions }
     for (let dim in result) {
       if (Math.abs(result[dim]) < 1e-15) {
@@ -1142,7 +1142,7 @@ let _config = function _config (options) {
    * Private function _toBaseUnits
    * @param {Unit} unit The unit to convert to SI.
    */
-  function _toBaseUnits(unit) {
+  function _toBaseUnits (unit) {
     const result = _clone(unit)
 
     const proposedUnitList = []
@@ -1150,7 +1150,6 @@ let _config = function _config (options) {
     // Multiple units or units with powers are formatted like this:
     // 5 (kg m^2) / (s^3 mol)
     // Build an representation from the base units of the SI unit system
-
 
     for (let dim in result.dimension) {
       if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
@@ -1167,7 +1166,6 @@ let _config = function _config (options) {
         }
       }
     }
-
 
     // for (let i = 0; i < unitStore.defs.baseQuantities.length; i++) {
     //   const baseDim = unitStore.defs.baseQuantities[i]
@@ -1385,7 +1383,7 @@ let _config = function _config (options) {
   * @param {Unit|string|number} unit The unit to convert.
   * @returns {Unit} The result of converting the unit to base units.
   */
-  unitmath.toBaseUnits = function toBaseUnits(unit) {
+  unitmath.toBaseUnits = function toBaseUnits (unit) {
     return _convertParamToUnit(unit).toBaseUnits()
   }
 
