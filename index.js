@@ -1,3 +1,2 @@
-
-const esmRequire = require('esm')(module)
-module.exports = esmRequire('./src/Unit.js').default
+import UnitMath from './src/Unit.js'
+export default UnitMath
