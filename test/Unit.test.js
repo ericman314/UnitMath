@@ -123,9 +123,7 @@ describe('unitmath', () => {
           skipBuiltIns: false,
           units: {},
           prefixes: {},
-          baseQuantities: [],
-          quantities: {},
-          unitSystems: {}
+          systems: {}
         }
       }
       let actualOptions = unit.config()
@@ -264,7 +262,7 @@ describe('unitmath', () => {
 
       it('should create new prefixes', () => {
         // TODO: Mutating individual units in the definitions can have bad side effects!
-        let meter = Object.assign({}, unit.definitions().units.meter)
+        let meter = { ...unit.definitions().units.meter }
         meter.prefixes = 'FUNNY'
         meter.commonPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
         let newUnit = unit.config({
@@ -292,7 +290,7 @@ describe('unitmath', () => {
         }), /common prefix.*was not found among the allowable prefixes/)
       })
 
-      it('should create new base quantities and derived quantities', () => {
+      it('should create new base units', () => {
         let newUnit = unit.config({
           definitions: {
             units: {
@@ -313,7 +311,6 @@ describe('unitmath', () => {
       })
 
       it('should prepend, but not replace, individual unit systems', () => {
-        // TODO: Still no good way to say that mi/hr should be replaced by mph unless mi is explicitly designated as a part of the unit system
         let newUnit = unit.config({
           definitions: {
             units: { mph: '1 mi/hr' },
@@ -332,10 +329,6 @@ describe('unitmath', () => {
           prefixMax: 4.99999,
           definitions: {
             skipBuiltIns: true,
-            baseQuantities: ['ESSENCE_OF_FOO'],
-            quantities: {
-              'FOOLUME': 'ESSENCE_OF_FOO^3'
-            },
             units: {
               foo: {
                 quantity: 'ESSENCE_OF_FOO',
@@ -366,127 +359,22 @@ describe('unitmath', () => {
         assert.strictEqual(newUnit('40 fib').format(), '1.6 FFfib')
       })
 
-      // describe('autoAddToSystem', () => {
-      //   it.skip('should add the unit to the specified system', () => {
-      //     let newUnit = unit.config({
-      //       system: 'us',
-      //       definitions: {
-      //         units: {
-      //           mph: {
-      //             value: '1 mile/hour',
-      //             autoAddToSystem: 'us'
-      //           }
-      //         }
-      //       }
-      //     })
-      //     assert.strictEqual(newUnit.definitions().unitSystems.us.VELOCITY, 'mph')
-      //   })
+      it('should use base prefix', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              widget: {
+                quantity: 'THINGS_YOU_CAN_MAKE',
+                value: 1,
+                prefixes: 'LONG',
+                basePrefix: 'kilo'
+              },
+            },
+          }
+        })
+        assert.deepStrictEqual(newUnit('5000 widget').toBaseUnits().toString(), '5 kilowidget')
+      })
 
-      //   it.skip('should auto-select system when \'auto\'', () => {
-      //     let newUnit = unit.config({
-      //       definitions: {
-      //         units: {
-      //           mph: {
-      //             value: '1 mile/hour',
-      //             autoAddToSystem: 'auto'
-      //           }
-      //         }
-      //       }
-      //     })
-      //     assert.strictEqual(newUnit.definitions().unitSystems.us.VELOCITY, 'mph')
-      //   })
-
-      //   it.skip('should format matching Units using the newly added unit only if autoAddToSystem was set', () => {
-      //     let newUnit = unit.config({
-      //       definitions: {
-      //         units: {
-      //           mph: {
-      //             value: '1 mile/hour',
-      //             autoAddToSystem: 'us'
-      //           }
-      //         }
-      //       }
-      //     })
-      //     let newUnitNoAuto = unit.config({
-      //       definitions: {
-      //         units: {
-      //           mph: '1 mile/hour'
-      //         }
-      //       }
-      //     })
-      //     assert.strictEqual(unit('1 mile/hour').simplify().toString(), '1 mile/hour')
-      //     assert.strictEqual(newUnitNoAuto('1 mile/hour').simplify().toString(), '1 mile/hour')
-      //     assert.strictEqual(newUnit('1 mile/hour').simplify().toString(), '1 mph')
-      //   })
-
-      //   it.skip('should create new quantities', () => {
-      //     let newUnit = unit.config({
-      //       definitions: {
-      //         units: {
-      //           snap: {
-      //             value: '1 m/s^4',
-      //             autoAddToSystem: 'auto'
-      //           }
-      //         }
-      //       }
-      //     })
-      //     assert.deepStrictEqual(newUnit('1 m/s^4').getQuantities(), ['snap_QUANTITY'])
-      //     assert.strictEqual(newUnit('1 m/s^4').simplify().toString(), '1 snap')
-      //   })
-
-      //   it.skip('should not override existing quantities', () => {
-      //     let newUnit = unit.config({
-      //       definitions: {
-      //         units: {
-      //           snap: {
-      //             value: '1 m/s^4',
-      //             autoAddToSystem: 'auto'
-      //           }
-      //         },
-      //         quantities: {
-      //           JOUNCE: ['LENGTH/TIME^4']
-      //         }
-      //       }
-      //     })
-      //     assert.deepStrictEqual(newUnit('1 m/s^4').getQuantities(), ['JOUNCE'])
-      //     assert.strictEqual(newUnit('1 m/s^4').simplify().toString(), '1 snap')
-      //   })
-
-      //   it('should not override existing unitSystem', () => {
-      //     let newUnit = unit.config({
-      //       definitions: {
-      //         units: {
-      //           tenmeter: {
-      //             value: '10 m',
-      //             autoAddToSystem: 'si'
-      //           }
-      //         }
-      //       }
-      //     })
-      //     assert.strictEqual(newUnit('100 J').div('10 N').simplify().toString(), '10 m') // Not '1 tenmeter'
-      //   })
-
-      //   it.skip('should work as global option: definitions.autoAddToSystem', () => {
-      //     let newUnit = unit.config({
-      //       definitions: {
-      //         units: {
-      //           mph: '1 mile/hour'
-      //         },
-      //         autoAddToSystem: 'us'
-      //       }
-      //     })
-      //     assert.strictEqual(newUnit('1 mile/hour').simplify().toString(), '1 mph')
-      //   })
-
-      //   it.skip('should throw if autoAddToSystem is not a string or known unit system', () => {
-      //     assert.throws(() => {
-      //       unit.config({ definitions: { units: { mph: { value: '1 mile/hour', autoAddToSystem: false } } } })
-      //     }, /autoAddToSystem must be a string: either a known unit system or 'auto'/)
-      //     assert.throws(() => {
-      //       unit.config({ definitions: { units: { mph: { value: '1 mile/hour', autoAddToSystem: 'nervous' } } } })
-      //     }, /autoAddToSystem must be a string: either a known unit system or 'auto'/)
-      //   })
-      // })
     })
 
     describe('newly returned namespace', () => {
@@ -514,9 +402,7 @@ describe('unitmath', () => {
       assert.strictEqual(defs.units.kelvin.prefixes, 'LONG')
       assert.strictEqual(defs.prefixes.LONG.giga, 1e9)
       assert.strictEqual(defs.prefixes.SHORT_LONG.giga, 1e9)
-      // assert.strictEqual(defs.unitSystems.si.FORCE, 'N')
-      // assert.strictEqual(defs.baseQuantities[0], 'MASS')
-      // assert.strictEqual(defs.quantities.AREA, 'LENGTH^2')
+    
 
       // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
       let defs2 = unit.config({}).definitions()
@@ -526,9 +412,7 @@ describe('unitmath', () => {
       assert.strictEqual(defs2.units.kelvin.prefixes, 'LONG')
       assert.strictEqual(defs2.prefixes.LONG.giga, 1e9)
       assert.strictEqual(defs2.prefixes.SHORT_LONG.giga, 1e9)
-      // assert.strictEqual(defs2.unitSystems.si.FORCE, 'N')
-      // assert.strictEqual(defs2.baseQuantities[0], 'MASS')
-      // assert.strictEqual(defs2.quantities.AREA, 'LENGTH^2')
+
     })
   })
 
@@ -624,74 +508,6 @@ describe('unitmath', () => {
       assert.throws(() => unit.exists(42), /parameter must be a string/)
     })
   })
-
-  // describe('getQuantity', () => {
-  //   it('should return the QUANTITY matching this unit', () => {
-  //     assert.deepStrictEqual(unit(5, 'kg m s K A rad bits').getQuantities(), [])
-  //     assert.deepStrictEqual(unit(5).getQuantities(), ['UNITLESS'])
-  //     assert.deepStrictEqual(unit(5, 'm s').getQuantities(), ['ABSEMENT'])
-  //     assert.deepStrictEqual(unit(5, 'm/s^2').getQuantities(), ['ACCELERATION'])
-  //     assert.deepStrictEqual(unit(5, 'deg').getQuantities(), ['ANGLE'])
-  //     assert.deepStrictEqual(unit(5, 'rad/s^2').getQuantities(), ['ANGULAR_ACCELERATION'])
-  //     assert.deepStrictEqual(unit(5, '5 kg m^2 rad/s').getQuantities(), ['ANGULAR_MOMENTUM'])
-  //     assert.deepStrictEqual(unit(5, '5 rad/s').getQuantities(), ['ANGULAR_VELOCITY'])
-  //     assert.deepStrictEqual(unit(5, 'mol').getQuantities(), ['AMOUNT_OF_SUBSTANCE'])
-  //     assert.deepStrictEqual(unit(5, 'm^2').getQuantities(), ['AREA'])
-  //     assert.deepStrictEqual(unit(5, 'kg/m^2').getQuantities(), ['AREA_DENSITY'])
-  //     assert.deepStrictEqual(unit(5, 'kb').getQuantities(), ['BIT'])
-  //     assert.deepStrictEqual(unit(5, 'Gb/s').getQuantities(), ['BIT_RATE'])
-  //     assert.deepStrictEqual(unit(5, 'C/V').getQuantities(), ['CAPACITANCE'])
-  //     assert.deepStrictEqual(unit(5, 'A/m^2').getQuantities(), ['CURRENT_DENSITY'])
-  //     assert.deepStrictEqual(unit(5, 'A').getQuantities(), ['CURRENT'])
-  //     assert.deepStrictEqual(unit(5, 'Pa s').getQuantities(), ['DYNAMIC_VISCOSITY'])
-  //     assert.deepStrictEqual(unit(5, 'C').getQuantities(), ['ELECTRIC_CHARGE'])
-  //     assert.deepStrictEqual(unit(5, 'C/m^3').getQuantities(), ['ELECTRIC_CHARGE_DENSITY'])
-  //     assert.deepStrictEqual(unit(5, 'C/m^2').getQuantities(), ['ELECTRIC_DISPLACEMENT'])
-  //     assert.deepStrictEqual(unit(5, 'V/m').getQuantities(), ['ELECTRIC_FIELD_STRENGTH'])
-  //     assert.deepStrictEqual(unit(5, 'siemens').getQuantities(), ['ELECTRICAL_CONDUCTANCE'])
-  //     assert.deepStrictEqual(unit(5, 'siemens/m').getQuantities(), ['ELECTRICAL_CONDUCTIVITY'])
-  //     assert.deepStrictEqual(unit(5, 'V').getQuantities(), ['ELECTRIC_POTENTIAL'])
-  //     assert.deepStrictEqual(unit(5, 'ohm').getQuantities(), ['RESISTANCE', 'IMPEDANCE'])
-  //     assert.deepStrictEqual(unit(5, 'ohm m').getQuantities(), ['ELECTRICAL_RESISTIVITY'])
-  //     assert.deepStrictEqual(unit(5, 'kg m^2 / s^2').getQuantities(), ['ENERGY', 'TORQUE'])
-  //     assert.deepStrictEqual(unit(5, 'J / K').getQuantities(), ['ENTROPY', 'HEAT_CAPACITY'])
-  //     assert.deepStrictEqual(unit(5, 'kg m / s^2').getQuantities(), ['FORCE'])
-  //     assert.deepStrictEqual(unit(5, 's^-1').getQuantities(), ['FREQUENCY'])
-  //     assert.deepStrictEqual(unit(5, 'W/m^2').getQuantities(), ['HEAT_FLUX_DENSITY', 'IRRADIANCE'])
-  //     assert.deepStrictEqual(unit(5, 'N s').getQuantities(), ['IMPULSE', 'MOMENTUM'])
-  //     assert.deepStrictEqual(unit(5, 'henry').getQuantities(), ['INDUCTANCE'])
-  //     assert.deepStrictEqual(unit(5, 'm/s^3').getQuantities(), ['JERK'])
-  //     assert.deepStrictEqual(unit(5, 'm^2/s').getQuantities(), ['KINEMATIC_VISCOSITY'])
-  //     assert.deepStrictEqual(unit(5, 'cm').getQuantities(), ['LENGTH'])
-  //     assert.deepStrictEqual(unit(5, 'kg/m').getQuantities(), ['LINEAR_DENSITY'])
-  //     assert.deepStrictEqual(unit(5, 'candela').getQuantities(), ['LUMINOUS_INTENSITY'])
-  //     assert.deepStrictEqual(unit(5, 'A/m').getQuantities(), ['MAGNETIC_FIELD_STRENGTH'])
-  //     assert.deepStrictEqual(unit(5, 'tesla m^2').getQuantities(), ['MAGNETIC_FLUX'])
-  //     assert.deepStrictEqual(unit(5, 'tesla').getQuantities(), ['MAGNETIC_FLUX_DENSITY'])
-  //     assert.deepStrictEqual(unit(5, 'lbm').getQuantities(), ['MASS'])
-  //     assert.deepStrictEqual(unit(5, 'mol/m^3').getQuantities(), ['MOLAR_CONCENTRATION'])
-  //     assert.deepStrictEqual(unit(5, 'J/mol').getQuantities(), ['MOLAR_ENERGY'])
-  //     assert.deepStrictEqual(unit(5, 'J/mol K').getQuantities(), ['MOLAR_ENTROPY', 'MOLAR_HEAT_CAPACITY'])
-  //     assert.deepStrictEqual(unit(5, 'H/m').getQuantities(), ['PERMEABILITY'])
-  //     assert.deepStrictEqual(unit(5, 'F/m').getQuantities(), ['PERMITTIVITY'])
-  //     assert.deepStrictEqual(unit(5, 'kg m^2 / s^3').getQuantities(), ['POWER'])
-  //     assert.deepStrictEqual(unit(5, 'kg / m s^2').getQuantities(), ['PRESSURE'])
-  //     assert.deepStrictEqual(unit(5, 'H^-1').getQuantities(), ['RELUCTANCE'])
-  //     assert.deepStrictEqual(unit(5, 'H^-1').getQuantities(), ['RELUCTANCE'])
-  //     assert.deepStrictEqual(unit(5, 'J/kg').getQuantities(), ['SPECIFIC_ENERGY'])
-  //     assert.deepStrictEqual(unit(5, 'J/kg K').getQuantities(), ['SPECIFIC_HEAT_CAPACITY'])
-  //     assert.deepStrictEqual(unit(5, 'm^3/kg').getQuantities(), ['SPECIFIC_VOLUME'])
-  //     assert.deepStrictEqual(unit(5, 'kg m^2/s').getQuantities(), ['SPIN'])
-  //     assert.deepStrictEqual(unit(5, 'J/m^2').getQuantities(), ['SURFACE_TENSION'])
-  //     assert.deepStrictEqual(unit(5, 'K').getQuantities(), ['TEMPERATURE'])
-  //     assert.deepStrictEqual(unit(5, 'K/m').getQuantities(), ['TEMPERATURE_GRADIENT'])
-  //     assert.deepStrictEqual(unit(5, 'W/m K').getQuantities(), ['THERMAL_CONDUCTIVITY'])
-  //     assert.deepStrictEqual(unit(5, 'day').getQuantities(), ['TIME'])
-  //     assert.deepStrictEqual(unit(5, 'm/s').getQuantities(), ['VELOCITY'])
-  //     assert.deepStrictEqual(unit(5, 'm^3').getQuantities(), ['VOLUME'])
-  //     assert.deepStrictEqual(unit(5, 'm^3/s').getQuantities(), ['VOLUMETRIC_FLOW_RATE'])
-  //   })
-  // })
 
   describe('equalQuantity', () => {
     it('should test whether two units are of the same quantity', () => {

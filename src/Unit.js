@@ -1438,9 +1438,7 @@ let defaultOptions = {
     skipBuiltIns: false,
     units: {},
     prefixes: {},
-    baseQuantities: [],
-    quantities: {},
-    unitSystems: {}
+    systems: {}
   },
   type: defaults
 }
