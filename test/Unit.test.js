@@ -87,22 +87,22 @@ beforeAll(() => {
 })
 
 describe('unitmath', () => {
-  describe.skip('unitmath namespace', () => {
+  describe('unitmath namespace', () => {
     test('should be a function', () => {
-      assert.strictEqual(typeof unit, 'function')
+      expect(typeof unit).toEqual('function')
     })
 
     test('should return a unit', () => {
-      assert.strictEqual(unit(1, 'm').type, 'Unit')
+      expect(unit(1, 'm').type).toEqual('Unit')
     })
 
     test('should have a config method', () => {
-      assert.strictEqual(typeof unit.config, 'function')
+      expect(typeof unit.config).toEqual('function')
     })
 
     test('should be frozen', () => {
-      assert.throws(() => { unit.config = 42 })
-      assert.throws(() => { unit.foo = 42 })
+      expect(() => { unit.config = 42 }).toThrow()
+      expect(() => { unit.foo = 42 }).toThrow()
     })
 
     test('should have the correct default format config options', () => {
@@ -126,41 +126,41 @@ describe('unitmath', () => {
       }
       let actualOptions = unit.config()
       for (let key in optionsToCheckEquality) {
-        assert.deepStrictEqual(optionsToCheckEquality[key], actualOptions[key], `config option ${key} has the wrong default value`)
+        expect(optionsToCheckEquality[key]).toEqual(actualOptions[key])
       }
     })
   })
 
-  describe.skip('config', () => {
+  describe('config', () => {
     test('should return current config when called with no arguments', () => {
-      assert.strictEqual(typeof unit.config(), 'object')
+      expect(typeof unit.config()).toEqual('object')
     })
 
     test('should clone the options argument', () => {
       let options = { prefix: 'always' }
       let newUnit = unit.config(options)
-      assert.notStrictEqual(options, newUnit.config())
+      expect(options).not.toBe(newUnit.config())
     })
 
     test('should freeze the options', () => {
       let newUnit = unit.config({})
       let options = newUnit.config()
-      assert.throws(() => { options.prefix = 'always' })
+      expect(() => { options.prefix = 'always' }).toThrow()
     })
 
     test('should set new config options', () => {
       let newUnit = unit.config({ prefix: 'always' })
-      assert.strictEqual(unit.config().prefix, 'auto')
-      assert.strictEqual(newUnit.config().prefix, 'always')
-      assert.strictEqual(newUnit.config().simplify, 'auto')
+      expect(unit.config().prefix).toEqual('auto')
+      expect(newUnit.config().prefix).toEqual('always')
+      expect(newUnit.config().simplify).toEqual('auto')
     })
 
     test('should throw on invalid options', () => {
-      assert.throws(() => unit.config({ prefix: 'invalidOption' }), /Invalid option for prefix: 'invalidOption'/)
-      assert.throws(() => unit.config({ simplify: 'bad' }), /Invalid option for simplify: 'bad'/)
+      expect(() => unit.config({ prefix: 'invalidOption' })).toThrow(/Invalid option for prefix: 'invalidOption'/)
+      expect(() => unit.config({ simplify: 'bad' })).toThrow(/Invalid option for simplify: 'bad'/)
     })
 
-    test('custom definitions', () => {
+    describe('custom definitions', () => {
       test('should create new units', () => {
         let newUnit = configCustomUnits({
           furlongsPerFortnight: { value: '1 furlong/fortnight' },
@@ -168,14 +168,14 @@ describe('unitmath', () => {
           fortnight: { value: [2, 'weeks'] }
         })
 
-        assert.strictEqual(newUnit('1 furlongsPerFortnight').to('yards/week').toString(), '110 yards / week')
+        expect(newUnit('1 furlongsPerFortnight').to('yards/week').toString()).toEqual('110 yards / week')
       })
 
       test('should use custom units when simplifying', () => {
         let newUnit = configCustomUnits({
           mph: { value: '1 mi/hr' }
         })
-        assert.strictEqual(newUnit('5 mi').div('2 hr').toString(), '2.5 mph')
+        expect(newUnit('5 mi').div('2 hr').toString()).toEqual('2.5 mph')
       })
 
       test('should use custom units derived from other custom units when simplifying', () => {
@@ -185,7 +185,7 @@ describe('unitmath', () => {
           gadget: { value: '5 N/woggle' },
           whimsy: { value: '8 gadget hours' }
         })
-        assert.strictEqual(newUnit(1000, 'N h kg^-2 bytes^-2').toString(), '2500 whimsy')
+        expect(newUnit(1000, 'N h kg^-2 bytes^-2').toString()).toEqual('2500 whimsy')
       })
 
       test('should apply prefixes and offset to custom units', () => {
@@ -193,19 +193,19 @@ describe('unitmath', () => {
           wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', commonPrefixes: ['', 'kilo'] }
         })
         let unit1 = newUnit('8000 rad^2/s')
-        assert.strictEqual(unit1.toString(), '1.999 kilowiggle')
+        expect(unit1.toString()).toEqual('1.999 kilowiggle')
       })
 
       test('should only allow valid names for units', () => {
-        assert.throws(() => configCustomUnits({ 'not_a_valid_unit': '3.14 kg' }), /Unit name contains non-alpha/)
-        assert.throws(() => configCustomUnits({ '5tartsWithNumber': '42 ft' }), /Unit name contains non-alpha/)
-        assert.throws(() => configCustomUnits({ 5: '5 day' }), /Unit name contains non-alpha/)
+        expect(() => configCustomUnits({ 'not_a_valid_unit': '3.14 kg' })).toThrow(/Unit name contains non-alpha/)
+        expect(() => configCustomUnits({ '5tartsWithNumber': '42 ft' })).toThrow(/Unit name contains non-alpha/)
+        expect(() => configCustomUnits({ 5: '5 day' })).toThrow(/Unit name contains non-alpha/)
       })
 
       test('should throw on invalid unit value type', () => {
-        assert.throws(() => configCustomUnits({ myUnit: 42 }), /Unit definition for 'myUnit' must be a string/)
+        expect(() => configCustomUnits({ myUnit: 42 })).toThrow(/Unit definition for 'myUnit' must be a string/)
 
-        assert.throws(() => configCustomUnits({ myUnit: { value: 42 } }), /Unit definition for 'myUnit' must be a string/)
+        expect(() => configCustomUnits({ myUnit: { value: 42 } })).toThrow(/Unit definition for 'myUnit' must be a string/)
       })
 
       test('should override existing units', () => {
@@ -215,47 +215,47 @@ describe('unitmath', () => {
             aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
           }
         })
-        assert.strictEqual(unit('1 lb').to('kg').toString(), '0.45359237 kg')
-        assert.strictEqual(newUnit('1 lb').to('kg').toString(), '0.5 kg')
+        expect(unit('1 lb').to('kg').toString()).toEqual('0.45359237 kg')
+        expect(newUnit('1 lb').to('kg').toString()).toEqual('0.5 kg')
       })
 
       test('should remove existing units if value is falsey', () => {
         let newUnit = configCustomUnits({ henry: null })
-        assert.doesNotThrow(() => unit('henry'))
-        assert.throws(() => newUnit('henry'), /Unit "henry" not found/)
+        expect(() => unit('henry')).not.toThrow()
+        expect(() => newUnit('henry')).toThrow(/Unit "henry" not found/)
       })
 
       test('should throw if not all units could be created', () => {
-        assert.throws(() => configCustomUnits({
+        expect(() => configCustomUnits({
           myUnit: '1 theirUnit',
           theirUnit: '1 myUnit'
-        }), /Error: Could not create the following units: myUnit, theirUnit. Reasons follow: SyntaxError: Unit "theirUnit" not found. SyntaxError: Unit "myUnit" not found./)
+        })).toThrow(/Could not create the following units: myUnit, theirUnit. Reasons follow: SyntaxError: Unit "theirUnit" not found. SyntaxError: Unit "myUnit" not found./)
 
-        assert.throws(() => configCustomUnits({
+        expect(() => configCustomUnits({
           myUnit: 'q038hfqi3hdq0'
-        }), /Error: Could not create the following units: myUnit. Reasons follow: SyntaxError: Unit "q038hfqi3hdq0" not found./)
+        })).toThrow(/Could not create the following units: myUnit. Reasons follow: SyntaxError: Unit "q038hfqi3hdq0" not found./)
 
-        assert.throws(() => configCustomUnits({
+        expect(() => configCustomUnits({
           myUnit: '8 m^'
-        }), /In "8 m\^", "\^" must be followed by a floating-point number/)
+        })).toThrow(/In "8 m\^", "\^" must be followed by a floating-point number/)
       })
 
       test('should throw if an alias would override an existing unit', () => {
-        assert.throws(() => configCustomUnits({
+        expect(() => configCustomUnits({
           myUnit: {
             value: '1 m',
             aliases: ['m']
           }
-        }), /Alias 'm' would override an existing unit/)
+        })).toThrow(/Alias 'm' would override an existing unit/)
       })
 
       test('should throw on unknown prefix', () => {
-        assert.throws(() => configCustomUnits({
+        expect(() => configCustomUnits({
           myUnit: {
             value: '45 s',
             prefixes: 'MADE_UP_PREFIXES'
           }
-        }), /Unknown prefixes 'MADE_UP_PREFIXES' for unit 'myUnit'/)
+        })).toThrow(/Unknown prefixes 'MADE_UP_PREFIXES' for unit 'myUnit'/)
       })
 
       test('should create new prefixes', () => {
@@ -276,16 +276,16 @@ describe('unitmath', () => {
           }
         })
 
-        assert.strictEqual(newUnit('6 meter').toString(), '1.5 Bmeter')
-        assert.strictEqual(newUnit('10 Cmeter').toString(), '1.25 Fmeter')
+        expect(newUnit('6 meter').toString()).toEqual('1.5 Bmeter')
+        expect(newUnit('10 Cmeter').toString()).toEqual('1.25 Fmeter')
       })
 
       test('should only allow common prefixes that are included in prefixes', () => {
         let meter = Object.assign({}, unit.definitions().units.meter)
         meter.commonPrefixes = ['', 'invalidPrefix']
-        assert.throws(() => configCustomUnits({
+        expect(() => configCustomUnits({
           meter
-        }), /common prefix.*was not found among the allowable prefixes/)
+        })).toThrow(/common prefix.*was not found among the allowable prefixes/)
       })
 
       test('should create new base units', () => {
@@ -303,9 +303,9 @@ describe('unitmath', () => {
           }
         })
 
-        assert.strictEqual(newUnit('1 megafoo/s').simplify().toString(), '720000000 fib')
-        assert.strictEqual(newUnit('1 megafoo/s').to('fib').toString(), '720000000 fib')
-        assert.strictEqual(newUnit('3 foo').pow(3).toString(), '27 flab')
+        expect(newUnit('1 megafoo/s').simplify().toString()).toEqual('720000000 fib')
+        expect(newUnit('1 megafoo/s').to('fib').toString()).toEqual('720000000 fib')
+        expect(newUnit('3 foo').pow(3).toString()).toEqual('27 flab')
       })
 
       test('should prepend, but not replace, individual unit systems', () => {
@@ -317,8 +317,8 @@ describe('unitmath', () => {
             }
           }
         })
-        assert.deepStrictEqual(newUnit('70 mi').div('60 min').toString(), '70 mph')
-        assert.strictEqual(newUnit.definitions().systems.us.includes('lbm'), true)
+        expect(newUnit('70 mi').div('60 min').toString()).toEqual('70 mph')
+        expect(newUnit.definitions().systems.us.includes('lbm')).toBeTruthy()
       })
 
       test('should skip builtins if so desired', () => {
@@ -354,7 +354,7 @@ describe('unitmath', () => {
           }
         })
 
-        assert.strictEqual(newUnit('40 fib').format(), '1.6 FFfib')
+        expect(newUnit('40 fib').format()).toEqual('1.6 FFfib')
       })
 
       test('should use base prefix', () => {
@@ -370,7 +370,7 @@ describe('unitmath', () => {
             },
           }
         })
-        assert.deepStrictEqual(newUnit('5000 widget').toBaseUnits().toString(), '5 kilowidget')
+        expect(newUnit('5000 widget').toBaseUnits().toString()).toEqual('5 kilowidget')
       })
 
     })
@@ -378,198 +378,190 @@ describe('unitmath', () => {
     describe('newly returned namespace', () => {
       test('should be a new unitmath namespace', () => {
         let newUnit = unit.config({})
-        assert.notStrictEqual(unit, newUnit)
+        expect(unit).not.toBe(newUnit)
       })
       test('should create unit instances in a separate prototype chain', () => {
         let newUnit = unit.config({})
-        assert.notStrictEqual(unit(1, 'm').add, newUnit(1, 'm').add)
+        expect(unit(1, 'm').add).not.toBe(newUnit(1, 'm').add)
       })
       test('should have a clone of the config options from the first namespace', () => {
         let newUnit = unit.config({})
-        assert.notStrictEqual(unit.config(), newUnit.config())
+        expect(unit.config()).not.toBe(newUnit.config())
       })
     })
   })
 
-  describe.skip('definitions', () => {
+  describe('definitions', () => {
     test('should return the original built-in unit definitions', () => {
       let defs = unit.definitions()
 
-      assert.strictEqual(defs.units.inch.value, '0.0254 meter')
-      assert.deepStrictEqual(defs.units.foot.aliases, ['ft', 'feet'])
-      assert.strictEqual(defs.units.kelvin.prefixes, 'LONG')
-      assert.strictEqual(defs.prefixes.LONG.giga, 1e9)
-      assert.strictEqual(defs.prefixes.SHORT_LONG.giga, 1e9)
+      expect(defs.units.inch.value).toEqual('0.0254 meter')
+      expect(defs.units.foot.aliases).toEqual(['ft', 'feet'])
+      expect(defs.units.kelvin.prefixes).toEqual('LONG')
+      expect(defs.prefixes.LONG.giga).toEqual(1e9)
+      expect(defs.prefixes.SHORT_LONG.giga).toEqual(1e9)
     
 
       // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
       let defs2 = unit.config({}).definitions()
 
-      assert.strictEqual(defs2.units.inch.value, '0.0254 meter')
-      assert.deepStrictEqual(defs2.units.foot.aliases, ['ft', 'feet'])
-      assert.strictEqual(defs2.units.kelvin.prefixes, 'LONG')
-      assert.strictEqual(defs2.prefixes.LONG.giga, 1e9)
-      assert.strictEqual(defs2.prefixes.SHORT_LONG.giga, 1e9)
+      expect(defs2.units.inch.value).toEqual('0.0254 meter')
+      expect(defs2.units.foot.aliases).toEqual(['ft', 'feet'])
+      expect(defs2.units.kelvin.prefixes).toEqual('LONG')
+      expect(defs2.prefixes.LONG.giga).toEqual(1e9)
+      expect(defs2.prefixes.SHORT_LONG.giga).toEqual(1e9)
 
     })
   })
 
-  describe.skip('unit instance', () => {
+  describe('unit instance', () => {
     test('should have prototype methods add, mul, etc.', () => {
       let u1 = unit(1, 'm')
       let u2 = unit(2, 'kg')
       let fns = ['add', 'mul']
       fns.forEach(fn => {
-        assert.strictEqual(typeof u1[fn], 'function')
+        expect(typeof u1[fn]).toEqual('function')
       })
-      assert.strictEqual(u1.add, u2.add)
+      expect(u1.add).toEqual(u2.add)
     })
 
     test('should be frozen', () => {
-      assert(Object.isFrozen(unit(1, 'm')))
+      expect(Object.isFrozen(unit(1, 'm'))).toBeTruthy()
     })
   })
 
-  describe.skip('factory function', () => {
+  describe('factory function', () => {
     test('should create unit correctly', () => {
       let unit1 = unit()
-      assert.strictEqual(unit1.value, null)
-      assert.strictEqual(unit1.units.length, 0)
+      expect(unit1.value).toEqual(null)
+      expect(unit1.units.length).toEqual(0)
 
       unit1 = unit(5000, 'cm')
-      assert.strictEqual(unit1.value, 5000)
-      assert.strictEqual(unit1.units[0].unit.name, 'm')
+      expect(unit1.value).toEqual(5000)
+      expect(unit1.units[0].unit.name).toEqual('m')
 
       unit1 = unit(5, 'kg')
-      assert.strictEqual(unit1.value, 5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
+      expect(unit1.value).toEqual(5)
+      expect(unit1.units[0].unit.name).toEqual('g')
 
       unit1 = unit('kg')
-      assert.strictEqual(unit1.value, null)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
+      expect(unit1.value).toEqual(null)
+      expect(unit1.units[0].unit.name).toEqual('g')
 
       unit1 = unit('10 Hz')
-      assert.strictEqual(unit1.value, 10)
-      assert.strictEqual(unit1.units[0].unit.name, 'Hz')
+      expect(unit1.value).toEqual(10)
+      expect(unit1.units[0].unit.name).toEqual('Hz')
 
       unit1 = unit(9.81, 'kg m/s^2')
-      assert.strictEqual(unit1.value, 9.81)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'm')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
+      expect(unit1.value).toEqual(9.81)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[1].unit.name).toEqual('m')
+      expect(unit1.units[2].unit.name).toEqual('s')
 
       unit1 = unit('9.81 kg m/s^2')
-      assert.strictEqual(unit1.value, 9.81)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'm')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
+      expect(unit1.value).toEqual(9.81)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[1].unit.name).toEqual('m')
+      expect(unit1.units[2].unit.name).toEqual('s')
 
       unit1 = unit('9.81', 'kg m/s^2')
-      assert.strictEqual(unit1.value, 9.81)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'm')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
+      expect(unit1.value).toEqual(9.81)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[1].unit.name).toEqual('m')
+      expect(unit1.units[2].unit.name).toEqual('s')
     })
 
     test('should combine duplicate units', () => {
-      assert.deepStrictEqual(unit('3 kg kg'), unit('3 kg^2'))
-      assert.deepStrictEqual(unit('3 kg/kg'), unit('3'))
-      assert.deepStrictEqual(unit('3 kg m / s s'), unit('3 kg m / s^2'))
-      assert.deepStrictEqual(unit('3 m cm'), unit('0.03 m^2'))
-      approx.deepEqual(unit('3 cm m / s minute'), unit('300 cm^2 / s minute'))
-    })
-
-    test('should ignore properties on Object.prototype', () => {
-      Object.prototype.foo = unit._unitStore.defs.units['meter'] // eslint-disable-line no-extend-native
-
-      assert.throws(() => { console.log(unit(1, 'foo')) }, /Unit "foo" not found/)
-
-      delete Object.prototype.foo
+      expect(unit('3 kg kg')).toEqual(unit('3 kg^2'))
+      expect(unit('3 kg/kg')).toEqual(unit('3'))
+      expect(unit('3 kg m / s s')).toEqual(unit('3 kg m / s^2'))
+      expect(unit('3 m cm')).toEqual(unit('0.03 m^2'))
+      expect(unit('3 cm m / s minute')).toEqual(unit('300 cm^2 / s minute'))
     })
 
     test('should throw an error if called with wrong type of arguments', () => {
-      assert.throws(() => { console.log(unit(0, 'bla')) }, /Unit.*not found/)
-      assert.throws(() => { console.log(unit(0, 3)) }, /you must supply a single/)
+      expect(() => { console.log(unit(0, 'bla')) }).toThrow(/Unit.*not found/)
+      expect(() => { console.log(unit(0, 3)) }).toThrow(/you must supply a single/)
     })
   })
 
-  describe.skip('exists', () => {
+  describe('exists', () => {
     test('should return true if the string contains unit plus a prefix', () => {
-      assert.strictEqual(unit.exists('cm'), true)
-      assert.strictEqual(unit.exists('inch'), true)
-      assert.strictEqual(unit.exists('kb'), true)
-      assert.strictEqual(unit.exists('bla'), false)
-      assert.strictEqual(unit.exists('5cm'), false)
+      expect(unit.exists('cm')).toBeTruthy()
+      expect(unit.exists('inch')).toBeTruthy()
+      expect(unit.exists('kb')).toBeTruthy()
+      expect(unit.exists('bla')).toBeFalsy()
+      expect(unit.exists('5cm')).toBeFalsy()
     })
 
     test('should throw on invalid parameter', () => {
-      assert.throws(() => unit.exists(42), /parameter must be a string/)
+      expect(() => unit.exists(42)).toThrow(/parameter must be a string/)
     })
   })
 
-  describe.skip('equalQuantity', () => {
+  describe('equalQuantity', () => {
     test('should test whether two units are of the same quantity', () => {
-      assert.strictEqual(unit(5, 'cm').equalQuantity(unit(10, 'm')), true)
-      assert.strictEqual(unit(5, 'cm').equalQuantity(unit(10, 'kg')), false)
-      assert.strictEqual(unit(5, 'N').equalQuantity(unit(10, 'kg m / s ^ 2')), true)
-      assert.strictEqual(unit(8.314, 'J / mol K').equalQuantity(unit(0.02366, 'ft^3 psi / mol degF')), true)
+      expect(unit(5, 'cm').equalQuantity(unit(10, 'm'))).toBeTruthy()
+      expect(unit(5, 'cm').equalQuantity(unit(10, 'kg'))).toBeFalsy()
+      expect(unit(5, 'N').equalQuantity(unit(10, 'kg m / s ^ 2'))).toBeTruthy()
+      expect(unit(8.314, 'J / mol K').equalQuantity(unit(0.02366, 'ft^3 psi / mol degF'))).toBeTruthy()
     })
   })
 
-  describe.skip('equals', () => {
+  describe('equals', () => {
     test('should test whether two units are equal', () => {
-      assert.strictEqual(unit(100, 'cm').equals(unit(1, 'm')), true)
-      assert.strictEqual(unit(100, 'cm').equals(unit(2, 'm')), false)
-      assert.strictEqual(unit(100, 'cm').equals(unit(1, 'kg')), false)
-      assert.strictEqual(unit(100, 'ft lbf').equals(unit(1200, 'in lbf')), true)
-      assert.strictEqual(unit(100, 'N').equals(unit(100, 'kg m / s ^ 2')), true)
-      assert.strictEqual(unit(100, 'N').equals(unit(100, 'kg m / s')), false)
-      assert.strictEqual(unit(100, 'Hz').equals(unit(100, 's ^ -1')), true)
+      expect(unit(100, 'cm').equals(unit(1, 'm'))).toBeTruthy()
+      expect(unit(100, 'cm').equals(unit(2, 'm'))).toBeFalsy()
+      expect(unit(100, 'cm').equals(unit(1, 'kg'))).toBeFalsy()
+      expect(unit(100, 'ft lbf').equals(unit(1200, 'in lbf'))).toBeTruthy()
+      expect(unit(100, 'N').equals(unit(100, 'kg m / s ^ 2'))).toBeTruthy()
+      expect(unit(100, 'N').equals(unit(100, 'kg m / s'))).toBeFalsy()
+      expect(unit(100, 'Hz').equals(unit(100, 's ^ -1'))).toBeTruthy()
     })
 
     test('should work with valueless units', () => {
-      assert.strictEqual(unit('cm').equals(unit('cm')), true)
-      assert.strictEqual(unit('cm').equals(unit('m')), false)
-      assert.strictEqual(unit('cm/s').equals(unit('cm/s')), true)
+      expect(unit('cm').equals(unit('cm'))).toBeTruthy()
+      expect(unit('cm').equals(unit('m'))).toBeFalsy()
+      expect(unit('cm/s').equals(unit('cm/s'))).toBeTruthy()
     })
 
     test('should return false if one unit has a value and the other does not', () => {
-      assert.strictEqual(unit('cm/s').equals(unit('1 cm/s')), false)
+      expect(unit('cm/s').equals(unit('1 cm/s'))).toBeFalsy()
     })
 
     test('should convert parameter to a unit', () => {
-      assert(unit(100, 'cm').equals('1 m'))
-      assert(unit('3 kg / kg').equals(3))
+      expect(unit(100, 'cm').equals('1 m')).toBeTruthy()
+      expect(unit('3 kg / kg').equals(3)).toBeTruthy()
     })
   })
 
-  describe.skip('compare', () => {
+  describe('compare', () => {
     test('should compare two units', () => {
-      assert.strictEqual(unit('30 min').compare('1 hour'), -1)
-      assert.strictEqual(unit('60 min').compare('1 hour'), 0)
-      assert.strictEqual(unit('90 min').compare('1 hour'), 1)
+      expect(unit('30 min').compare('1 hour')).toEqual(-1)
+      expect(unit('60 min').compare('1 hour')).toEqual(0)
+      expect(unit('90 min').compare('1 hour')).toEqual(1)
     })
 
     test('should work with valueless units', () => {
-      assert.strictEqual(unit('kg/hr').compare('kg/min'), -1)
-      assert.strictEqual(unit('kg/hr').compare('kg/hr'), 0)
-      assert.strictEqual(unit('kg/hr').compare('g/hr'), 1)
+      expect(unit('kg/hr').compare('kg/min')).toEqual(-1)
+      expect(unit('kg/hr').compare('kg/hr')).toEqual(0)
+      expect(unit('kg/hr').compare('g/hr')).toEqual(1)
     })
 
     test('should throw if dimensions do not match', () => {
-      assert.throws(() => unit(100, 'N').compare(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
-      assert.throws(() => unit(100, 'cm').compare(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'N').compare(unit(100, 'kg m / s'))).toThrow(/Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'cm').compare(unit(1, 'kg'))).toThrow(/Cannot compare units.*dimensions do not match/)
     })
 
     test('should convert parameter to a unit', () => {
-      assert.strictEqual(unit(100, 'cm').compare('2 m'), -1)
-      assert.strictEqual(unit('3 kg / kg').compare(2), 1)
+      expect(unit(100, 'cm').compare('2 m')).toEqual(-1)
+      expect(unit('3 kg / kg').compare(2)).toEqual(1)
     })
 
     test('should consistently compare NaNs', () => {
-      assert.strictEqual(unit(100, 'cm').compare(unit(NaN, 'cm')), -1)
-      assert.strictEqual(unit(NaN, 'cm').compare(unit(100, 'cm')), 1)
-      assert.strictEqual(unit(NaN, 'cm').compare(unit(NaN, 'cm')), 1)
+      expect(unit(100, 'cm').compare(unit(NaN, 'cm'))).toEqual(-1)
+      expect(unit(NaN, 'cm').compare(unit(100, 'cm'))).toEqual(1)
+      expect(unit(NaN, 'cm').compare(unit(NaN, 'cm'))).toEqual(1)
     })
 
     test('should sort Infinities and NaNs correctly', () => {
@@ -587,8 +579,8 @@ describe('unitmath', () => {
       ]
 
       units.sort((a, b) => a.compare(b))
-      assert.deepStrictEqual(
-        units.map(u => u.toString()),
+      expect(
+        units.map(u => u.toString())).toEqual(
         [
           '-Infinity m', '-Infinity m',
           '1 in', '10 in',
@@ -600,548 +592,550 @@ describe('unitmath', () => {
     })
   })
 
-  describe.skip('lessThan', () => {
+  describe('lessThan', () => {
     test('should test whether one unit is less than another', () => {
-      assert.strictEqual(unit(100, 'cm').lessThan(unit(1, 'm')), false)
-      assert.strictEqual(unit(100, 'cm').lessThan(unit(2, 'm')), true)
-      // assert.strictEqual(unit(100, 'ft lbf').lessThan(unit(1200, 'in lbf')), false)  // Round-off error
-      assert.strictEqual(unit(100, 'N').lessThan(unit(100, 'kg m / s ^ 2')), false)
-      assert.strictEqual(unit(100, 'Hz').lessThan(unit(100, 's ^ -1')), false)
-      assert.strictEqual(unit(101, 'Hz').lessThan(unit(100, 's ^ -1')), false)
-      assert.strictEqual(unit(99, 'Hz').lessThan(unit(100, 's ^ -1')), true)
+      expect(unit(100, 'cm').lessThan(unit(1, 'm'))).toBeFalsy()
+      expect(unit(100, 'cm').lessThan(unit(2, 'm'))).toBeTruthy()
+      // expect(unit(100, 'ft lbf').lessThan(unit(1200, 'in lbf'))).toBeFalsy()  // Round-off error
+      expect(unit(100, 'N').lessThan(unit(100, 'kg m / s ^ 2'))).toBeFalsy()
+      expect(unit(100, 'Hz').lessThan(unit(100, 's ^ -1'))).toBeFalsy()
+      expect(unit(101, 'Hz').lessThan(unit(100, 's ^ -1'))).toBeFalsy()
+      expect(unit(99, 'Hz').lessThan(unit(100, 's ^ -1'))).toBeTruthy()
     })
 
     test('should work with valueless units', () => {
-      assert.strictEqual(unit('cm').lessThan(unit('cm')), false)
-      assert.strictEqual(unit('cm').lessThan(unit('m')), true)
-      assert.strictEqual(unit('cm/s').lessThan(unit('cm/min')), false)
+      expect(unit('cm').lessThan(unit('cm'))).toBeFalsy()
+      expect(unit('cm').lessThan(unit('m'))).toBeTruthy()
+      expect(unit('cm/s').lessThan(unit('cm/min'))).toBeFalsy()
     })
 
     test('should throw if dimensions do not match', () => {
-      assert.throws(() => unit(100, 'N').lessThan(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
-      assert.throws(() => unit(100, 'cm').lessThan(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'N').lessThan(unit(100, 'kg m / s'))).toThrow(/Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'cm').lessThan(unit(1, 'kg'))).toThrow(/Cannot compare units.*dimensions do not match/)
     })
 
     test('should throw if one unit has a value and the other does not', () => {
-      assert.throws(() => unit('1m').lessThan('km'), /Cannot compare units.*one has a value and the other does not/)
+      expect(() => unit('1m').lessThan('km')).toThrow(/Cannot compare units.*one has a value and the other does not/)
     })
 
     test('should convert parameter to a unit', () => {
-      assert(unit(100, 'cm').lessThan('2 m'))
-      assert(unit('3 kg / kg').lessThan(4))
+      expect(unit(100, 'cm').lessThan('2 m')).toBeTruthy()
+      expect(unit('3 kg / kg').lessThan(4)).toBeTruthy()
     })
   })
 
-  describe.skip('lessThanOrEqual', () => {
+  describe('lessThanOrEqual', () => {
     test('should test whether one unit is less than another', () => {
-      assert.strictEqual(unit(100, 'cm').lessThanOrEqual(unit(1, 'm')), true)
-      assert.strictEqual(unit(100, 'cm').lessThanOrEqual(unit(2, 'm')), true)
-      // assert.strictEqual(unit(100, 'ft lbf').lessThanOrEqual(unit(1200, 'in lbf')), false)  // Round-off error
-      assert.strictEqual(unit(100, 'N').lessThanOrEqual(unit(100, 'kg m / s ^ 2')), true)
-      assert.strictEqual(unit(100, 'Hz').lessThanOrEqual(unit(100, 's ^ -1')), true)
-      assert.strictEqual(unit(101, 'Hz').lessThanOrEqual(unit(100, 's ^ -1')), false)
-      assert.strictEqual(unit(99, 'Hz').lessThanOrEqual(unit(100, 's ^ -1')), true)
+      expect(unit(100, 'cm').lessThanOrEqual(unit(1, 'm'))).toBeTruthy()
+      expect(unit(100, 'cm').lessThanOrEqual(unit(2, 'm'))).toBeTruthy()
+      // expect(unit(100, 'ft lbf').lessThanOrEqual(unit(1200, 'in lbf'))).toBeFalsy()  // Round-off error
+      expect(unit(100, 'N').lessThanOrEqual(unit(100, 'kg m / s ^ 2'))).toBeTruthy()
+      expect(unit(100, 'Hz').lessThanOrEqual(unit(100, 's ^ -1'))).toBeTruthy()
+      expect(unit(101, 'Hz').lessThanOrEqual(unit(100, 's ^ -1'))).toBeFalsy()
+      expect(unit(99, 'Hz').lessThanOrEqual(unit(100, 's ^ -1'))).toBeTruthy()
     })
 
     test('should work with valueless units', () => {
-      assert.strictEqual(unit('cm').lessThanOrEqual(unit('cm')), true)
-      assert.strictEqual(unit('cm').lessThanOrEqual(unit('m')), true)
-      assert.strictEqual(unit('cm/s').lessThanOrEqual(unit('cm/min')), false)
+      expect(unit('cm').lessThanOrEqual(unit('cm'))).toBeTruthy()
+      expect(unit('cm').lessThanOrEqual(unit('m'))).toBeTruthy()
+      expect(unit('cm/s').lessThanOrEqual(unit('cm/min'))).toBeFalsy()
     })
 
     test('should throw if dimensions do not match', () => {
-      assert.throws(() => unit(100, 'N').lessThanOrEqual(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
-      assert.throws(() => unit(100, 'cm').lessThanOrEqual(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'N').lessThanOrEqual(unit(100, 'kg m / s'))).toThrow(/Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'cm').lessThanOrEqual(unit(1, 'kg'))).toThrow(/Cannot compare units.*dimensions do not match/)
     })
 
     test('should throw if one unit has a value and the other does not', () => {
-      assert.throws(() => unit('1m').lessThanOrEqual('km'), /Cannot compare units.*one has a value and the other does not/)
+      expect(() => unit('1m').lessThanOrEqual('km')).toThrow(/Cannot compare units.*one has a value and the other does not/)
     })
 
     test('should convert parameter to a unit', () => {
-      assert(unit(100, 'cm').lessThanOrEqual('2 m'))
-      assert(unit('3 kg / kg').lessThanOrEqual(4))
+      expect(unit(100, 'cm').lessThanOrEqual('2 m')).toBeTruthy()
+      expect(unit('3 kg / kg').lessThanOrEqual(4)).toBeTruthy()
     })
   })
 
-  describe.skip('greaterThan', () => {
+  describe('greaterThan', () => {
     test('should test whether one unit is greater than another', () => {
-      assert.strictEqual(unit(100, 'cm').greaterThan(unit(1, 'm')), false)
-      assert.strictEqual(unit(100, 'cm').greaterThan(unit(0.5, 'm')), true)
-      // assert.strictEqual(unit(100, 'ft lbf').greaterThan(unit(1200, 'in lbf')), false)  // Round-off error
-      assert.strictEqual(unit(100, 'N').greaterThan(unit(100, 'kg m / s ^ 2')), false)
-      assert.strictEqual(unit(100, 'Hz').greaterThan(unit(100, 's ^ -1')), false)
-      assert.strictEqual(unit(101, 'Hz').greaterThan(unit(100, 's ^ -1')), true)
-      assert.strictEqual(unit(99, 'Hz').greaterThan(unit(100, 's ^ -1')), false)
+      expect(unit(100, 'cm').greaterThan(unit(1, 'm'))).toBeFalsy()
+      expect(unit(100, 'cm').greaterThan(unit(0.5, 'm'))).toBeTruthy()
+      // expect(unit(100, 'ft lbf').greaterThan(unit(1200, 'in lbf'))).toBeFalsy()  // Round-off error
+      expect(unit(100, 'N').greaterThan(unit(100, 'kg m / s ^ 2'))).toBeFalsy()
+      expect(unit(100, 'Hz').greaterThan(unit(100, 's ^ -1'))).toBeFalsy()
+      expect(unit(101, 'Hz').greaterThan(unit(100, 's ^ -1'))).toBeTruthy()
+      expect(unit(99, 'Hz').greaterThan(unit(100, 's ^ -1'))).toBeFalsy()
     })
 
     test('should work with valueless units', () => {
-      assert.strictEqual(unit('cm').greaterThan(unit('cm')), false)
-      assert.strictEqual(unit('cm').greaterThan(unit('m')), false)
-      assert.strictEqual(unit('cm/s').greaterThan(unit('cm/min')), true)
+      expect(unit('cm').greaterThan(unit('cm'))).toBeFalsy()
+      expect(unit('cm').greaterThan(unit('m'))).toBeFalsy()
     })
 
     test('should throw if dimensions do not match', () => {
-      assert.throws(() => unit(100, 'N').greaterThan(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
-      assert.throws(() => unit(100, 'cm').greaterThan(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'N').greaterThan(unit(100, 'kg m / s'))).toThrow(/Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'cm').greaterThan(unit(1, 'kg'))).toThrow(/Cannot compare units.*dimensions do not match/)
     })
 
     test('should throw if one unit has a value and the other does not', () => {
-      assert.throws(() => unit('1m').greaterThan('km'), /Cannot compare units.*one has a value and the other does not/)
+      expect(() => unit('1m').greaterThan('km')).toThrow(/Cannot compare units.*one has a value and the other does not/)
     })
 
     test('should convert parameter to a unit', () => {
-      assert(unit(100, 'cm').greaterThan('0.5 m'))
-      assert(unit('3 kg / kg').greaterThan(2))
+      expect(unit(100, 'cm').greaterThan('0.5 m')).toBeTruthy()
+      expect(unit('3 kg / kg').greaterThan(2)).toBeTruthy()
     })
   })
 
-  describe.skip('greaterThanOrEqual', () => {
+  describe('greaterThanOrEqual', () => {
     test('should test whether one unit is greater than another', () => {
-      assert.strictEqual(unit(100, 'cm').greaterThanOrEqual(unit(1, 'm')), true)
-      assert.strictEqual(unit(100, 'cm').greaterThanOrEqual(unit(2, 'm')), false)
-      // assert.strictEqual(unit(100, 'ft lbf').greaterThanOrEqual(unit(1200, 'in lbf')), false)  // Round-off error
-      assert.strictEqual(unit(100, 'N').greaterThanOrEqual(unit(100, 'kg m / s ^ 2')), true)
-      assert.strictEqual(unit(100, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1')), true)
-      assert.strictEqual(unit(101, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1')), true)
-      assert.strictEqual(unit(99, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1')), false)
+      expect(unit(100, 'cm').greaterThanOrEqual(unit(1, 'm'))).toBeTruthy()
+      expect(unit(100, 'cm').greaterThanOrEqual(unit(2, 'm'))).toBeFalsy()
+      // expect(unit(100, 'ft lbf').greaterThanOrEqual(unit(1200, 'in lbf'))).toBeFalsy()  // Round-off error
+      expect(unit(100, 'N').greaterThanOrEqual(unit(100, 'kg m / s ^ 2'))).toBeTruthy()
+      expect(unit(100, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1'))).toBeTruthy()
+      expect(unit(101, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1'))).toBeTruthy()
+      expect(unit(99, 'Hz').greaterThanOrEqual(unit(100, 's ^ -1'))).toBeFalsy()
     })
 
     test('should work with valueless units', () => {
-      assert.strictEqual(unit('cm').greaterThanOrEqual(unit('cm')), true)
-      assert.strictEqual(unit('cm').greaterThanOrEqual(unit('m')), false)
-      assert.strictEqual(unit('cm/s').greaterThanOrEqual(unit('cm/min')), true)
+      expect(unit('cm').greaterThanOrEqual(unit('cm'))).toBeTruthy()
+      expect(unit('cm').greaterThanOrEqual(unit('m'))).toBeFalsy()
+      expect(unit('cm/s').greaterThanOrEqual(unit('cm/min'))).toBeTruthy()
     })
 
     test('should throw if dimensions do not match', () => {
-      assert.throws(() => unit(100, 'N').greaterThanOrEqual(unit(100, 'kg m / s')), /Cannot compare units.*dimensions do not match/)
-      assert.throws(() => unit(100, 'cm').greaterThanOrEqual(unit(1, 'kg')), /Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'N').greaterThanOrEqual(unit(100, 'kg m / s'))).toThrow(/Cannot compare units.*dimensions do not match/)
+      expect(() => unit(100, 'cm').greaterThanOrEqual(unit(1, 'kg'))).toThrow(/Cannot compare units.*dimensions do not match/)
     })
 
     test('should throw if one unit has a value and the other does not', () => {
-      assert.throws(() => unit('1m').greaterThanOrEqual('km'), /Cannot compare units.*one has a value and the other does not/)
+      expect(() => unit('1m').greaterThanOrEqual('km')).toThrow(/Cannot compare units.*one has a value and the other does not/)
     })
 
     test('should convert parameter to a unit', () => {
-      assert(unit(100, 'cm').greaterThanOrEqual('0.5 m'))
-      assert(unit('3 kg / kg').greaterThanOrEqual(2))
+      expect(unit(100, 'cm').greaterThanOrEqual('0.5 m')).toBeTruthy()
+      expect(unit('3 kg / kg').greaterThanOrEqual(2)).toBeTruthy()
     })
   })
 
-  describe.skip('clone', () => {
+  describe('clone', () => {
     test('should clone a unit', () => {
       const u1 = unit(100, 'cm')
       const u2 = u1.clone()
-      assert.notStrictEqual(u1, u2)
-      assert.deepStrictEqual(u1, u2)
+      expect(u1).not.toBe(u2) // u2 must be a clone
+      expect(u1).toApproximatelyEqual(u2) // u2 must be a clone
 
       const u3 = unit(8.314, 'km/hr')
       const u4 = u3.clone()
-      assert.notStrictEqual(u3, u4)
-      assert.deepStrictEqual(u3, u4)
+      expect(u3).not.toBe(u4)
+      expect(u3).toApproximatelyEqual(u4)
+
 
       const u7 = unit(8.314, 'kg m^2 / s^2 K mol')
       const u8 = u7.clone()
-      assert.notStrictEqual(u7, u8)
-      assert.deepStrictEqual(u7, u8)
+      expect(u7).not.toBe(u8)
+      expect(u7).toApproximatelyEqual(u8)
+
 
       const u9 = unit(8.314, 'kg m^2 / s^2 K mol').to()
       const u10 = u9.clone()
-      assert.notStrictEqual(u9, u10)
-      assert.deepStrictEqual(u9, u10)
+      expect(u9).not.toBe(u10)
+      expect(u9).toApproximatelyEqual(u10)
+
     })
 
     test('should freeze the returned unit', () => {
-      assert(Object.isFrozen(unit(100, 'cm').clone()))
+      expect(Object.isFrozen(unit(100, 'cm').clone())).toBeTruthy()
     })
   })
 
-  describe.skip('to', () => {
+  describe('to', () => {
     test('should convert a unit using a target unit string', () => {
       const u1 = unit(5000, 'in')
-      assert.strictEqual(u1.value, 5000)
-      assert.strictEqual(u1.units[0].unit.name, 'in')
-      assert.strictEqual(u1.units[0].prefix, '')
+      expect(u1.value).toEqual(5000)
+      expect(u1.units[0].unit.name).toEqual('in')
+      expect(u1.units[0].prefix).toEqual('')
 
       const u2 = u1.to('cm')
-      assert.notStrictEqual(u1, u2) // u2 must be a clone
-      assert.strictEqual(u2.value, 12700)
-      assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix, 'c')
+      expect(u1).not.toBe(u2) // u2 must be a clone
+      expect(u2.value).toEqual(12700)
+      expect(u2.units[0].unit.name).toEqual('m')
+      expect(u2.units[0].prefix).toEqual('c')
 
       const u3 = unit(299792.458, 'km/s')
-      assert.strictEqual(u3.value, 299792.458)
-      assert.strictEqual(u3.units[0].unit.name, 'm')
-      assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix, 'k')
+      expect(u3.value).toEqual(299792.458)
+      expect(u3.units[0].unit.name).toEqual('m')
+      expect(u3.units[1].unit.name).toEqual('s')
+      expect(u3.units[0].prefix).toEqual('k')
 
       const u4 = u3.to('m/s')
-      assert.notStrictEqual(u3, u4) // u4 must be a clone
-      assert.strictEqual(u4.value, 299792458)
-      assert.strictEqual(u4.units[0].unit.name, 'm')
-      assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix, '')
+      expect(u3).not.toBe(u4) // u2 must be a clone
+      expect(u4.value).toEqual(299792458)
+      expect(u4.units[0].unit.name).toEqual('m')
+      expect(u4.units[1].unit.name).toEqual('s')
+      expect(u4.units[0].prefix).toEqual('')
     })
 
     test('should convert a unit using a target unit', () => {
       const u1 = unit(5000, 'in')
-      assert.strictEqual(u1.value, 5000)
-      assert.strictEqual(u1.units[0].unit.name, 'in')
-      assert.strictEqual(u1.units[0].prefix, '')
+      expect(u1.value).toEqual(5000)
+      expect(u1.units[0].unit.name).toEqual('in')
+      expect(u1.units[0].prefix).toEqual('')
 
       const u2 = u1.to(unit('cm'))
-      assert.notStrictEqual(u1, u2) // u2 must be a clone
-      assert.strictEqual(u2.value, 12700)
-      assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix, 'c')
+      expect(u1).not.toBe(u2) // u2 must be a clone
+      expect(u2.value).toEqual(12700)
+      expect(u2.units[0].unit.name).toEqual('m')
+      expect(u2.units[0].prefix).toEqual('c')
 
       const u3 = unit(299792.458, 'km/s')
-      assert.strictEqual(u3.value, 299792.458)
-      assert.strictEqual(u3.units[0].unit.name, 'm')
-      assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix, 'k')
+      expect(u3.value).toEqual(299792.458)
+      expect(u3.units[0].unit.name).toEqual('m')
+      expect(u3.units[1].unit.name).toEqual('s')
+      expect(u3.units[0].prefix).toEqual('k')
 
       const u4 = u3.to(unit('m/s'))
-      assert.notStrictEqual(u3, u4) // u4 must be a clone
-      assert.strictEqual(u4.value, 299792458)
-      assert.strictEqual(u4.units[0].unit.name, 'm')
-      assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix, '')
+      expect(u3).not.toBe(u4) // u2 must be a clone
+      expect(u4.value).toEqual(299792458)
+      expect(u4.units[0].unit.name).toEqual('m')
+      expect(u4.units[1].unit.name).toEqual('s')
+      expect(u4.units[0].prefix).toEqual('')
     })
 
     test('should convert a valueless unit', () => {
       const u1 = unit(null, 'm')
-      assert.strictEqual(u1.value, null)
-      assert.strictEqual(u1.units[0].unit.name, 'm')
-      assert.strictEqual(u1.units[0].prefix, '')
+      expect(u1.value).toEqual(null)
+      expect(u1.units[0].unit.name).toEqual('m')
+      expect(u1.units[0].prefix).toEqual('')
 
       const u2 = u1.to(unit(null, 'cm'))
-      assert.notStrictEqual(u1, u2) // u2 must be a clone
-      assert.strictEqual(u2.value, 100) // u2 must have a value
-      assert.strictEqual(u2.units[0].unit.name, 'm')
-      assert.strictEqual(u2.units[0].prefix, 'c')
+      expect(u1).not.toBe(u2) // u2 must be a clone
+      expect(u2.value).toEqual(100) // u2 must have a value
+      expect(u2.units[0].unit.name).toEqual('m')
+      expect(u2.units[0].prefix).toEqual('c')
 
       const u3 = unit(null, 'm/s')
-      assert.strictEqual(u3.value, null)
-      assert.strictEqual(u3.units[0].unit.name, 'm')
-      assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix, '')
+      expect(u3.value).toEqual(null)
+      expect(u3.units[0].unit.name).toEqual('m')
+      expect(u3.units[1].unit.name).toEqual('s')
+      expect(u3.units[0].prefix).toEqual('')
 
       const u4 = u3.to(unit(null, 'cm/s'))
-      assert.notStrictEqual(u3, u4) // u4 must be a clone
-      assert.strictEqual(u4.value, 100) // u4 must have a value
-      assert.strictEqual(u4.units[0].unit.name, 'm')
-      assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix, 'c')
+      expect(u3).not.toBe(u4) // u2 must be a clone
+      expect(u4.value).toEqual(100) // u4 must have a value
+      expect(u4.units[0].unit.name).toEqual('m')
+      expect(u4.units[1].unit.name).toEqual('s')
+      expect(u4.units[0].prefix).toEqual('c')
 
       const u5 = unit(null, 'km').to('cm')
-      assert.strictEqual(u5.value, 100000)
-      assert.strictEqual(u5.units[0].unit.name, 'm')
-      assert.strictEqual(u5.units[0].prefix, 'c')
+      expect(u5.value).toEqual(100000)
+      expect(u5.units[0].unit.name).toEqual('m')
+      expect(u5.units[0].prefix).toEqual('c')
     })
 
     test('should convert a binary prefixes (1)', () => {
       const u1 = unit(1, 'Kib')
-      assert.strictEqual(u1.value, 1)
-      assert.strictEqual(u1.units[0].unit.name, 'b')
-      assert.strictEqual(u1.units[0].prefix, 'Ki')
+      expect(u1.value).toEqual(1)
+      expect(u1.units[0].unit.name).toEqual('b')
+      expect(u1.units[0].prefix).toEqual('Ki')
 
       const u2 = u1.to(unit(null, 'b'))
-      assert.notStrictEqual(u1, u2) // u2 must be a clone
-      assert.strictEqual(u2.value, 1024) // u2 must have a value
-      assert.strictEqual(u2.units[0].unit.name, 'b')
-      assert.strictEqual(u2.units[0].prefix, '')
+      expect(u1).not.toBe(u2) // u2 must be a clone
+      expect(u2.value).toEqual(1024) // u2 must have a value
+      expect(u2.units[0].unit.name).toEqual('b')
+      expect(u2.units[0].prefix).toEqual('')
 
       const u3 = unit(1, 'Kib/s')
-      assert.strictEqual(u3.value, 1)
-      assert.strictEqual(u3.units[0].unit.name, 'b')
-      assert.strictEqual(u3.units[1].unit.name, 's')
-      assert.strictEqual(u3.units[0].prefix, 'Ki')
+      expect(u3.value).toEqual(1)
+      expect(u3.units[0].unit.name).toEqual('b')
+      expect(u3.units[1].unit.name).toEqual('s')
+      expect(u3.units[0].prefix).toEqual('Ki')
 
       const u4 = u3.to(unit(null, 'b/s'))
-      assert.notStrictEqual(u3, u4) // u4 must be a clone
-      assert.strictEqual(u4.value, 1024) // u4 must have a value
-      assert.strictEqual(u4.units[0].unit.name, 'b')
-      assert.strictEqual(u4.units[1].unit.name, 's')
-      assert.strictEqual(u4.units[0].prefix, '')
+      expect(u3).not.toBe(u4) // u2 must be a clone
+      expect(u4.value).toEqual(1024) // u4 must have a value
+      expect(u4.units[0].unit.name).toEqual('b')
+      expect(u4.units[1].unit.name).toEqual('s')
+      expect(u4.units[0].prefix).toEqual('')
     })
 
     test('should convert a binary prefixes (2)', () => {
       const u1 = unit(1, 'kb')
-      assert.strictEqual(u1.value, 1)
-      assert.strictEqual(u1.units[0].unit.name, 'b')
-      assert.strictEqual(u1.units[0].prefix, 'k')
+      expect(u1.value).toEqual(1)
+      expect(u1.units[0].unit.name).toEqual('b')
+      expect(u1.units[0].prefix).toEqual('k')
 
       const u2 = u1.to(unit(null, 'b'))
-      assert.notStrictEqual(u1, u2) // u2 must be a clone
-      assert.strictEqual(u2.value, 1000) // u2 must have a value
-      assert.strictEqual(u2.units[0].unit.name, 'b')
-      assert.strictEqual(u2.units[0].prefix, '')
+      expect(u1).not.toBe(u2) // u2 must be a clone
+      expect(u2.value).toEqual(1000) // u2 must have a value
+      expect(u2.units[0].unit.name).toEqual('b')
+      expect(u2.units[0].prefix).toEqual('')
     })
 
     test('the alternate api syntax should also work', () => {
-      assert.strictEqual(unit.to('lbm', 'kg').format(), '0.45359237 kg')
-      assert.strictEqual(unit.to(unit('10 lbm'), unit('kg')).format(), '4.5359237 kg')
+      expect(unit.to('lbm', 'kg').format()).toEqual('0.45359237 kg')
+      expect(unit.to(unit('10 lbm'), unit('kg')).format()).toEqual('4.5359237 kg')
     })
 
     test('should throw an error when converting to an incompatible unit', () => {
       const u1 = unit(5000, 'cm')
-      assert.throws(() => { u1.to('kg') }, /dimensions do not match/)
+      expect(() => { u1.to('kg') }).toThrow(/dimensions do not match/)
       const u2 = unit(5000, 'N s')
-      assert.throws(() => { u2.to('kg^5 / s') }, /dimensions do not match/)
+      expect(() => { u2.to('kg^5 / s') }).toThrow(/dimensions do not match/)
     })
 
     test('should throw an error when converting to a unit having a value', () => {
       const u1 = unit(5000, 'cm')
-      assert.throws(() => { u1.to(unit(4, 'm')) }, /unit must be valueless/)
+      expect(() => { u1.to(unit(4, 'm')) }).toThrow(/unit must be valueless/)
     })
 
     test('should throw an error when converting to an unsupported type of argument', () => {
       const u1 = unit(5000, 'cm')
-      assert.throws(() => { u1.to(new Date()) }, /Parameter must be a Unit or a string./)
+      expect(() => { u1.to(new Date()) }).toThrow(/Parameter must be a Unit or a string./)
     })
   })
 
-  describe.skip('getUnits', () => {
+  describe('getUnits', () => {
     test('should return the units only of a unit', () => {
-      assert.deepStrictEqual(unit('42 kg / m s^2').getUnits(), unit('kg / m s^2'))
+      expect(unit('42 kg / m s^2').getUnits()).toApproximatelyEqual(unit('kg / m s^2'))
     })
   })
 
-  describe.skip('toString', () => {
+  describe('toString', () => {
     test('should convert to string when no extra simplification is requested', () => {
-      assert.strictEqual(unit(5000, 'cm').to().toString(), '5000 cm')
-      assert.strictEqual(unit(5, 'kg').to().toString(), '5 kg')
-      assert.strictEqual(unit(2 / 3, 'm').to().toString(), '0.666666666666667 m')
-      assert.strictEqual(unit(5, 'N').to().toString(), '5 N')
-      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').to().toString(), '5 kg m / s^2')
-      assert.strictEqual(unit(5, 's^-2').to().toString(), '5 s^-2')
-      assert.strictEqual(unit(5, 'm / s ^ 2').to().toString(), '5 m / s^2')
-      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').to().toString(), 'kg m^2 / s^2 mol')
-      assert.strictEqual(unit(10, 'hertz').to().toString(), '10 hertz')
-      assert.strictEqual(unit('3.14 rad').to().toString(), '3.14 rad')
-      assert.strictEqual(unit('J / mol K').to().toString(), 'J / mol K')
-      assert.strictEqual(unit(2).to().toString(), '2')
-      assert.strictEqual(unit().to().toString(), '')
+      expect(unit(5000, 'cm').to().toString()).toEqual('5000 cm')
+      expect(unit(5, 'kg').to().toString()).toEqual('5 kg')
+      expect(unit(2 / 3, 'm').to().toString()).toEqual('0.666666666666667 m')
+      expect(unit(5, 'N').to().toString()).toEqual('5 N')
+      expect(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').to().toString()).toEqual('5 kg m / s^2')
+      expect(unit(5, 's^-2').to().toString()).toEqual('5 s^-2')
+      expect(unit(5, 'm / s ^ 2').to().toString()).toEqual('5 m / s^2')
+      expect(unit(null, 'kg m^2 / s^2 mol').to().toString()).toEqual('kg m^2 / s^2 mol')
+      expect(unit(10, 'hertz').to().toString()).toEqual('10 hertz')
+      expect(unit('3.14 rad').to().toString()).toEqual('3.14 rad')
+      expect(unit('J / mol K').to().toString()).toEqual('J / mol K')
+      expect(unit(2).to().toString()).toEqual('2')
+      expect(unit().to().toString()).toEqual('')
     })
 
     test('should convert to string properly', () => {
-      assert.strictEqual(unit(5, 'kg').toString(), '5 kg')
-      assert.strictEqual(unit(2 / 3, 'm').toString(), '0.666666666666667 m')
-      assert.strictEqual(unit(5, 'N').toString(), '5 N')
-      assert.strictEqual(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').to().toString(), '5 kg m / s^2')
-      assert.strictEqual(unit(5, 's^-2').toString(), '5 s^-2')
-      assert.strictEqual(unit(5, 'm / s ^ 2').toString(), '5 m / s^2')
-      assert.strictEqual(unit(null, 'kg m^2 / s^2 mol').toString(), 'kg m^2 / s^2 mol')
-      assert.strictEqual(unit(10, 'hertz').toString(), '10 hertz')
+      expect(unit(5, 'kg').toString()).toEqual('5 kg')
+      expect(unit(2 / 3, 'm').toString()).toEqual('0.666666666666667 m')
+      expect(unit(5, 'N').toString()).toEqual('5 N')
+      expect(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').to().toString()).toEqual('5 kg m / s^2')
+      expect(unit(5, 's^-2').toString()).toEqual('5 s^-2')
+      expect(unit(5, 'm / s ^ 2').toString()).toEqual('5 m / s^2')
+      expect(unit(null, 'kg m^2 / s^2 mol').toString()).toEqual('kg m^2 / s^2 mol')
+      expect(unit(10, 'hertz').toString()).toEqual('10 hertz')
     })
 
     test('should render with the best prefix', () => {
-      assert.strictEqual(unit(0.000001, 'm').format(8), '1 um')
-      assert.strictEqual(unit(0.00001, 'm').format(8), '10 um')
-      assert.strictEqual(unit(0.0001, 'm').format(8), '0.1 mm')
-      assert.strictEqual(unit(0.0005, 'm').format(8), '0.5 mm')
-      assert.strictEqual(unit(0.0006, 'm').toString(), '0.6 mm')
-      assert.strictEqual(unit(0.001, 'm').toString(), '0.1 cm')
-      assert.strictEqual(unit(0.01, 'm').toString(), '1 cm')
-      assert.strictEqual(unit(100000, 'm').toString(), '100 km')
-      assert.strictEqual(unit(300000, 'm').toString(), '300 km')
-      assert.strictEqual(unit(500000, 'm').toString(), '500 km')
-      assert.strictEqual(unit(600000, 'm').toString(), '600 km')
-      assert.strictEqual(unit(1000000, 'm').toString(), '1000 km')
-      assert.strictEqual(unit(10000000, 'm').toString(), '10000 km')
-      assert.strictEqual(unit(2000, 'ohm').toString(), '2 kohm')
+      expect(unit(0.000001, 'm').format(8)).toEqual('1 um')
+      expect(unit(0.00001, 'm').format(8)).toEqual('10 um')
+      expect(unit(0.0001, 'm').format(8)).toEqual('0.1 mm')
+      expect(unit(0.0005, 'm').format(8)).toEqual('0.5 mm')
+      expect(unit(0.0006, 'm').toString()).toEqual('0.6 mm')
+      expect(unit(0.001, 'm').toString()).toEqual('0.1 cm')
+      expect(unit(0.01, 'm').toString()).toEqual('1 cm')
+      expect(unit(100000, 'm').toString()).toEqual('100 km')
+      expect(unit(300000, 'm').toString()).toEqual('300 km')
+      expect(unit(500000, 'm').toString()).toEqual('500 km')
+      expect(unit(600000, 'm').toString()).toEqual('600 km')
+      expect(unit(1000000, 'm').toString()).toEqual('1000 km')
+      expect(unit(10000000, 'm').toString()).toEqual('10000 km')
+      expect(unit(2000, 'ohm').toString()).toEqual('2 kohm')
 
-      assert.strictEqual(unit(-0.000001, 'm').format(8), '-1 um')
-      assert.strictEqual(unit(-0.00001, 'm').format(8), '-10 um')
-      assert.strictEqual(unit(-0.0001, 'm').format(8), '-0.1 mm')
-      assert.strictEqual(unit(-0.0005, 'm').format(8), '-0.5 mm')
-      assert.strictEqual(unit(-0.0006, 'm').toString(), '-0.6 mm')
-      assert.strictEqual(unit(-0.001, 'm').toString(), '-0.1 cm')
-      assert.strictEqual(unit(-0.01, 'm').toString(), '-1 cm')
-      assert.strictEqual(unit(-100000, 'm').toString(), '-100 km')
-      assert.strictEqual(unit(-300000, 'm').toString(), '-300 km')
-      assert.strictEqual(unit(-500000, 'm').toString(), '-500 km')
-      assert.strictEqual(unit(-600000, 'm').toString(), '-600 km')
-      assert.strictEqual(unit(-1000000, 'm').toString(), '-1000 km')
-      assert.strictEqual(unit(-10000000, 'm').toString(), '-10000 km')
-      assert.strictEqual(unit(-2000, 'ohm').toString(), '-2 kohm')
+      expect(unit(-0.000001, 'm').format(8)).toEqual('-1 um')
+      expect(unit(-0.00001, 'm').format(8)).toEqual('-10 um')
+      expect(unit(-0.0001, 'm').format(8)).toEqual('-0.1 mm')
+      expect(unit(-0.0005, 'm').format(8)).toEqual('-0.5 mm')
+      expect(unit(-0.0006, 'm').toString()).toEqual('-0.6 mm')
+      expect(unit(-0.001, 'm').toString()).toEqual('-0.1 cm')
+      expect(unit(-0.01, 'm').toString()).toEqual('-1 cm')
+      expect(unit(-100000, 'm').toString()).toEqual('-100 km')
+      expect(unit(-300000, 'm').toString()).toEqual('-300 km')
+      expect(unit(-500000, 'm').toString()).toEqual('-500 km')
+      expect(unit(-600000, 'm').toString()).toEqual('-600 km')
+      expect(unit(-1000000, 'm').toString()).toEqual('-1000 km')
+      expect(unit(-10000000, 'm').toString()).toEqual('-10000 km')
+      expect(unit(-2000, 'ohm').toString()).toEqual('-2 kohm')
     })
 
     test('should keep the original prefix when in range', () => {
-      assert.strictEqual(unit(0.0999, 'm').toString(), '9.99 cm')
-      assert.strictEqual(unit(0.1, 'm').toString(), '0.1 m')
-      assert.strictEqual(unit(0.5, 'm').toString(), '0.5 m')
-      assert.strictEqual(unit(0.6, 'm').toString(), '0.6 m')
-      assert.strictEqual(unit(1, 'm').toString(), '1 m')
-      assert.strictEqual(unit(10, 'm').toString(), '10 m')
-      assert.strictEqual(unit(100, 'm').toString(), '100 m')
-      assert.strictEqual(unit(300, 'm').toString(), '300 m')
-      assert.strictEqual(unit(500, 'm').toString(), '500 m')
-      assert.strictEqual(unit(600, 'm').toString(), '600 m')
-      assert.strictEqual(unit(1000, 'm').toString(), '1000 m')
-      assert.strictEqual(unit(1001, 'm').toString(), '1.001 km')
+      expect(unit(0.0999, 'm').toString()).toEqual('9.99 cm')
+      expect(unit(0.1, 'm').toString()).toEqual('0.1 m')
+      expect(unit(0.5, 'm').toString()).toEqual('0.5 m')
+      expect(unit(0.6, 'm').toString()).toEqual('0.6 m')
+      expect(unit(1, 'm').toString()).toEqual('1 m')
+      expect(unit(10, 'm').toString()).toEqual('10 m')
+      expect(unit(100, 'm').toString()).toEqual('100 m')
+      expect(unit(300, 'm').toString()).toEqual('300 m')
+      expect(unit(500, 'm').toString()).toEqual('500 m')
+      expect(unit(600, 'm').toString()).toEqual('600 m')
+      expect(unit(1000, 'm').toString()).toEqual('1000 m')
+      expect(unit(1001, 'm').toString()).toEqual('1.001 km')
     })
 
     test('should render best prefix for a single unit raised to integral power', () => {
-      assert.strictEqual(unit(3.2e7, 'm^2').toString(), '32 km^2')
-      assert.strictEqual(unit(3.2e-7, 'm^2').toString(), '0.32 mm^2')
-      assert.strictEqual(unit(15000, 'm^-1').toString(), '150 cm^-1')
-      assert.strictEqual(unit(3e-9, 'm^-2').toString(), '0.003 km^-2')
-      assert.strictEqual(unit(3e-9, 'm^-1.5').toString(), '3e-9 m^-1.5')
-      assert.strictEqual(unit(2, 'kg^0').toString(), '2')
+      expect(unit(3.2e7, 'm^2').toString()).toEqual('32 km^2')
+      expect(unit(3.2e-7, 'm^2').toString()).toEqual('0.32 mm^2')
+      expect(unit(15000, 'm^-1').toString()).toEqual('150 cm^-1')
+      expect(unit(3e-9, 'm^-2').toString()).toEqual('0.003 km^-2')
+      expect(unit(3e-9, 'm^-1.5').toString()).toEqual('3e-9 m^-1.5')
+      expect(unit(2, 'kg^0').toString()).toEqual('2')
     })
 
     test('should not change the prefix unless there is a `commonPrefixes` defined for the unit', () => {
       // lumen has prefixes, but no commonPrefixes, so its prefixes should not change
-      assert.strictEqual(unit('4 microlumen').format(), '4 microlumen')
-      assert.strictEqual(unit('4e-6 lumen').format(), '0.000004 lumen')
+      expect(unit('4 microlumen').format()).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').format()).toEqual('0.000004 lumen')
 
       // newton has prefixes and commonPrefixes so its prefix should change
-      assert.strictEqual(unit('4 micronewton').format(), '4 micronewton')
-      assert.strictEqual(unit('4e-6 newton').format(), '4 micronewton')
+      expect(unit('4 micronewton').format()).toEqual('4 micronewton')
+      expect(unit('4e-6 newton').format()).toEqual('4 micronewton')
     })
 
     test('should use the prefixesToChooseFrom option', () => {
-      assert.strictEqual(unit('4 microlumen').format({ prefixesToChooseFrom: 'all' }), '4 microlumen')
-      assert.strictEqual(unit('4e-6 lumen').format({ prefixesToChooseFrom: 'all' }), '4 microlumen')
+      expect(unit('4 microlumen').format({ prefixesToChooseFrom: 'all' })).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').format({ prefixesToChooseFrom: 'all' })).toEqual('4 microlumen')
 
-      assert.strictEqual(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'all' }), '4 piconewton')
-      assert.strictEqual(unit('4e-2 newton').format({ prefixesToChooseFrom: 'all' }), '0.4 decinewton')
-      assert.strictEqual(unit('4e+9 newton').format({ prefixesToChooseFrom: 'all' }), '4 giganewton')
+      expect(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'all' })).toEqual('4 piconewton')
+      expect(unit('4e-2 newton').format({ prefixesToChooseFrom: 'all' })).toEqual('0.4 decinewton')
+      expect(unit('4e+9 newton').format({ prefixesToChooseFrom: 'all' })).toEqual('4 giganewton')
 
-      assert.strictEqual(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'common' }), '0.000004 micronewton')
-      assert.strictEqual(unit('4e-2 newton').format({ prefixesToChooseFrom: 'common' }), '40 millinewton')
-      assert.strictEqual(unit('4e+9 newton').format({ prefixesToChooseFrom: 'common' }), '4000 meganewton')
+      expect(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'common' })).toEqual('0.000004 micronewton')
+      expect(unit('4e-2 newton').format({ prefixesToChooseFrom: 'common' })).toEqual('40 millinewton')
+      expect(unit('4e+9 newton').format({ prefixesToChooseFrom: 'common' })).toEqual('4000 meganewton')
     })
 
     test('should avoid division by zero by not choosing a prefix for very small values', () => {
-      assert.strictEqual(unit('1e-40 m').format(), '1e-31 nm')
-      assert.strictEqual(unit('1e-60 m').format(), '1e-60 m')
-      assert.strictEqual(unit('0 m').format(), '0 m')
-      assert.strictEqual(unit('-1e-40 m').format(), '-1e-31 nm')
-      assert.strictEqual(unit('-1e-60 m').format(), '-1e-60 m')
+      expect(unit('1e-40 m').format()).toEqual('1e-31 nm')
+      expect(unit('1e-60 m').format()).toEqual('1e-60 m')
+      expect(unit('0 m').format()).toEqual('0 m')
+      expect(unit('-1e-40 m').format()).toEqual('-1e-31 nm')
+      expect(unit('-1e-60 m').format()).toEqual('-1e-60 m')
     })
 
     test('should not render best prefix if "fixed" by the `to` method', () => {
       const u = unit(5e-3, 'm')
-      assert.strictEqual(u.toString(), '0.5 cm')
+      expect(u.toString()).toEqual('0.5 cm')
       const v = u.to()
-      assert.strictEqual(v.toString(), '0.005 m')
+      expect(v.toString()).toEqual('0.005 m')
     })
 
     test('should format a unit without value', () => {
-      assert.strictEqual(unit(null, 'cm').toString(), 'cm')
-      assert.strictEqual(unit(null, 'm').toString(), 'm')
-      assert.strictEqual(unit(null, 'kg m/s').toString(), 'kg m / s')
+      expect(unit(null, 'cm').toString()).toEqual('cm')
+      expect(unit(null, 'm').toString()).toEqual('m')
+      expect(unit(null, 'kg m/s').toString()).toEqual('kg m / s')
     })
 
     test('should format a unit with fixed prefix and without value', () => {
-      assert.strictEqual(unit(null, 'km').to('cm').toString(), '100000 cm')
-      assert.strictEqual(unit(null, 'inch').to('cm').toString(), '2.54 cm')
-      assert.strictEqual(unit(null, 'N/m^2').to('lbf/inch^2').toString({ precision: 10 }), '0.0001450377377 lbf / inch^2')
+      expect(unit(null, 'km').to('cm').toString()).toEqual('100000 cm')
+      expect(unit(null, 'inch').to('cm').toString()).toEqual('2.54 cm')
+      expect(unit(null, 'N/m^2').to('lbf/inch^2').toString({ precision: 10 })).toEqual('0.0001450377377 lbf / inch^2')
     })
 
     // test('should ignore properties in Object.prototype when finding the best prefix', () => {
     //   Object.prototype.foo = 'bar' // eslint-disable-line no-extend-native
 
-    //   assert.strictEqual(unit(5e5, 'cm').format(), '5 km')
+    //   expect(unit(5e5, 'cm').format(), '5 km')
 
     //   delete Object.prototype.foo
     // })
   })
 
-  describe.skip('setValue', () => {
+  describe('setValue', () => {
     test('should set a unit\'s value', () => {
-      assert.strictEqual(unit('10 lumen').setValue(20).format(), '20 lumen')
-      assert.strictEqual(unit('lumen').setValue(20).format(), '20 lumen')
-      assert.strictEqual(unit('10 lumen').setValue(null).format(), 'lumen')
-      assert.strictEqual(unit('10 lumen').setValue().format(), 'lumen')
+      expect(unit('10 lumen').setValue(20).format()).toEqual('20 lumen')
+      expect(unit('lumen').setValue(20).format()).toEqual('20 lumen')
+      expect(unit('10 lumen').setValue(null).format()).toEqual('lumen')
+      expect(unit('10 lumen').setValue().format()).toEqual('lumen')
     })
   })
 
-  describe.skip('getValue', () => {
+  describe('getValue', () => {
     test('should get a unit\'s value', () => {
-      assert.strictEqual(unit('20 kg').getValue(), 20)
-      assert.strictEqual(unit('3 g').getValue(), 3)
-      assert.strictEqual(unit('40 mi/hr').getValue(), 40)
-      assert.strictEqual(unit('km/hr').getValue(), null)
+      expect(unit('20 kg').getValue()).toEqual(20)
+      expect(unit('3 g').getValue()).toEqual(3)
+      expect(unit('40 mi/hr').getValue()).toEqual(40)
+      expect(unit('km/hr').getValue()).toEqual(null)
     })
   })
 
-  describe.skip('getNormalizedValue', () => {
+  describe('getNormalizedValue', () => {
     test('should get a unit\'s normalized value', () => {
-      assert.strictEqual(unit('20 kg').getNormalizedValue(), 20)
-      assert.strictEqual(unit('3 g').getNormalizedValue(), 0.003)
-      assert.strictEqual(unit('40 mi/hr').getNormalizedValue(), 17.8816)
-      assert.strictEqual(unit('km/hr').getNormalizedValue(), null)
+      expect(unit('20 kg').getNormalizedValue()).toEqual(20)
+      expect(unit('3 g').getNormalizedValue()).toEqual(0.003)
+      expect(unit('40 mi/hr').getNormalizedValue()).toEqual(17.8816)
+      expect(unit('km/hr').getNormalizedValue()).toEqual(null)
     })
   })
 
-  describe.skip('setNormalizedValue', () => {
+  describe('setNormalizedValue', () => {
     test('should set a unit\'s normalized value', () => {
-      assert.strictEqual(unit('20 kg').setNormalizedValue(10).format(), '10 kg')
-      assert.strictEqual(unit('3 g').setNormalizedValue(5).format(), '5 kg')
-      assert.strictEqual(unit('40 mi/hr').setNormalizedValue(10).format(), '22.369362920544 mi / hr')
-      assert.strictEqual(unit('km/hr').setNormalizedValue(1).format(), '3.6 km / hr')
+      expect(unit('20 kg').setNormalizedValue(10).format()).toEqual('10 kg')
+      expect(unit('3 g').setNormalizedValue(5).format()).toEqual('5 kg')
+      expect(unit('40 mi/hr').setNormalizedValue(10).format()).toEqual('22.369362920544 mi / hr')
+      expect(unit('km/hr').setNormalizedValue(1).format()).toEqual('3.6 km / hr')
     })
   })
 
-  describe.skip('simplify', () => {
+  describe('simplify', () => {
     test('should not simplify units fixed by the to() method', () => {
       const unit1 = unit(10, 'kg m/s^2').to()
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'm')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
-      assert.strictEqual(unit1.toString(), '10 kg m / s^2')
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[1].unit.name).toEqual('m')
+      expect(unit1.units[2].unit.name).toEqual('s')
+      expect(unit1.toString()).toEqual('10 kg m / s^2')
     })
 
     test('should simplify units without values', () => {
-      assert.strictEqual(unit('kg m/s^2').simplify().format(), 'N')
+      expect(unit('kg m/s^2').simplify().format()).toEqual('N')
     })
 
     test('should simplify units when they cancel out', () => {
       const unit1 = unit(2, 'Hz')
       const unit2 = unit(2, 's')
       const unit3 = unit1.mul(unit2)
-      assert.strictEqual(unit3.toString(), '4')
+      expect(unit3.toString()).toEqual('4')
 
       const nounit = unit('40m').mul('40N').div('40J')
-      assert.strictEqual(nounit.toString(), '40')
+      expect(nounit.toString()).toEqual('40')
 
       const nounit2 = unit('2 hours').div('1 hour')
-      assert.strictEqual(nounit2.toString(), '2')
+      expect(nounit2.toString()).toEqual('2')
     })
 
     test('should simplify units according to chosen unit system', () => {
       // Simplify explicitly
       let unit1 = unit.config({ system: 'us' })('10 N')
-      assert.strictEqual(unit1.simplify().toString(), '2.2480894309971 lbf')
+      expect(unit1.simplify().toString()).toEqual('2.2480894309971 lbf')
 
       let unit2 = unit.config({ system: 'cgs' })('10 N')
-      assert.strictEqual(unit2.simplify().toString(), '1000 kdyn')
+      expect(unit2.simplify().toString()).toEqual('1000 kdyn')
 
       // Reduce threshold to 0
       let newUnit = unit.config({ simplifyThreshold: 0 })
 
       let unit3 = newUnit.config({ system: 'us' })('10 N')
-      assert.strictEqual(unit3.toString(), '2.2480894309971 lbf')
+      expect(unit3.toString()).toEqual('2.2480894309971 lbf')
 
       let unit4 = newUnit.config({ system: 'cgs' })('10 N')
-      assert.strictEqual(unit4.toString(), '1000 kdyn')
+      expect(unit4.toString()).toEqual('1000 kdyn')
     })
 
     test('should correctly simplify units when unit system is "auto"', () => {
       const unit1 = unit(5, 'lbf min / s')
-      assert.strictEqual(unit1.simplify().toString(), '300 lbf')
-      assert.strictEqual(unit('150 lbf').div('10 in^2').toString(), '15 psi')
-      assert.strictEqual(unit('400 N').div('10 cm^2').toString(), '400 kPa')
+      expect(unit1.simplify().toString()).toEqual('300 lbf')
+      expect(unit('150 lbf').div('10 in^2').toString()).toEqual('15 psi')
+      expect(unit('400 N').div('10 cm^2').toString()).toEqual('400 kPa')
     })
 
     test('should infer the unit system when using non-preferred units which are members of that system', () => {
       // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
       let unit1 = unit('10 mile').mul('10 kip')
-      assert.strictEqual(unit1.toString({ simplifyThreshold: 0 }), '0.678515620705073 MMBTU')
+      expect(unit1.toString({ simplifyThreshold: 0 })).toEqual('0.678515620705073 MMBTU')
     })
 
     test('it should correctly differentiate between si and cgs units when unit system is "auto"', () => {
@@ -1151,257 +1145,256 @@ describe('unitmath', () => {
       let unit2Si = unit('10 kg')
       let unit3 = unit('2 s')
 
-      assert.strictEqual(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString(), '12.5 dyn')
-      assert.strictEqual(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString(), '12.5 N')
+      expect(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString()).toEqual('12.5 dyn')
+      expect(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString()).toEqual('12.5 N')
     })
 
     test('should try to use preexisting units in the simplified expression', () => {
       let unit1 = unit('10 ft hour / minute')
-      assert.strictEqual(unit1.toString(), '600 ft')
+      expect(unit1.toString()).toEqual('600 ft')
 
       unit1 = unit('10 mile hour / minute')
-      assert.strictEqual(unit1.toString(), '600 mile')
+      expect(unit1.toString()).toEqual('600 mile')
 
       unit1 = unit('10 mi hour / minute')
-      assert.strictEqual(unit1.toString(), '600 mi')
+      expect(unit1.toString()).toEqual('600 mi')
 
       unit1 = unit('10 m hour / minute')
-      assert.strictEqual(unit1.toString(), '600 m')
+      expect(unit1.toString()).toEqual('600 m')
 
       unit1 = unit('10 meter hour / minute')
-      assert.strictEqual(unit1.toString(), '600 meter')
+      expect(unit1.toString()).toEqual('600 meter')
     })
 
     test('should not simplify unless complexity is reduced by the threshold', () => {
-      assert.strictEqual(unit('10 N m').toString(), '10 N m')
-      assert.strictEqual(unit('10 J / m').toString(), '10 N')
-      assert.strictEqual(unit('10 m^3 Pa').toString(), '10 J')
-      assert.strictEqual(unit('10 s^-1').toString(), '10 Hz')
-      assert.strictEqual(unit('10 C/s').toString(), '10 A')
+      expect(unit('10 N m').toString()).toEqual('10 N m')
+      expect(unit('10 J / m').toString()).toEqual('10 N')
+      expect(unit('10 m^3 Pa').toString()).toEqual('10 J')
+      expect(unit('10 s^-1').toString()).toEqual('10 Hz')
+      expect(unit('10 C/s').toString()).toEqual('10 A')
 
       let newUnit = unit.config({ simplifyThreshold: 10 })
-      assert.strictEqual(newUnit('10 N m').toString(), '10 N m')
-      assert.strictEqual(newUnit('10 J / m').toString(), '10 J / m')
-      assert.strictEqual(newUnit('10 m^3 Pa').toString(), '10 m^3 Pa')
+      expect(newUnit('10 N m').toString()).toEqual('10 N m')
+      expect(newUnit('10 J / m').toString()).toEqual('10 J / m')
+      expect(newUnit('10 m^3 Pa').toString()).toEqual('10 m^3 Pa')
 
       newUnit = newUnit.config({ simplifyThreshold: 0 })
-      assert.strictEqual(newUnit('10 N m').toString(), '10 J')
-      assert.strictEqual(newUnit('10 J / m').toString(), '10 N')
-      assert.strictEqual(newUnit('10 m^3 Pa').toString(), '10 J')
+      expect(newUnit('10 N m').toString()).toEqual('10 J')
+      expect(newUnit('10 J / m').toString()).toEqual('10 N')
+      expect(newUnit('10 m^3 Pa').toString()).toEqual('10 J')
     })
   })
 
-  describe.skip('precision', () => {
+  describe('precision', () => {
     test('should format units with given precision', () => {
-      assert.strictEqual(unit.config({ precision: 3 })(2 / 3, 'm').toString(), '0.667 m')
-      assert.strictEqual(unit.config({ precision: 1 })(2 / 3, 'm').toString(), '0.7 m')
-      assert.strictEqual(unit.config({ precision: 10 })(2 / 3, 'm').toString(), '0.6666666667 m')
+      expect(unit.config({ precision: 3 })(2 / 3, 'm').toString()).toEqual('0.667 m')
+      expect(unit.config({ precision: 1 })(2 / 3, 'm').toString()).toEqual('0.7 m')
+      expect(unit.config({ precision: 10 })(2 / 3, 'm').toString()).toEqual('0.6666666667 m')
     })
   })
 
-  describe.skip('format', () => {
+  describe('format', () => {
     test('should accept formatting options as argument to the function', () => {
-      assert.strictEqual(unit('1 lb').to('kg').format({ prefix: 'always', prefixMin: 1, precision: 4 }), '453.6 g')
+      expect(unit('1 lb').to('kg').format({ prefix: 'always', prefixMin: 1, precision: 4 })).toEqual('453.6 g')
     })
 
     test('should render parentheses if desired', () => {
-      assert.strictEqual(unit('kg m / s^2').to().format({ parentheses: true }), '(kg m) / s^2')
-      assert.strictEqual(unit('8.314 J / mol K').to().format({ parentheses: true }), '8.314 J / (mol K)')
+      expect(unit('kg m / s^2').to().format({ parentheses: true })).toEqual('(kg m) / s^2')
+      expect(unit('8.314 J / mol K').to().format({ parentheses: true })).toEqual('8.314 J / (mol K)')
     })
 
     test('should only simplify units with values', () => {
       let unit1 = unit(null, 'kg m mol / s^2 mol')
-      assert.strictEqual(unit1.format(), 'kg m / s^2')
+      expect(unit1.format()).toEqual('kg m / s^2')
       unit1 = unit1.mul(1)
-      assert.strictEqual(unit1.format(), '1 N')
+      expect(unit1.format()).toEqual('1 N')
     })
 
     test('should respect the `simplify` option', () => {
-      assert.strictEqual(unit('1 kg m / s^2').format(), '1 N')
-      assert.strictEqual(unit('1 kg m / s^2').format({ simplify: 'never' }), '1 kg m / s^2')
-      assert.strictEqual(unit('1 N m').format(), '1 N m')
-      assert.strictEqual(unit('1 N m').format({ simplify: 'always' }), '1 J')
+      expect(unit('1 kg m / s^2').format()).toEqual('1 N')
+      expect(unit('1 kg m / s^2').format({ simplify: 'never' })).toEqual('1 kg m / s^2')
+      expect(unit('1 N m').format()).toEqual('1 N m')
+      expect(unit('1 N m').format({ simplify: 'always' })).toEqual('1 J')
     })
   })
 
-  describe.skip('valueOf', () => {
+  describe('valueOf', () => {
     test('should output a raw, unsimplified string representation of this unit', () => {
-      assert.strictEqual(unit('8.314 J / mol K').valueOf(), '8.314 J / mol K')
-      assert.strictEqual(unit('10 h / s').valueOf(), '10 h / s')
-      assert.strictEqual(unit('10 h / s').format(), '36000')
+      expect(unit('8.314 J / mol K').valueOf()).toEqual('8.314 J / mol K')
+      expect(unit('10 h / s').valueOf()).toEqual('10 h / s')
+      expect(unit('10 h / s').format()).toEqual('36000')
     })
   })
 
-  describe.skip('parse', () => {
+  describe('parse', () => {
     test('should parse units correctly', () => {
       let unit1
 
       unit1 = unit('5kg')
-      assert.strictEqual(unit1.value, 5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(5)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('5 kg')
-      assert.strictEqual(unit1.value, 5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(5)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit(' 5 kg ')
-      assert.strictEqual(unit1.value, 5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(5)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('5e-3kg')
-      assert.strictEqual(unit1.value, 0.005)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(0.005)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('5e+3kg')
-      assert.strictEqual(unit1.value, 5000)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(5000)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('5e3kg')
-      assert.strictEqual(unit1.value, 5000)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(5000)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('-5kg')
-      assert.strictEqual(unit1.value, -5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(-5)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('+5kg')
-      assert.strictEqual(unit1.value, 5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(5)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('.5kg')
-      assert.strictEqual(unit1.value, 0.5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(0.5)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('-5mg')
-      approx.equal(unit1.value, -5)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'm')
+      expect(unit1.value).toEqual(-5)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('m')
 
       unit1 = unit('5.2mg')
-      approx.equal(unit1.value, 5.2)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[0].prefix, 'm')
+      expect(unit1.value).toEqual(5.2)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[0].prefix).toEqual('m')
 
       unit1 = unit('300 kg/minute')
-      approx.equal(unit1.value, 300)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'minute')
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(300)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[1].unit.name).toEqual('minute')
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('981 cm/s^2')
-      approx.equal(unit1.value, 981)
-      assert.strictEqual(unit1.units[0].unit.name, 'm')
-      assert.strictEqual(unit1.units[1].unit.name, 's')
-      assert.strictEqual(unit1.units[1].power, -2)
-      assert.strictEqual(unit1.units[0].prefix, 'c')
+      expect(unit1.value).toEqual(981)
+      expect(unit1.units[0].unit.name).toEqual('m')
+      expect(unit1.units[1].unit.name).toEqual('s')
+      expect(unit1.units[1].power).toEqual(-2)
+      expect(unit1.units[0].prefix).toEqual('c')
 
       unit1 = unit('981 cm*s^-2')
-      approx.equal(unit1.value, 981)
-      assert.strictEqual(unit1.units[0].unit.name, 'm')
-      assert.strictEqual(unit1.units[1].unit.name, 's')
-      assert.strictEqual(unit1.units[1].power, -2)
-      assert.strictEqual(unit1.units[0].prefix, 'c')
+      expect(unit1.value).toEqual(981)
+      expect(unit1.units[0].unit.name).toEqual('m')
+      expect(unit1.units[1].unit.name).toEqual('s')
+      expect(unit1.units[1].power).toEqual(-2)
+      expect(unit1.units[0].prefix).toEqual('c')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
-      approx.equal(unit1.value, 8.314)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'm')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
-      assert.strictEqual(unit1.units[3].unit.name, 'K')
-      assert.strictEqual(unit1.units[4].unit.name, 'mol')
-      assert.strictEqual(unit1.units[0].power, 1)
-      assert.strictEqual(unit1.units[1].power, 2)
-      assert.strictEqual(unit1.units[2].power, -2)
-      assert.strictEqual(unit1.units[3].power, -1)
-      assert.strictEqual(unit1.units[4].power, -1)
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(8.314)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[1].unit.name).toEqual('m')
+      expect(unit1.units[2].unit.name).toEqual('s')
+      expect(unit1.units[3].unit.name).toEqual('K')
+      expect(unit1.units[4].unit.name).toEqual('mol')
+      expect(unit1.units[0].power).toEqual(1)
+      expect(unit1.units[1].power).toEqual(2)
+      expect(unit1.units[2].power).toEqual(-2)
+      expect(unit1.units[3].power).toEqual(-1)
+      expect(unit1.units[4].power).toEqual(-1)
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
-      approx.equal(unit1.value, 8.314)
-      assert.strictEqual(unit1.units[0].unit.name, 'g')
-      assert.strictEqual(unit1.units[1].unit.name, 'm')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
-      assert.strictEqual(unit1.units[3].unit.name, 'K')
-      assert.strictEqual(unit1.units[4].unit.name, 'mol')
-      assert.strictEqual(unit1.units[0].power, 1)
-      assert.strictEqual(unit1.units[1].power, 2)
-      assert.strictEqual(unit1.units[2].power, -2)
-      assert.strictEqual(unit1.units[3].power, -1)
-      assert.strictEqual(unit1.units[4].power, -1)
-      assert.strictEqual(unit1.units[0].prefix, 'k')
+      expect(unit1.value).toEqual(8.314)
+      expect(unit1.units[0].unit.name).toEqual('g')
+      expect(unit1.units[1].unit.name).toEqual('m')
+      expect(unit1.units[2].unit.name).toEqual('s')
+      expect(unit1.units[3].unit.name).toEqual('K')
+      expect(unit1.units[4].unit.name).toEqual('mol')
+      expect(unit1.units[0].power).toEqual(1)
+      expect(unit1.units[1].power).toEqual(2)
+      expect(unit1.units[2].power).toEqual(-2)
+      expect(unit1.units[3].power).toEqual(-1)
+      expect(unit1.units[4].power).toEqual(-1)
+      expect(unit1.units[0].prefix).toEqual('k')
 
       unit1 = unit('5exabytes')
-      approx.equal(unit1.value, 5)
-      assert.strictEqual(unit1.units[0].unit.name, 'bytes')
+      expect(unit1.value).toEqual(5)
+      expect(unit1.units[0].unit.name).toEqual('bytes')
 
       unit1 = unit('1 / s')
-      approx.equal(unit1.value, 1)
-      assert.strictEqual(unit1.units[0].unit.name, 's')
-      assert.strictEqual(unit1.units[0].power, -1)
+      expect(unit1.value).toEqual(1)
+      expect(unit1.units[0].unit.name).toEqual('s')
+      expect(unit1.units[0].power).toEqual(-1)
 
       unit1 = unit('1/s')
-      approx.equal(unit1.value, 1)
-      assert.strictEqual(unit1.units[0].unit.name, 's')
-      assert.strictEqual(unit1.units[0].power, -1)
+      expect(unit1.value).toEqual(1)
+      expect(unit1.units[0].unit.name).toEqual('s')
+      expect(unit1.units[0].power).toEqual(-1)
 
       unit1 = unit('1 * s')
-      approx.equal(unit1.value, 1)
-      assert.strictEqual(unit1.units[0].unit.name, 's')
-      assert.strictEqual(unit1.units[0].power, 1)
+      expect(unit1.value).toEqual(1)
+      expect(unit1.units[0].unit.name).toEqual('s')
+      expect(unit1.units[0].power).toEqual(1)
     })
 
     test('should throw error when parsing expressions with invalid characters', () => {
-      assert.throws(() => { unit('8.314 J / (mol * K)') }, /Unexpected "\("/)
-      assert.throws(() => { unit('8.314 J / mol / K') }, /Unexpected additional "\/"/)
+      expect(() => { unit('8.314 J / (mol * K)') }).toThrow(/Unexpected "\("/)
+      expect(() => { unit('8.314 J / mol / K') }).toThrow(/Unexpected additional "\/"/)
     })
 
     test('should parse units with correct precedence', () => {
       const unit1 = unit('1  m^3 / kg s^2') // implicit multiplication
 
-      approx.equal(unit1.value, 1)
-      assert.strictEqual(unit1.units[0].unit.name, 'm')
-      assert.strictEqual(unit1.units[1].unit.name, 'g')
-      assert.strictEqual(unit1.units[2].unit.name, 's')
-      assert.strictEqual(unit1.units[0].power, 3)
-      assert.strictEqual(unit1.units[1].power, -1)
-      assert.strictEqual(unit1.units[2].power, -2)
-      assert.strictEqual(unit1.units[0].prefix, '')
+      expect(unit1.units[0].unit.name).toEqual('m')
+      expect(unit1.units[1].unit.name).toEqual('g')
+      expect(unit1.units[2].unit.name).toEqual('s')
+      expect(unit1.units[0].power).toEqual(3)
+      expect(unit1.units[1].power).toEqual(-1)
+      expect(unit1.units[2].power).toEqual(-2)
+      expect(unit1.units[0].prefix).toEqual('')
     })
 
     test('should throw an exception when parsing an invalid unit', () => {
-      assert.throws(() => { unit('.meter') }, /Unexpected "\."/)
-      assert.throws(() => { unit('5e') }, /Unit "e" not found/)
-      assert.throws(() => { unit('5e.') }, /Unit "e" not found/)
-      assert.throws(() => { unit('5e1.3') }, /Unexpected "\."/)
-      assert.throws(() => { unit('meter.') }, /Unexpected "\."/)
-      assert.throws(() => { unit('meter/') }, /Trailing characters/)
-      assert.throws(() => { unit('/meter') }, /Unexpected "\/"/)
-      assert.throws(() => { unit('1 */ s') }, /Unexpected "\/"/)
-      assert.throws(() => { unit('45 kg 34 m') }, /Unexpected "3"/)
-      assert.throws(() => unit('10 m^'), /must be followed by a floating/)
-      assert.throws(() => unit('10 m+'), /Unexpected "\+"/)
+      expect(() => { unit('.meter') }).toThrow(/Unexpected "\."/)
+      expect(() => { unit('5e') }).toThrow(/Unit "e" not found/)
+      expect(() => { unit('5e.') }).toThrow(/Unit "e" not found/)
+      expect(() => { unit('5e1.3') }).toThrow(/Unexpected "\."/)
+      expect(() => { unit('meter.') }).toThrow(/Unexpected "\."/)
+      expect(() => { unit('meter/') }).toThrow(/Trailing characters/)
+      expect(() => { unit('/meter') }).toThrow(/Unexpected "\/"/)
+      expect(() => { unit('1 */ s') }).toThrow(/Unexpected "\/"/)
+      expect(() => { unit('45 kg 34 m') }).toThrow(/Unexpected "3"/)
+      expect(() => unit('10 m^')).toThrow(/must be followed by a floating/)
+      expect(() => unit('10 m+')).toThrow(/Unexpected "\+"/)
     })
 
     test('should parse empty strings and only numbers', () => {
-      assert.strictEqual(unit(123).value, 123)
-      assert.strictEqual(unit(123).units.length, 0)
-      assert.strictEqual(unit('').value, null)
-      assert.strictEqual(unit('').units.length, 0)
-      assert.strictEqual(unit().value, null)
-      assert.strictEqual(unit().units.length, 0)
+      expect(unit(123).value).toEqual(123)
+      expect(unit(123).units.length).toEqual(0)
+      expect(unit('').value).toEqual(null)
+      expect(unit('').units.length).toEqual(0)
+      expect(unit().value).toEqual(null)
+      expect(unit().units.length).toEqual(0)
     })
 
     test('should throw if parser() receives other than a string', () => {
-      assert.throws(() => unit._unitStore.parser(42), /TypeError: Invalid argument in parse/)
+      expect(() => unit._unitStore.parser(42)).toThrow(/Invalid argument in parse/)
     })
   })
 
