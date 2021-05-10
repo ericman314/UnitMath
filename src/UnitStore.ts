@@ -1,6 +1,7 @@
 import createParser from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
+import { UnitDefinitions, UnitSystems } from "./Unit";
 
 /**
  * Creates a new unit store.
@@ -14,30 +15,41 @@ export default function createUnitStore (options) {
 
   // TODO: Should we deep freeze the built-ins to prevent modification of the built-in units?
 
-  // These will contain the built-in units extended with the user's definitions
-  const originalDefinitions = {}
+  const { skipBuiltIns } = options.definitions
 
-  if (options.definitions.skipBuiltIns) {
-    originalDefinitions.prefixes = { ...options.definitions.prefixes }
-    originalDefinitions.units = { ...options.definitions.units }
-    originalDefinitions.systems = { ...options.definitions.systems }
+  // Merge the built-in units with the user's definitions
+
+  let systems: UnitSystems
+
+  if (skipBuiltIns) {
+    systems = { ...options.definitions.systems }
   } else {
-    originalDefinitions.prefixes = { ...builtIns.prefixes, ...options.definitions.prefixes }
-    originalDefinitions.units = { ...builtIns.units, ...options.definitions.units }
-    originalDefinitions.systems = { ...builtIns.systems }
+    systems = { ...builtIns.systems } as any
 
     // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
     for (let system in options.definitions.systems) {
-      if (originalDefinitions.systems.hasOwnProperty(system)) {
-        originalDefinitions.systems[system] = [...options.definitions.systems[system], ...originalDefinitions.systems[system]]
+      if (systems.hasOwnProperty(system)) {
+        systems[system] = [...options.definitions.systems[system], ...systems[system]]
       } else {
-        originalDefinitions.systems[system] = [...options.definitions.systems[system]]
+        systems[system] = [...options.definitions.systems[system]]
       }
     }
   }
 
+  const originalDefinitions: UnitDefinitions = {
+    systems,
+    prefixes: {
+      ...(skipBuiltIns ? {} : builtIns.prefixes),
+      ...options.definitions.prefixes
+    },
+    units: {
+      ...(skipBuiltIns ? {} : builtIns.units),
+      ...options.definitions.units
+    }
+  }
+
   // These will contain copies we can mutate without affecting the originals
-  const defs = {
+  const defs: UnitDefinitions = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
     systems: {}

@@ -15,7 +15,8 @@
     "prepublishOnly": "npm test && npm run test:bundle",
     "test": "npm run test:src && npm run lint",
     "test:src": "jest --watch",
-    "test:bundle": "npm run build && jest 'test/**/*.test-bundle.js'",
+    "test:bundle": "npm run build && jest --testMatch '**/test/**/*.test-bundle.js'",
+    "test:compiled": "npm run build && jest --testMatch '**/test/**/*.test-compiled.js'",
     "lint": "standard --env=jest --env=worker --verbose",
     "lint:fix": "standard --env=jest --env=worker --fix --verbose",
     "coverage": "jest --coverage"
@@ -46,6 +47,7 @@
     "babel-jest": "^26.0.1",
     "core-js": "3.0.1",
     "decimal.js": "^10.2.0",
+    "esm": "^3.2.25",
     "jest": "^26.0.1",
     "rollup": "^1.32.1",
     "rollup-plugin-babel": "4.3.2",

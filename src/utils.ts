@@ -1,13 +1,12 @@
+import { DataType } from "./Unit"
+
+type Unit = any //!FIXME
 
 /**
    * Normalize a value, based on an array of unit pieces
-   * @param {unit[]} unitPieces
-   * @param {number | *} value
-   * @param {object} type
-   * @return {number | *} normalized value
    * @private
    */
-export function normalize (unitPieces, value, type) {
+export function normalize (unitPieces: Unit[], value: number, type: DataType) {
   let unitValue, unitOffset, unitPower, unitPrefixValue
 
   if (value === null || value === undefined || unitPieces.length === 0) {
@@ -38,13 +37,11 @@ export function normalize (unitPieces, value, type) {
 
 /**
    * Denormalize a value, based on an array of atomic units
-   * @param {unit[]} unitPieces Array of atomic units (as in, Unit.units)
-   * @param {number} value
-   * @param {object} type
-   * @return {number} denormalized value
+   * @param unitPieces Array of atomic units (as in, Unit.units)
+   * @returns denormalized value
    * @private
    */
-export function denormalize (unitPieces, value, type) {
+export function denormalize (unitPieces: Unit[], value: number, type: DataType): number {
   let unitValue, unitOffset, unitPower, unitPrefixValue
 
   if (value === null || value === undefined || unitPieces.length === 0) {
@@ -76,10 +73,11 @@ export function denormalize (unitPieces, value, type) {
 
 /**
    * Return whether the given array of unit pieces is compound (contains multiple units, such as m/s, or cm^2, but not N)
-   * @param {unit[]} units Array of unit pieces
-   * @return {boolean} True if the unit is compound
+   * @param nits Array of unit pieces
+   * @returns True if the unit is compound
+   * @private
    */
-export function isCompound (units) {
+export function isCompound (units: Unit[]): boolean {
   if (units.length === 0) {
     return false
   }

@@ -3,6 +3,38 @@ import { normalize, denormalize, isCompound as _isCompound } from './utils'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
+export interface DataType {
+  conv(...a)
+  clone(...a)
+  add(...a)
+  sub(...a)
+  mul(...a)
+  div(...a)
+  pow(...a)
+}
+
+export interface UnitPrefixes {
+  [prefixSet: string]: Record<string, number>
+}
+
+export interface UnitSystems {
+  [system: string]: string[]
+}
+
+export interface UnitProps {
+  quantity: string
+  value: number | string
+  prefixes: string
+  commonPrefixes: string[]
+  aliases: string[]
+}
+
+export interface UnitDefinitions {
+  prefixes: UnitPrefixes,
+  systems: UnitSystems,
+  units: Record<string, UnitProps>
+}
+
 /**
  * Create a clone of the this unit factory function, but with the specified options.
  * @param {Object} options Configuration options to set on the new instance.
