@@ -1,3 +1,7 @@
 {
-
+    "compilerOptions": {
+        "module": "ESNext",
+        "noImplicitAny": false,
+        "target": "ESNext"
+    }
 }

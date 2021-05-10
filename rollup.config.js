@@ -24,8 +24,18 @@ const babelOptions = {
   ]
 }
 
-const typescriptOptions = {
+const tsOptions = {
+  check: false,
   abortOnError: false
+}
+
+const tsOptionsWithDeclarations = { // TODO use this when types are OK
+  ...tsOptions,
+  tsconfigOverride: {
+    compilerOptions: {
+      declaration: true
+    }
+  }
 }
 
 const name = 'UnitMath'
@@ -41,7 +51,7 @@ export default [
       format: 'umd'
     },
     plugins: [
-      typescript(typescriptOptions),
+      typescript(tsOptions),
       babel(babelOptions),
       commonjs()
     ]
@@ -56,7 +66,7 @@ export default [
       name
     },
     plugins: [
-      typescript(typescriptOptions),
+      typescript(tsOptions),
       babel(babelOptions),
       commonjs(),
       terser(teserOptions)
@@ -72,7 +82,7 @@ export default [
       name
     },
     plugins: [
-      typescript(typescriptOptions),
+      typescript(tsOptions),
       terser(teserOptions)
     ]
   },
@@ -84,7 +94,7 @@ export default [
       format: 'es'
     },
     plugins: [
-      typescript(typescriptOptions)
+      typescript(tsOptions)
     ]
   },
   // minified es build
@@ -96,7 +106,7 @@ export default [
       indent: false
     },
     plugins: [
-      typescript(typescriptOptions),
+      typescript(tsOptions),
       terser(teserOptions)
     ]
   }
