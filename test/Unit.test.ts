@@ -1,4 +1,4 @@
-import unit from '../src/Unit.ts'
+import unit from '../src/Unit'
 import Decimal from 'decimal.js'
 import approx from './approx'
 
@@ -20,8 +20,8 @@ beforeAll(() => {
   const isDec = a => expect(a).toBeInstanceOf(Decimal)
 
   let typeComplete = {
-    conv: a => Decimal(a),
-    clone: a => { isDec(a); return Decimal(a) },
+    conv: a => new Decimal(a),
+    clone: a => { isDec(a); return new Decimal(a) },
     add: (a, b) => {
       isDec(a)
       isDec(b)
@@ -1814,7 +1814,7 @@ describe('unitmath', () => {
       })
 
       test('should work if given the custom type directly', () => {
-        let u = unitDec(Decimal('3.1415926535897932384626433832795'), 'rad')
+        let u = unitDec(new Decimal('3.1415926535897932384626433832795'), 'rad')
         expect(u.toString()).toEqual('3.1415926535897932384626433832795 rad')
         expect(u.value).toBeInstanceOf(Decimal)
       })
@@ -1921,7 +1921,7 @@ describe('unitmath', () => {
       test('should do setValue', () => {
         expect(unitDec('64 m^2/s^2').setValue(10).format()).toEqual('10 m^2 / s^2')
         expect(unitDec('64 m^2/s^2').setValue('1.4142135623730950488016887242097').format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
-        expect(unitDec('64 m^2/s^2').setValue(Decimal('1.4142135623730950488016887242097')).format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
+        expect(unitDec('64 m^2/s^2').setValue(new Decimal('1.4142135623730950488016887242097')).format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
       })
 
       // TODO: Test all other custom functions

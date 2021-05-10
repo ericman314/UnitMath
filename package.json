@@ -42,6 +42,7 @@
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.9.6",
     "@babel/preset-env": "^7.9.6",
+    "@types/jest": "^26.0.23",
     "babel-jest": "^26.0.1",
     "core-js": "3.0.1",
     "decimal.js": "^10.2.0",
@@ -53,6 +54,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.30.0",
     "standard": "^12.0.1",
+    "ts-jest": "^26.5.6",
     "typescript": "^4.1.3"
   }
 }
