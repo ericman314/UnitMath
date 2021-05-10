@@ -1,5 +1,5 @@
-import createUnitStore from './UnitStore.js'
-import { normalize, denormalize, isCompound as _isCompound } from './utils.js'
+import createUnitStore from './UnitStore'
+import { normalize, denormalize, isCompound as _isCompound } from './utils'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 

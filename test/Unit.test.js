@@ -1,4 +1,4 @@
-import unit from '../src/Unit.js'
+import unit from '../src/Unit.ts'
 import Decimal from 'decimal.js'
 import approx from './approx'
 
@@ -400,7 +400,7 @@ describe('unitmath', () => {
       expect(defs.units.kelvin.prefixes).toEqual('LONG')
       expect(defs.prefixes.LONG.giga).toEqual(1e9)
       expect(defs.prefixes.SHORT_LONG.giga).toEqual(1e9)
-    
+
 
       // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
       let defs2 = unit.config({}).definitions()
