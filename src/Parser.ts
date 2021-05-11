@@ -1,7 +1,29 @@
+import { DataType, UnitPropsButCooler } from "./Unit"
+
+
+export interface ParserOptions {
+  type: DataType
+}
+
+interface parsedUnit {
+  units?: subUnit[]
+  dimension?: Record<string, number>,
+  value?: any
+}
+
+interface subUnit {
+  unit: UnitPropsButCooler,
+  prefix: string,
+  power: number
+}
+
+type findUnitFn = (unitString: string) => { unit: UnitPropsButCooler, prefix: string } | null
+
+
 /**
  * Returns a new Parser.
  */
-export default function createParser (options, findUnit) {
+export default function createParser (options: ParserOptions, findUnit: findUnitFn) {
   // private variables and functions for the Unit parser
   let text, index, c
 
@@ -156,7 +178,7 @@ export default function createParser (options, findUnit) {
       throw new TypeError('Invalid argument in parse, string expected')
     }
 
-    const unit = {}
+    const unit: parsedUnit = {}
 
     unit.units = []
 
@@ -239,7 +261,7 @@ export default function createParser (options, findUnit) {
           // No valid number found for the power!
           throw new SyntaxError('In "' + str + '", "^" must be followed by a floating-point number')
         }
-        power *= p
+        power *= +p
       }
 
       // Add the unit to the list

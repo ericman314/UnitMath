@@ -1,7 +1,7 @@
 import createParser from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
-import { UnitDefinitions, UnitSystems } from "./Unit";
+import { UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler, UnitSystems } from "./Unit";
 
 /**
  * Creates a new unit store.
@@ -49,7 +49,7 @@ export default function createUnitStore (options) {
   }
 
   // These will contain copies we can mutate without affecting the originals
-  const defs: UnitDefinitions = {
+  const defs: UnitDefinitionsButCooler = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
     systems: {}
@@ -101,21 +101,22 @@ export default function createUnitStore (options) {
     let unitsAdded = 0
     let unitsSkipped = []
     let reasonsSkipped = []
-    for (const unitDefKey in originalDefinitions.units) {
+
+    for (const unitDefKey of Object.keys(originalDefinitions.units)) {
       if (defs.units.hasOwnProperty(unitDefKey)) continue
 
       const unitDef = originalDefinitions.units[unitDefKey]
-
       if (!unitDef) continue
 
-      const containsUnknownPrefix = unitDef.prefixes && !defs.prefixes.hasOwnProperty(unitDef.prefixes)
-      if (containsUnknownPrefix) {
+      // uses unknown set of prefixes?
+      if (unitDef.prefixes && !defs.prefixes.hasOwnProperty(unitDef.prefixes)) {
         throw new Error(`Unknown prefixes '${unitDef.prefixes}' for unit '${unitDefKey}'`)
       }
 
-      let unitValue
-      let unitDimension
-      let unitQuantity
+      let unitValue: UnitProps['value']
+      let unitDimension: { [s: string]: number }
+      let unitQuantity: UnitProps['quantity']
+
       let skipThisUnit = false
       if (unitDef.quantity) {
         // Defining the unit based on a quantity.
@@ -163,7 +164,7 @@ export default function createUnitStore (options) {
           if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(newUnitName) && newUnitName !== '') {
             throw new SyntaxError(`Unit name contains non-alphanumeric characters or begins with a number: '${newUnitName}'`)
           }
-          const newUnit = {
+          const newUnit: UnitPropsButCooler = {
             name: newUnitName,
             value: unitValue,
             offset: unitDef.offset || 0,
@@ -196,11 +197,11 @@ export default function createUnitStore (options) {
   }
 
   // Replace unit system strings with valueless units
-  for (let system in defs.systems) {
+  for (let system of Object.keys(defs.systems)) {
     let sys = defs.systems[system]
     for (let i = 0; i < sys.length; i++) {
       // Important! The unit below is not a real unit, but for now it is-close enough
-      let unit = parser(sys[i])
+      let unit: any = parser(sys[i])
       if (unit) {
         unit.type = 'Unit'
         Object.freeze(unit)
@@ -212,7 +213,7 @@ export default function createUnitStore (options) {
   }
 
   // Final setup for units
-  for (let key in defs.units) {
+  for (let key of Object.keys(defs.units)) {
     const unit = defs.units[key]
     // Check that each commonPrefix is in prefixes
     if (unit.commonPrefixes) {
@@ -229,7 +230,7 @@ export default function createUnitStore (options) {
    * Tests whether the given string exists as a known unit. The unit may have a prefix.
    * @param {string} singleUnitString The name of the unit, with optional prefix.
    */
-  function exists (singleUnitString) {
+  function exists (singleUnitString: string) {
     return findUnit(singleUnitString) !== null
   }
 
@@ -240,7 +241,7 @@ export default function createUnitStore (options) {
    *                                  prefix is returned. Else, null is returned.
    * @private
    */
-  function findUnit (unitString) {
+  function findUnit (unitString: string): { unit: UnitPropsButCooler, prefix: string } | null {
     if (typeof unitString !== 'string') {
       throw new TypeError(`parameter must be a string (${unitString} given)`)
     }

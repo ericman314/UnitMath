@@ -22,11 +22,25 @@ export interface UnitSystems {
 }
 
 export interface UnitProps {
-  quantity: string
-  value: number | string
-  prefixes: string
-  commonPrefixes: string[]
-  aliases: string[]
+  quantity?: string
+  value: number | string | [any, any]
+  prefixes?: string
+  basePrefix?: string
+  commonPrefixes?: string[]
+  aliases?: string[]
+  offset: number
+}
+
+export interface UnitPropsButCooler {
+  name: string
+  quantity?: string
+  value: number | string | [any, any]
+  dimension: Record<string, number>,
+  prefixes: Record<string, number>
+  basePrefix?: string
+  commonPrefixes?: string[]
+  aliases?: string[]
+  offset: number
 }
 
 export interface UnitDefinitions {
@@ -34,6 +48,13 @@ export interface UnitDefinitions {
   systems: UnitSystems,
   units: Record<string, UnitProps>
 }
+
+export interface UnitDefinitionsButCooler {
+  prefixes: UnitPrefixes,
+  systems: Record<string, any[]>,
+  units: Record<string, UnitPropsButCooler>
+}
+
 
 /**
  * Create a clone of the this unit factory function, but with the specified options.
