@@ -1,4 +1,4 @@
-import { DataType } from "./Unit"
+import { TypeArithmetics } from "./Unit"
 
 type Unit = any //!FIXME
 
@@ -6,7 +6,7 @@ type Unit = any //!FIXME
    * Normalize a value, based on an array of unit pieces
    * @private
    */
-export function normalize (unitPieces: Unit[], value: number, type: DataType) {
+export function normalize<T> (unitPieces: Unit[], value: T, type: TypeArithmetics<T>) {
   let unitValue, unitOffset, unitPower, unitPrefixValue
 
   if (value === null || value === undefined || unitPieces.length === 0) {
@@ -41,7 +41,7 @@ export function normalize (unitPieces: Unit[], value: number, type: DataType) {
    * @returns denormalized value
    * @private
    */
-export function denormalize (unitPieces: Unit[], value: number, type: DataType): number {
+export function denormalize<T>(unitPieces: Unit[], value: T, type: TypeArithmetics<T>): T {
   let unitValue, unitOffset, unitPower, unitPrefixValue
 
   if (value === null || value === undefined || unitPieces.length === 0) {

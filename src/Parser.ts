@@ -1,9 +1,4 @@
-import { DataType, UnitPropsButCooler } from "./Unit"
-
-
-export interface ParserOptions {
-  type: DataType
-}
+import { TypeArithmetics, UnitPropsButCooler, Options } from "./Unit"
 
 interface parsedUnit {
   units?: subUnit[]
@@ -23,7 +18,7 @@ type findUnitFn = (unitString: string) => { unit: UnitPropsButCooler, prefix: st
 /**
  * Returns a new Parser.
  */
-export default function createParser (options: ParserOptions, findUnit: findUnitFn) {
+export default function createParser<T> (options: Options<T>, findUnit: findUnitFn) {
   // private variables and functions for the Unit parser
   let text, index, c
 

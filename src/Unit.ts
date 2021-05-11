@@ -1,16 +1,26 @@
+import { systems } from './BuiltIns'
 import createUnitStore from './UnitStore'
 import { normalize, denormalize, isCompound as _isCompound } from './utils'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
-export interface DataType {
-  conv(...a)
-  clone(...a)
-  add(...a)
-  sub(...a)
-  mul(...a)
-  div(...a)
-  pow(...a)
+export interface TypeArithmetics<T = any> {
+  conv(a: any): T
+  conv<S extends T>(a: S, b: T): S
+  clone(a: T): T
+  add(a: T, b: T): T
+  sub(a: T, b: T): T
+  mul(a: T, b: T): T
+  div(a: T, b: T): T
+  pow(a: T, b: T): T
+}
+
+export interface Options<T> {
+  type: TypeArithmetics<T>
+  definitions: UnitDefinitions & { skipBuiltIns?: boolean }
+  system: 'auto' | keyof typeof systems // TODO allow custom
+  prefix: 'never' | 'auto' | 'always'
+  simplify: 'never', 'auto', 'always'
 }
 
 export interface UnitPrefixes {
@@ -28,7 +38,7 @@ export interface UnitProps {
   basePrefix?: string
   commonPrefixes?: string[]
   aliases?: string[]
-  offset: number
+  offset?: number
 }
 
 export interface UnitPropsButCooler {
@@ -46,7 +56,7 @@ export interface UnitPropsButCooler {
 export interface UnitDefinitions {
   prefixes: UnitPrefixes,
   systems: UnitSystems,
-  units: Record<string, UnitProps>
+  units: Record<string, UnitProps | string>
 }
 
 export interface UnitDefinitionsButCooler {
@@ -61,17 +71,17 @@ export interface UnitDefinitionsButCooler {
  * @param {Object} options Configuration options to set on the new instance.
  * @returns {Function} A new instance of the unit factory function with the specified options.
  */
-let _config = function _config (options) {
+let _config = function _config<T> (options: Options<T>) {
   options = Object.assign({}, options)
 
   // Check to make sure options are valid
 
-  const validPrefix = ['never', 'auto', 'always']
+  const validPrefix = <const>['never', 'auto', 'always']
   if (!validPrefix.includes(options.prefix)) {
     throw new Error(`Invalid option for prefix: '${options.prefix}'. Valid options are ${validPrefix.join(', ')}`)
   }
 
-  const validSimplify = ['never', 'auto', 'always']
+  const validSimplify = <const>['never', 'auto', 'always']
   if (!validSimplify.includes(options.simplify)) {
     throw new Error(`Invalid option for simplify: '${options.simplify}'. Valid options are ${validSimplify.join(', ')}`)
   }
@@ -130,8 +140,13 @@ let _config = function _config (options) {
    * @param {String} unitString The unit string, unless already included in the `value` parameter.
    * @returns {Unit} The Unit given by the value and unit string.
    */
-  class Unit {
-    constructor (value, unitString) {
+  class Unit<V extends T> {
+    public type: 'Unit'
+    public dimension: Record<string, number>
+    public units: any
+    public value: V
+
+    constructor (value: V, unitString) {
       let parseResult
 
       if (typeof value === 'undefined' && typeof unitString === 'undefined') {

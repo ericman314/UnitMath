@@ -1,13 +1,12 @@
 import createParser from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
-import { UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler, UnitSystems } from "./Unit";
+import { Options, UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler, UnitSystems } from "./Unit";
 
 /**
  * Creates a new unit store.
- * @param {Object} options
  */
-export default function createUnitStore (options) {
+export default function createUnitStore<T>(options: Options<T>) {
   /* Units are defined by these objects:
    * defs.prefixes
    * defs.units
@@ -108,9 +107,11 @@ export default function createUnitStore (options) {
       const unitDef = originalDefinitions.units[unitDefKey]
       if (!unitDef) continue
 
+      const unitDefObj = typeof unitDef === 'string' ? null : unitDef
+
       // uses unknown set of prefixes?
-      if (unitDef.prefixes && !defs.prefixes.hasOwnProperty(unitDef.prefixes)) {
-        throw new Error(`Unknown prefixes '${unitDef.prefixes}' for unit '${unitDefKey}'`)
+      if (unitDefObj && unitDefObj.prefixes && !defs.prefixes.hasOwnProperty(unitDefObj.prefixes)) {
+        throw new Error(`Unknown prefixes '${unitDefObj.prefixes}' for unit '${unitDefKey}'`)
       }
 
       let unitValue: UnitProps['value']
@@ -118,21 +119,21 @@ export default function createUnitStore (options) {
       let unitQuantity: UnitProps['quantity']
 
       let skipThisUnit = false
-      if (unitDef.quantity) {
+      if (unitDefObj && unitDefObj.quantity) {
         // Defining the unit based on a quantity.
-        unitValue = unitDef.value
-        unitDimension = { [unitDef.quantity]: 1 }
-        unitQuantity = unitDef.quantity
+        unitValue = unitDefObj.value
+        unitDimension = { [unitDefObj.quantity]: 1 }
+        unitQuantity = unitDefObj.quantity
       } else {
         // Defining the unit based on other units.
         let parsed
         try {
           if (unitDef.hasOwnProperty('value')) {
-            if (typeof unitDef.value === 'string') {
-              parsed = parser(unitDef.value)
-            } else if (Array.isArray(unitDef.value) && unitDef.value.length === 2) {
-              parsed = parser(unitDef.value[1])
-              parsed.value = options.type.conv(unitDef.value[0])
+            if (unitDefObj && typeof unitDefObj.value === 'string') {
+              parsed = parser(unitDefObj.value)
+            } else if (Array.isArray(unitDefObj.value) && unitDefObj.value.length === 2) {
+              parsed = parser(unitDefObj.value[1])
+              parsed.value = options.type.conv(unitDefObj.value[0])
             } else {
               throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
             }
@@ -156,7 +157,7 @@ export default function createUnitStore (options) {
 
       if (!skipThisUnit) {
         // Add this units and its aliases (they are all the same except for the name)
-        let unitAndAliases = [unitDefKey].concat(unitDef.aliases || [])
+        let unitAndAliases = [unitDefKey].concat(unitDefObj?.aliases ?? [])
         unitAndAliases.forEach(newUnitName => {
           if (defs.units.hasOwnProperty(newUnitName)) {
             throw new Error(`Alias '${newUnitName}' would override an existing unit`)
@@ -167,14 +168,14 @@ export default function createUnitStore (options) {
           const newUnit: UnitPropsButCooler = {
             name: newUnitName,
             value: unitValue,
-            offset: unitDef.offset || 0,
+            offset: unitDefObj?.offset ?? 0,
             dimension: unitDimension,
-            prefixes: defs.prefixes[unitDef.prefixes] || { '': 1 },
-            commonPrefixes: unitDef.commonPrefixes // Default should be undefined
+            prefixes: defs.prefixes[unitDefObj?.prefixes] ?? { '': 1 },
+            commonPrefixes: unitDefObj?.commonPrefixes // Default should be undefined
             // systems: []
           }
           if (unitQuantity) newUnit.quantity = unitQuantity
-          if (unitDef.basePrefix) newUnit.basePrefix = unitDef.basePrefix
+          if (unitDefObj?.basePrefix) newUnit.basePrefix = unitDefObj.basePrefix
           Object.freeze(newUnit)
           defs.units[newUnitName] = newUnit
           unitsAdded++

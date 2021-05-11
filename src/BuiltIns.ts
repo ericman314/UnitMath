@@ -1,6 +1,8 @@
 // A base quantity is a physical quantity in a subset of a given system of quantities that is chosen by convention, where no quantity in the set can be expressed in terms of the others.
 // export const baseQuantities = ['MASS', 'LENGTH', 'TIME', 'CURRENT', 'TEMPERATURE', 'LUMINOUS_INTENSITY', 'AMOUNT_OF_SUBSTANCE', 'ANGLE', 'BIT', 'SOLID_ANGLE']
 
+import { UnitProps } from "./Unit"
+
 // A derived quantity is a quantity in a system of quantities that is a defined in terms of the base quantities of that system.
 // export const quantities = {
 //   UNITLESS: '',
@@ -242,7 +244,7 @@ prefixes.BINARY_LONG = Object.assign({}, prefixes.BINARY_LONG_SI, prefixes.BINAR
 // defined using a base quantity, such as LENGTH, or it may be defined in terms of other units. The unit may also
 // include `prefixes`, which specify which prefix set will be used for parsing the unit, and `commonPrefixes`, which
 // specifies which prefixes will be used when formatting that unit.
-export const units = <const>{
+export const units: Record<string, UnitProps | string> = {
   '': {
     quantity: 'UNITLESS',
     value: 1
