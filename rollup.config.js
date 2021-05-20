@@ -25,15 +25,18 @@ const babelOptions = {
 }
 
 const tsOptions = {
-  check: false,
-  abortOnError: false
+  check: true,
+  abortOnError: true
 }
 
-const tsOptionsWithDeclarations = { // TODO use this when types are OK
+const tsOptionsDeclaration = {
   ...tsOptions,
+  useTsconfigDeclarationDir: true,
   tsconfigOverride: {
     compilerOptions: {
-      declaration: true
+      declaration: true,
+      emitDeclarationOnly: true,
+      outFile: 'es/UnitMath.d.ts'
     }
   }
 }
@@ -95,6 +98,13 @@ export default [
     },
     plugins: [
       typescript(tsOptions)
+    ]
+  },
+  // d.ts build
+  {
+    input,
+    plugins: [
+      typescript(tsOptionsDeclaration)
     ]
   },
   // minified es build

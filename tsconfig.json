@@ -1,7 +1,9 @@
 {
+    "include": [ "src/**/*" ],
     "compilerOptions": {
         "module": "ESNext",
         "noImplicitAny": false,
-        "target": "ESNext"
+        "target": "ESNext",
+        "rootDir": "src/"
     }
 }

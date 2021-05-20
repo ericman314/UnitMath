@@ -117,6 +117,255 @@ export interface UnitDefinitionsButCooler<T> {
 }
 
 
+export interface Unit<V> {
+  readonly type: 'Unit'
+
+  value: V
+  units: AtomicUnit<V>[]
+  dimension: Record<string, number>
+
+  /** whether the prefix and the units are fixed */
+  fixed: boolean
+
+  // new (): Unit<V>
+  // new (str: string): Unit<V>
+  // new (value: V, unit: string): Unit<V>
+
+
+  /**
+   * create a copy of this unit
+   */
+  clone(): Unit<V>
+
+  /**
+   * Adds two units. Both units' dimensions must be equal.
+   * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
+   * @returns {Unit} The result of adding this and the other unit.
+   */
+  add(other: Unit<V> | string): Unit<V>
+  add(value: V, unit: string): Unit<V>
+
+
+  /**
+   * Subtracts two units. Both units' dimensions must be equal.
+   * @param {Unit|string} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
+   * @returns {Unit} The result of subtract this and the other unit.
+   */
+  sub(other: Unit<V> | string): Unit<V>
+  sub(value: V, unit: string): Unit<V>
+
+  /**
+   * Multiplies two units.
+   * @param {Unit|string} other The unit to multiply to this one.
+   * @returns {Unit} The result of multiplying this and the other unit.
+   */
+  mul(other: Unit<V> | string): Unit<V>
+  mul(value: V, unit: string): Unit<V>
+
+  /**
+   * Divides two units.
+   * @param {Unit|string} other The unit to divide this unit by.
+   * @returns {Unit} The result of dividing this by the other unit.
+   */
+  div(other: Unit<V> | string): Unit<V>
+  div(value: V, unit: string): Unit<V>
+
+
+  /**
+   * Calculate the power of a unit
+   * @memberof Unit
+   * @param {number|custom} p
+   * @returns {Unit}      The result: this^p
+   */
+  pow(p: number | V): Unit<V>
+
+  /**
+   * Takes the square root of a unit.
+   * @memberof Unit
+   * @returns {Unit} The square root of this unit.
+   */
+  sqrt(): Unit<V>
+
+  /**
+   * Returns the absolute value of this unit.
+   * @memberOf Unit
+   * @returns {Unit} The absolute value of this unit.
+   */
+  abs(): Unit<V>
+
+  /**
+   * Returns an array of units whose sum is equal to this unit, where each unit in the array is taken from the supplied string array.
+   * @param {string[]} units A string array of units to split this unit into.
+   * @returns {Unit[]} An array of units
+   */
+  split(units: string[]): Unit<V>[]
+
+  /**
+   * Convert the unit to a specific unit.
+   * @memberof Unit
+   * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm". If omitted, a new unit is returned which is fixed (will not be auto-simplified)
+   * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+   */
+  to(valuelessUnit?: string | Unit<V>): Unit<V>
+
+  /**
+   * Convert the unit to SI units.
+   * @memberof Unit
+   * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+   */
+  toBaseUnits(): Unit<V>
+
+  /**
+   * Returns a new unit with the given value.
+   * @param {number | string | custom} value
+   * @returns A new unit with the given value.
+   */
+  setValue(value: V | string | number): Unit<V>
+
+  /**
+   * Returns this unit's value.
+   * @returns The value of this unit.
+   */
+  getValue(): V
+
+  /**
+   * Returns this unit's normalized value, which is the value it would have if it were to be converted to SI base units (or whatever base units are defined)
+   * @returns The notmalized value of the unit.
+   */
+  getNormalizedValue(): V
+
+  /**
+   * Returns a new unit with the given normalized value.
+   * @param {number | string | custom} normalizedValue
+   * @returns A new unit with the given normalized value.
+   */
+  setNormalizedValue (normalizedValue: string | number | V): Unit<V>
+
+  /**
+   * Simplify this Unit's unit list and return a new Unit with the simplified list.
+   * The returned Unit will contain a list of the "best" units for formatting.
+   * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
+   */
+  simplify(): Unit<V>
+
+  /**
+   * Returns this unit without a value.
+   * @memberof Unit
+   * @returns {Unit} A new unit formed by removing the value from this unit.
+   */
+  getUnits(): Unit<V>
+
+  /**
+   * Returns whether the unit is compound (like m/s, cm^2) or not (kg, N, hogshead)
+   * @memberof Unit
+   * @returns True if the unit is compound
+   */
+  isCompound(): boolean
+
+  /**
+   * check if this unit matches the given quantity
+   * @memberof Unit
+   * @param {QUANTITY | string | undefined} quantity
+   */
+  hasQuantity(quantity: any): boolean
+
+  /**
+   * Check if this unit has a dimension equal to another unit
+   * @param {Unit} other
+   * @return {boolean} true if equal dimensions
+   */
+  equalQuantity(other: Unit<V>): boolean
+
+  /**
+   * Returns a string array of all the quantities that match this unit.
+   * @return {string[]} The matching quantities, or an empty array if there are no matching quantities.
+   */
+  getQuantities(): string[]
+
+  /**
+   * Check if this unit equals another unit
+   * @memberof Unit
+   * @param {Unit} other
+   * @return {boolean} true if both units are equal
+   */
+  equals(other: Unit<V>): boolean
+
+  /**
+   * Compare this unit to another and return a value indicating whether this unit is less than, greater than, or equal to the other.
+   * @param {Unit} other
+   * @return {number} -1 if this unit is less than, 1 if this unit is greater than, and 0 if this unit is equal to the other unit.
+   */
+  compare(other: Unit<V>): -1 | 0 | 1
+
+  /**
+   * Compare this unit to another and return whether this unit is less than the other.
+   * @param {Unit} other
+   * @return {boolean} true if this unit is less than the other.
+   */
+  lessThan(other: Unit<V>): boolean
+
+  /**
+   * Compare this unit to another and return whether this unit is less than or equal to the other.
+   * @param {Unit} other
+   * @return {boolean} true if this unit is less than or equal the other.
+   */
+  lessThanOrEqual(other: Unit<V>): boolean
+
+  /**
+   * Compare this unit to another and return whether this unit is greater than the other.
+   * @param {Unit} other
+   * @return {boolean} true if this unit is greater than the other.
+   */
+  greaterThan(other: Unit<V>): boolean
+
+  /**
+   * Compare this unit to another and return whether this unit is greater than or equal to the other.
+   * @param {Unit} other
+   * @return {boolean} true if this unit is greater than or equal the other.
+   */
+  greaterThanOrEqual(other: Unit<V>): boolean
+
+  /**
+   * Get a string representation of the Unit, with optional formatting options. Alias of `format`.
+   * @memberof Unit
+   * @param {Object} [opts]  Formatting options.
+   * @return {string}
+   */
+  toString (...opts: any[]): string
+
+  /**
+   * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
+   */
+  valueOf(): string
+
+  /**
+   * Get a string representation of the Unit, with optional formatting options.
+   */
+  format(...userOpts: any[]): string
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Create a clone of the this unit factory function, but with the specified options.
  * @param {Object} options Configuration options to set on the new instance.
@@ -185,7 +434,7 @@ let _config = function _config<T> (options: Options<T>) {
   function unitmath<V extends T>(value: V, unit: string): Unit<V>
 
   function unitmath(value?: any, unitString?: any) {
-    let unit = new Unit(value, unitString)
+    let unit = new _Unit(value, unitString)
     Object.freeze(unit)
     return unit
   }
@@ -194,9 +443,10 @@ let _config = function _config<T> (options: Options<T>) {
    * The actual constructor for Unit. Creates a new Unit with the specified value and unit string.
    * @param {Number|String|*} value The `number` to assign to the unit, or a `string` representing the value and the unit string together.
    * @param {String} unitString The unit string, unless already included in the `value` parameter.
-   * @returns {Unit} The Unit given by the value and unit string.
+   * @returns {_Unit} The Unit given by the value and unit string.
    */
-  class Unit<V extends T|n> {
+  class _Unit<V extends T|n>
+  implements Unit<V> {
     readonly type = 'Unit'
 
     public value: V
@@ -320,7 +570,7 @@ let _config = function _config<T> (options: Options<T>) {
     pow(p: number | V) {
       const unit = _pow(this, p)
       Object.freeze(unit)
-      return unit
+      return unit as Unit<V>
     }
 
     /**
@@ -331,7 +581,7 @@ let _config = function _config<T> (options: Options<T>) {
     sqrt() {
       const unit = _sqrt(this)
       Object.freeze(unit)
-      return unit
+      return unit as Unit<V>
     }
 
     /**
@@ -342,7 +592,7 @@ let _config = function _config<T> (options: Options<T>) {
     abs() {
       const unit = _abs(this)
       Object.freeze(unit)
-      return unit
+      return unit as Unit<V>
     }
 
     /**
@@ -502,7 +752,7 @@ let _config = function _config<T> (options: Options<T>) {
       if (!matchingUnit) {
         for (let unit of this.units) {
           if (this.equalQuantity(unit.unit.name)) {
-            matchingUnit = new Unit(unit.unit.name)
+            matchingUnit = new _Unit(unit.unit.name)
             break
           }
         }
@@ -512,7 +762,7 @@ let _config = function _config<T> (options: Options<T>) {
       if (!matchingUnit) {
         for (let unit of Object.keys(unitStore.defs.units)) {
           if (this.equalQuantity(unit)) {
-            matchingUnit = new Unit(unit)
+            matchingUnit = new _Unit(unit)
             break
           }
         }
@@ -858,8 +1108,8 @@ let _config = function _config<T> (options: Options<T>) {
    * Private function _clone
    * @param {Unit} unit
    */
-  function _clone<V extends T|n>(unit: Unit<V>): Unit<V> {
-    const result = new Unit<V>()
+  function _clone<V extends T|n>(unit: Unit<V> | _Unit<V>): Unit<V> {
+    const result = new _Unit<V>()
     result.value = unit.value === null ? null : options.type.clone(unit.value)
     result.dimension = { ...unit.dimension }
     if (unit.fixed) {
@@ -873,7 +1123,7 @@ let _config = function _config<T> (options: Options<T>) {
       }
     }
 
-    return result
+    return result as Unit<V>
   }
 
   /**
@@ -1121,7 +1371,7 @@ let _config = function _config<T> (options: Options<T>) {
         xFixed = options.type.trunc(x.value)
       }
 
-      const y = new Unit(xFixed, units[i].toString())
+      const y = new _Unit(xFixed, units[i].toString())
       result.push(y)
       x = _sub(x, y)
     }
@@ -1287,7 +1537,7 @@ let _config = function _config<T> (options: Options<T>) {
    * Private function _toBaseUnits
    * @param {Unit} unit The unit to convert to SI.
    */
-  function _toBaseUnits<V extends T|n>(unit: Unit<V>): Unit<V> {
+  function _toBaseUnits<V extends T|n>(unit: _Unit<V> | Unit<V>): Unit<V> {
     const result = _clone(unit)
 
     const proposedUnitList = []
@@ -1339,7 +1589,7 @@ let _config = function _config<T> (options: Options<T>) {
    * @param {string | number | custom} value The value to set
    * @returns {Unit} A new unit with the given value
    */
-  function _setValue<V extends T|n>(unit: Unit<V>, value: V | string | number): Unit<V> {
+  function _setValue<V extends T|n>(unit: _Unit<V> | Unit<V>, value: V | string | number): Unit<V> {
     let result = _clone(unit)
     if (typeof value === 'undefined' || value === null) {
       result.value = null
@@ -1419,9 +1669,9 @@ let _config = function _config<T> (options: Options<T>) {
    * @param {Object} options Configuration options, in addition to those existing, to set on the new instance.
    * @returns {Function} A new instance of the unit factory function with the specified options; or, if no arguments are given, the current options.
    */
-  unitmath.config = function config (newOptions) {
+  unitmath.config = function config<S> (newOptions: Options<S>) {
     if (typeof (newOptions) === 'undefined') {
-      return options
+      return unitmath
     }
 
     // Shallow copy existing config
@@ -1536,20 +1786,10 @@ let _config = function _config<T> (options: Options<T>) {
 
   // TODO: This is used only for testing, could there be another way rather than exposing it on the public namespace?
   unitmath._unitStore = unitStore
-
-  // This is a hack to get the Unit<V> type outside of this scope
-  unitmath.UNIT_CLASS_TYPE_HACK = undefined as Unit<T>
-
   Object.freeze(unitmath)
 
   return unitmath
 }
-
-
-// This is a hack to get the Unit<V> type
-// https://stackoverflow.com/a/64919133/1137334
-class __<T>{ _() { return _config<T>(0 as any)['UNIT_CLASS_TYPE_HACK'] } }
-export type Unit<T> = ReturnType<__<T>['_']>
 
 
 // Define default arithmetic functions
