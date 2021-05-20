@@ -27,7 +27,7 @@ export default function createUnitStore<T>(options: Options<T>) {
     systems = { ...builtIns.systems } as any
 
     // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
-    for (let system in options.definitions.systems) {
+    for (let system of Object.keys(options.definitions.systems)) {
       if (systems.hasOwnProperty(system)) {
         systems[system] = [...options.definitions.systems[system], ...systems[system]]
       } else {
@@ -54,7 +54,7 @@ export default function createUnitStore<T>(options: Options<T>) {
     prefixes: { ...originalDefinitions.prefixes },
     systems: {}
   }
-  for (let system in originalDefinitions.systems) {
+  for (let system of Object.keys(originalDefinitions.systems)) {
     defs.systems[system] = originalDefinitions.systems[system].slice()
   }
 
@@ -256,19 +256,17 @@ export default function createUnitStore<T>(options: Options<T>) {
       }
     }
 
-    for (const name in defs.units) {
-      if (defs.units.hasOwnProperty(name)) {
-        if (unitString.substring(unitString.length - name.length, unitString.length) === name) {
-          const unit = defs.units[name]
-          const prefixLen = (unitString.length - name.length)
-          const prefix = unitString.substring(0, prefixLen)
-          if (unit.prefixes.hasOwnProperty(prefix)) {
-            // store unit, prefix, and value
-            // console.log(`findUnit(${unitString}): { unit.name: ${unit.name}, prefix: ${prefix} }`)
-            return {
-              unit,
-              prefix
-            }
+    for (const name of Object.keys(defs.units)) {
+      if (unitString.substring(unitString.length - name.length, unitString.length) === name) {
+        const unit = defs.units[name]
+        const prefixLen = (unitString.length - name.length)
+        const prefix = unitString.substring(0, prefixLen)
+        if (unit.prefixes.hasOwnProperty(prefix)) {
+          // store unit, prefix, and value
+          // console.log(`findUnit(${unitString}): { unit.name: ${unit.name}, prefix: ${prefix} }`)
+          return {
+            unit,
+            prefix
           }
         }
       }

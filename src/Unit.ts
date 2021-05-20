@@ -446,8 +446,7 @@ let _config = function _config<T> (options: Options<T>) {
         // If unit system is 'auto', then examine the existing units to infer which system is preferred.
         let identifiedSystems = {}
         for (let unit of this.units) {
-          for (let system in unitStore.defs.systems) {
-            if (!unitStore.defs.systems.hasOwnProperty(system)) continue
+          for (let system of Object.keys(unitStore.defs.systems)) {
             for (let systemUnit of unitStore.defs.systems[system]) {
               let systemUnitString = `${systemUnit.units[0].prefix}${systemUnit.units[0].unit.name}`
               let unitString = `${unit.prefix}${unit.unit.name}`
@@ -511,7 +510,7 @@ let _config = function _config<T> (options: Options<T>) {
 
       // 3. Search for a matching dimension in all units
       if (!matchingUnit) {
-        for (let unit in unitStore.defs.units) {
+        for (let unit of Object.keys(unitStore.defs.units)) {
           if (this.equalQuantity(unit)) {
             matchingUnit = new Unit(unit)
             break
@@ -609,7 +608,7 @@ let _config = function _config<T> (options: Options<T>) {
     equalQuantity (other) {
       other = _convertParamToUnit(other)
       // All dimensions must be the same
-      for (let dim in { ...this.dimension, ...other.dimension }) {
+      for (let dim of Object.keys({ ...this.dimension, ...other.dimension })) {
         if (Math.abs((this.dimension[dim] || 0) - (other.dimension[dim] || 0)) > 1e-12) {
           return false
         }
@@ -623,7 +622,7 @@ let _config = function _config<T> (options: Options<T>) {
      */
     getQuantities () {
       const result = []
-      for (let d in unitStore.defs.quantities) {
+      for (let d of Object.keys(unitStore.defs.quantities)) {
         if (this.hasQuantity(d)) {
           result.push(d)
         }
@@ -869,10 +868,8 @@ let _config = function _config<T> (options: Options<T>) {
     result.units = []
     for (let i = 0; i < unit.units.length; i++) {
       result.units[i] = {} as any
-      for (const p in unit.units[i]) {
-        if (unit.units[i].hasOwnProperty(p)) {
-          result.units[i][p] = unit.units[i][p]
-        }
+      for (const p of Object.keys(unit.units[i])) {
+        result.units[i][p] = unit.units[i][p]
       }
     }
 
@@ -925,7 +922,7 @@ let _config = function _config<T> (options: Options<T>) {
    */
   function _removeZeroDimensions (dimensions: Record<string, number>): Record<string, number> {
     let result = { ...dimensions }
-    for (let dim in result) {
+    for (let dim of Object.keys(result)) {
       if (Math.abs(result[dim]) < 1e-15) {
         delete result[dim]
       }
@@ -998,7 +995,7 @@ let _config = function _config<T> (options: Options<T>) {
   function _mul (unit1, unit2) {
     const result = _clone(unit1)
 
-    for (let dim in { ...unit1.dimension, ...unit2.dimension }) {
+    for (let dim of Object.keys({ ...unit1.dimension, ...unit2.dimension })) {
       result.dimension[dim] = (unit1.dimension[dim] || 0) + (unit2.dimension[dim] || 0)
       if (Math.abs(result.dimension[dim]) < 1e-15) delete result.dimension[dim]
     }
@@ -1007,7 +1004,7 @@ let _config = function _config<T> (options: Options<T>) {
     for (let i = 0; i < unit2.units.length; i++) {
       // Make a deep copy
       const inverted = {} as AtomicUnit<T>
-      for (const key in unit2.units[i]) {
+      for (const key of Object.keys(unit2.units[i])) {
         inverted[key] = unit2.units[i][key]
       }
       result.units.push(inverted)
@@ -1035,7 +1032,7 @@ let _config = function _config<T> (options: Options<T>) {
    */
   function _div (unit1, unit2) {
     const result = _clone(unit1)
-    for (let dim in { ...unit1.dimension, ...unit2.dimension }) {
+    for (let dim of Object.keys({ ...unit1.dimension, ...unit2.dimension })) {
       result.dimension[dim] = (unit1.dimension[dim] || 0) - (unit2.dimension[dim] || 0)
       if (Math.abs(result.dimension[dim]) < 1e-15) delete result.dimension[dim]
     }
@@ -1044,7 +1041,7 @@ let _config = function _config<T> (options: Options<T>) {
     for (let i = 0; i < unit2.units.length; i++) {
       // Make a deep copy
       const inverted = {} as AtomicUnit<T>
-      for (const key in unit2.units[i]) {
+      for (const key of Object.keys(unit2.units[i])) {
         inverted[key] = unit2.units[i][key]
       }
       inverted.power = -inverted.power
@@ -1074,7 +1071,7 @@ let _config = function _config<T> (options: Options<T>) {
   function _pow (unit, p) {
     // TODO: combineDuplicateUnits
     const result = _clone(unit)
-    for (let dim in result.dimension) {
+    for (let dim of Object.keys(result.dimension)) {
       result.dimension[dim] = unit.dimension[dim] * p
     }
 
@@ -1299,9 +1296,9 @@ let _config = function _config<T> (options: Options<T>) {
     // 5 (kg m^2) / (s^3 mol)
     // Build an representation from the base units of the SI unit system
 
-    for (let dim in result.dimension) {
+    for (let dim of Object.keys(result.dimension)) {
       if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
-        for (let unit in unitStore.defs.units) {
+        for (let unit of Object.keys(unitStore.defs.units)) {
           // console.log(unitStore.defs.units[unit])
           if (unitStore.defs.units[unit].quantity === dim) {
             proposedUnitList.push({
@@ -1431,7 +1428,7 @@ let _config = function _config<T> (options: Options<T>) {
     let retOptions = Object.assign({}, options)
 
     // Shallow copy new options (except unit and type)
-    for (let key in newOptions) {
+    for (let key of Object.keys(newOptions)) {
       if (key !== 'unit' && key !== 'type') {
         retOptions[key] = newOptions[key]
       }
@@ -1576,7 +1573,7 @@ let defaults: TypeArithmetics<number> = {
 }
 
 // These are mostly to help warn the user if they forgot to override one or more of the default functions
-for (const key in defaults) {
+for (const key of Object.keys(defaults)) {
   defaults[key][IS_DEFAULT_FUN] = true
 }
 

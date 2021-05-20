@@ -260,7 +260,7 @@ export default function createParser<T> (options: Options<T>, findUnit: findUnit
         power: power
       })
 
-      for (let dim in found.unit.dimension) {
+      for (let dim of Object.keys(found.unit.dimension)) {
         unit.dimension[dim] = (unit.dimension[dim] || 0) + (found.unit.dimension[dim] || 0) * power
       }
 
