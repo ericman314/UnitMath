@@ -1,24 +1,18 @@
-import { TypeArithmetics, UnitPropsButCooler, Options } from "./Unit"
+import { UnitPropsButCooler, Options, AtomicUnit } from "./Unit"
 
-interface parsedUnit {
-  units?: subUnit[]
+export interface ParsedUnit<V = any> {
+  units?: AtomicUnit<V>[]
   dimension?: Record<string, number>,
-  value?: any
+  value?: V
 }
 
-interface subUnit {
-  unit: UnitPropsButCooler,
-  prefix: string,
-  power: number
-}
-
-type findUnitFn = (unitString: string) => { unit: UnitPropsButCooler, prefix: string } | null
+type findUnitFn<T> = (unitString: string) => { unit: UnitPropsButCooler<T>, prefix: string } | null
 
 
 /**
  * Returns a new Parser.
  */
-export default function createParser<T> (options: Options<T>, findUnit: findUnitFn) {
+export default function createParser<T> (options: Options<T>, findUnit: findUnitFn<T>) {
   // private variables and functions for the Unit parser
   let text, index, c
 
@@ -162,7 +156,7 @@ export default function createParser<T> (options: Options<T>, findUnit: findUnit
    * @param {string} str        A string like "5.2 inch", "4e2 cm/s^2"
    * @return {Object} { value, unitArray }
    */
-  function parse (str) {
+  function parse (str): ParsedUnit<T|number> {
     // console.log(`parse("${str}")`)
 
     text = str
@@ -173,7 +167,7 @@ export default function createParser<T> (options: Options<T>, findUnit: findUnit
       throw new TypeError('Invalid argument in parse, string expected')
     }
 
-    const unit: parsedUnit = {}
+    const unit: ParsedUnit = {}
 
     unit.units = []
 

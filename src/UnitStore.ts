@@ -1,7 +1,8 @@
-import createParser from './Parser'
+import createParser, { ParsedUnit } from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
-import { Options, UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler, UnitSystems } from "./Unit";
+import { isUnitPropsWithQuantity, Options, UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler, UnitSystems } from "./Unit";
+
 
 /**
  * Creates a new unit store.
@@ -35,7 +36,7 @@ export default function createUnitStore<T>(options: Options<T>) {
     }
   }
 
-  const originalDefinitions: UnitDefinitions = {
+  const originalDefinitions: UnitDefinitions<T> = {
     systems,
     prefixes: {
       ...(skipBuiltIns ? {} : builtIns.prefixes),
@@ -48,7 +49,7 @@ export default function createUnitStore<T>(options: Options<T>) {
   }
 
   // These will contain copies we can mutate without affecting the originals
-  const defs: UnitDefinitionsButCooler = {
+  const defs: UnitDefinitionsButCooler<T> = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
     systems: {}
@@ -114,19 +115,19 @@ export default function createUnitStore<T>(options: Options<T>) {
         throw new Error(`Unknown prefixes '${unitDefObj.prefixes}' for unit '${unitDefKey}'`)
       }
 
-      let unitValue: UnitProps['value']
+      let unitValue: T|number
       let unitDimension: { [s: string]: number }
-      let unitQuantity: UnitProps['quantity']
+      let unitQuantity: UnitProps<T>['quantity']
 
       let skipThisUnit = false
-      if (unitDefObj && unitDefObj.quantity) {
+      if (isUnitPropsWithQuantity(unitDefObj)) {
         // Defining the unit based on a quantity.
         unitValue = unitDefObj.value
         unitDimension = { [unitDefObj.quantity]: 1 }
         unitQuantity = unitDefObj.quantity
       } else {
         // Defining the unit based on other units.
-        let parsed
+        let parsed: ParsedUnit<T|number>
         try {
           if (unitDef.hasOwnProperty('value')) {
             if (unitDefObj && typeof unitDefObj.value === 'string') {
@@ -165,7 +166,7 @@ export default function createUnitStore<T>(options: Options<T>) {
           if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(newUnitName) && newUnitName !== '') {
             throw new SyntaxError(`Unit name contains non-alphanumeric characters or begins with a number: '${newUnitName}'`)
           }
-          const newUnit: UnitPropsButCooler = {
+          const newUnit: UnitPropsButCooler<any> = {
             name: newUnitName,
             value: unitValue,
             offset: unitDefObj?.offset ?? 0,
@@ -242,7 +243,7 @@ export default function createUnitStore<T>(options: Options<T>) {
    *                                  prefix is returned. Else, null is returned.
    * @private
    */
-  function findUnit (unitString: string): { unit: UnitPropsButCooler, prefix: string } | null {
+  function findUnit (unitString: string): { unit: UnitPropsButCooler<T>, prefix: string } | null {
     if (typeof unitString !== 'string') {
       throw new TypeError(`parameter must be a string (${unitString} given)`)
     }

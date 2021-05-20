@@ -244,7 +244,7 @@ prefixes.BINARY_LONG = Object.assign({}, prefixes.BINARY_LONG_SI, prefixes.BINAR
 // defined using a base quantity, such as LENGTH, or it may be defined in terms of other units. The unit may also
 // include `prefixes`, which specify which prefix set will be used for parsing the unit, and `commonPrefixes`, which
 // specifies which prefixes will be used when formatting that unit.
-export const units: Record<string, UnitProps | string> = {
+export const units: Record<string, UnitProps<number> | string> = {
   '': {
     quantity: 'UNITLESS',
     value: 1
