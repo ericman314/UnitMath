@@ -1537,10 +1537,10 @@ let _config = function _config<T> (options: Options<T>) {
   // TODO: This is used only for testing, could there be another way rather than exposing it on the public namespace?
   unitmath._unitStore = unitStore
 
-  Object.freeze(unitmath)
-
   // This is a hack to get the Unit<V> type outside of this scope
   unitmath.UNIT_CLASS_TYPE_HACK = undefined as Unit<T>
+
+  Object.freeze(unitmath)
 
   return unitmath
 }
