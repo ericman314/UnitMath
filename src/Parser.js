@@ -29,6 +29,18 @@ export default function createParser (options, findUnit) {
     c = text.charAt(index)
   }
 
+  function parseNonFinite() {
+    const nonFiniteStrings = ['NaN', 'Infinity', '-Infinity']
+    for (let nonFiniteString of nonFiniteStrings) {
+      if (text.substr(index, nonFiniteString.length) === nonFiniteString) {
+        index += nonFiniteString.length
+        c = text.charAt(index)
+        return nonFiniteString
+      }
+    }
+    return null
+  }
+
   function parseNumber () {
     let number = ''
     let oldIndex
@@ -167,7 +179,7 @@ export default function createParser (options, findUnit) {
     let expectingUnit = false
 
     // A unit should follow this pattern:
-    // [number] ...[ [*/] unit[^number] ]
+    // [number|[-]Infinity|NaN] ...[ [*/] unit[^number] ]
     // unit[^number] ... [ [*/] unit[^number] ]
 
     // Rules:
@@ -183,8 +195,9 @@ export default function createParser (options, findUnit) {
     next()
     skipWhitespace()
 
-    // Optional number at the start of the string
-    const valueStr = parseNumber()
+
+    // Optional number or non-finite string at the start of the string
+    const valueStr = parseNonFinite() || parseNumber()
     // console.log(`valueStr = "${valueStr}"`)
 
     if (valueStr) {
