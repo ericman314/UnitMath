@@ -1715,6 +1715,22 @@ describe('unitmath', () => {
       assert.strictEqual(unit().units.length, 0)
     })
 
+    it('should parse NaN and +/- Infinity', () => {
+      assert.strictEqual(Number.isNaN(unit('NaN').value), true)
+      assert.strictEqual(Number.isNaN(unit('NaN kg').value), true)
+      assert.strictEqual(unit('NaN kg').units[0].unit.name, 'g')
+      assert.strictEqual(Number.isNaN(unit('NaNkg').value), true)
+      assert.strictEqual(unit('NaNkg').units[0].unit.name, 'g')
+
+      assert.strictEqual(unit('Infinity').value, Infinity)
+      assert.strictEqual(unit('Infinity kg').value, Infinity)
+      assert.strictEqual(unit('Infinity kg').units[0].unit.name, 'g')
+
+      assert.strictEqual(unit('-Infinity').value, -Infinity)
+      assert.strictEqual(unit('-Infinity kg').value, -Infinity)
+      assert.strictEqual(unit('-Infinity kg').units[0].unit.name, 'g')
+    })
+
     it('should throw if parser() receives other than a string', () => {
       assert.throws(() => unit._unitStore.parser(42), /TypeError: Invalid argument in parse/)
     })

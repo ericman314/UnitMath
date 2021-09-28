@@ -1,5 +1,8 @@
 # History
 
+## 2021-09-28, v0.8.7
+- Parse strings `NaN`, `Infinity`, and `-Infinity`
+
 ## 2020-07-13, v0.8.6
 - Standardized on US customary fluid volumes
 - Corrected values for `teaspoon` and `fluidounce`
