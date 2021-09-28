@@ -27,7 +27,7 @@ export interface TypeArithmetics<T = any> {
   ge(a: T|n, b: T|n): boolean
   gt(a: T|n, b: T|n): boolean
 
-  format(a: T|n, ...options: any[]): string
+  format?(a: T | n, ...options: any[]): string
 
   round(a: T|n): T|n
   trunc(a: T|n): T|n
@@ -39,14 +39,19 @@ export interface AtomicUnit<V> {
   power: number
 }
 
-export interface Options<T> {
-  type: TypeArithmetics<T>
-  definitions: UnitDefinitions<T> & { skipBuiltIns?: boolean }
-  system: 'auto' | keyof typeof systems // TODO allow custom
-  prefix: 'never' | 'auto' | 'always'
-  simplify: 'never' | 'auto' | 'always'
-  precision: number
-  simplifyThreshold: number
+// Is it correct to specify a default type here?
+export interface Options<T = number> {
+  type?: TypeArithmetics<T>
+  definitions?: UnitDefinitions<T> & { skipBuiltIns?: boolean }
+  system?: 'auto' | keyof typeof systems // TODO allow custom
+  prefix?: 'never' | 'auto' | 'always'
+  prefixMin?: number
+  prefixMax?: number
+  prefixesToChooseFrom?: 'common' | 'all'
+  simplify?: 'never' | 'auto' | 'always'
+  precision?: number
+  parentheses?: boolean
+  simplifyThreshold?: number
 }
 
 export interface UnitPrefixes {
@@ -103,8 +108,8 @@ export interface UnitPropsButCooler<V> {
 }
 
 export interface UnitDefinitions<T> {
-  prefixes: UnitPrefixes,
-  systems: UnitSystems,
+  prefixes?: UnitPrefixes,
+  systems?: UnitSystems,
   units: Record<string, UnitProps<T|n> | string>
 }
 
@@ -117,6 +122,7 @@ export interface UnitDefinitionsButCooler<T> {
 }
 
 
+// Rename so Unit the type does not conflict with Unit the class? Is this interface even necessary? I don't know
 export interface Unit<V> {
   readonly type: 'Unit'
 
@@ -142,7 +148,7 @@ export interface Unit<V> {
    * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
    * @returns {Unit} The result of adding this and the other unit.
    */
-  add(other: Unit<V> | string): Unit<V>
+  add(other: Unit<V> | string | number): Unit<V>
   add(value: V, unit: string): Unit<V>
 
 
@@ -344,9 +350,21 @@ export interface Unit<V> {
   format(...userOpts: any[]): string
 }
 
+export interface UnitFactory<V> {
+  (): Unit<V>
+  (str: string): Unit<V>
+  (value: V, unitString: string): Unit<V>
+  config: (newOptions: Options<unknown>) => UnitFactory<unknown>
+  // TODO: Couldn't figure out how to make overloading work
+  getConfig: () => Options<V>
+  definitions: () => UnitDefinitions<V>
+  add: (a: Unit<V> | string | number, b: Unit<V> | string | number) => Unit<V>
+}
 
-
-
+export type TestFunction = {
+  (string): string
+  (number): number
+}
 
 
 
@@ -371,7 +389,7 @@ export interface Unit<V> {
  * @param {Object} options Configuration options to set on the new instance.
  * @returns {Function} A new instance of the unit factory function with the specified options.
  */
-let _config = function _config<T> (options: Options<T>) {
+let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   options = Object.assign({}, options)
 
   // Check to make sure options are valid
@@ -429,11 +447,11 @@ let _config = function _config<T> (options: Options<T>) {
    * @returns {Unit} The Unit given by the value and unit string.
    */
 
-  function unitmath<V extends T>(): Unit<V>
-  function unitmath<V extends T>(str: string): Unit<V>
-  function unitmath<V extends T>(value: V, unit: string): Unit<V>
+  // function unitmath<V extends T>(): Unit<V>
+  // function unitmath<V extends T>(str: string): Unit<V>
+  // function unitmath<V extends T>(value: V, unitString: string): Unit<V>
 
-  function unitmath(value?: any, unitString?: any) {
+  const unitmath: UnitFactory<T> = function unitmath(value?: any, unitString?: any) {
     let unit = new _Unit(value, unitString)
     Object.freeze(unit)
     return unit
@@ -1094,10 +1112,15 @@ let _config = function _config<T> (options: Options<T>) {
    * @returns {Unit} The frozen unit that was converted from the input parameter, or the original unit.
    */
 
-  function _convertParamToUnit<V extends T|n>(other: Unit<V> | string): Unit<V>
-  function _convertParamToUnit<V extends T|n>(value: V, unit: string): Unit<V>
+  // function _convertParamToUnit<V extends T | n>(other: Unit<V> | string | n): Unit<V>
+  // function _convertParamToUnit<V extends T|n>(value: V, unit: string): Unit<V>
 
-  function _convertParamToUnit<V extends T|n> (a?: any, b?: any): Unit<V> {
+  // function _convertParamToUnit<V extends T|n> (a?: any, b?: any): Unit<V> {
+
+  function _convertParamToUnit(other: Unit<T> | string | n): Unit<T>
+  function _convertParamToUnit(value: T, unit: string): Unit<T>
+
+  function _convertParamToUnit(a?: any, b?: any): Unit<T> {
     if (a.type === 'Unit') {
       return a
     }
@@ -1663,15 +1686,17 @@ let _config = function _config<T> (options: Options<T>) {
   let unitStore = createUnitStore(options)
 
   // Public functions available on the unitmath namespace
+  
 
   /**
    * Create a clone of the this unit factory function, but with the specified options.
    * @param {Object} options Configuration options, in addition to those existing, to set on the new instance.
-   * @returns {Function} A new instance of the unit factory function with the specified options; or, if no arguments are given, the current options.
+   * @returns {Function} A new instance of the unit factory function with the specified options
    */
-  unitmath.config = function config<S> (newOptions: Options<S>) {
+  // unitmath.config = function config<S>(newOptions?: Options<S>): UnitFactory<T> | Options<S> {
+  unitmath.config = function <S>(newOptions: Options<S>): UnitFactory<T> {
     if (typeof (newOptions) === 'undefined') {
-      return unitmath
+      throw new Error('options is required')
     }
 
     // Shallow copy existing config
@@ -1688,6 +1713,13 @@ let _config = function _config<T> (options: Options<T>) {
     retOptions.definitions = Object.assign({}, options.definitions, newOptions.definitions)
     retOptions.type = Object.assign({}, options.type, newOptions.type)
     return _config(retOptions)
+  }
+
+  /**
+   * Get the currently configured options
+   */
+  unitmath.getConfig = function () {
+    return options
   }
 
   unitmath.definitions = function definitions () {
@@ -1819,7 +1851,7 @@ for (const key of Object.keys(defaults)) {
 
 // TODO: setting to say whether to format using only the common prefixes or all prefixes
 
-const defaultOptions = <const>{
+const defaultOptions: Options<number> = <const>{
   parentheses: false,
   precision: 15,
   prefix: 'auto',
@@ -1829,7 +1861,7 @@ const defaultOptions = <const>{
   simplify: 'auto',
   simplifyThreshold: 2,
   system: 'auto',
-  subsystem: 'auto',
+  // subsystem: 'auto',
   definitions: {
     skipBuiltIns: false,
     units: {},

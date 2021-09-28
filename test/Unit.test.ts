@@ -1,4 +1,4 @@
-import unit from '../src/Unit'
+import unit, { Options } from '../src/Unit'
 import Decimal from 'decimal.js'
 import approx from './approx'
 
@@ -101,8 +101,9 @@ describe('unitmath', () => {
     })
 
     test('should be frozen', () => {
-      expect(() => { unit.config = 42 }).toThrow()
-      expect(() => { unit.foo = 42 }).toThrow()
+      // Type coercion to `any` is to suppress typescript compile error: we are expecting these statements to throw
+      expect(() => { (unit as any).config = 42 }).toThrow()
+      expect(() => { (unit as any).foo = 42 }).toThrow()
     })
 
     test('should have the correct default format config options', () => {
@@ -137,7 +138,7 @@ describe('unitmath', () => {
     })
 
     test('should clone the options argument', () => {
-      let options = { prefix: 'always' }
+      let options: Options<number> = { prefix: 'always' }
       let newUnit = unit.config(options)
       expect(options).not.toBe(newUnit.config())
     })
