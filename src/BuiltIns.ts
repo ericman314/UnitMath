@@ -244,7 +244,7 @@ prefixes.BINARY_LONG = Object.assign({}, prefixes.BINARY_LONG_SI, prefixes.BINAR
 // defined using a base quantity, such as LENGTH, or it may be defined in terms of other units. The unit may also
 // include `prefixes`, which specify which prefix set will be used for parsing the unit, and `commonPrefixes`, which
 // specifies which prefixes will be used when formatting that unit.
-export const units: Record<string, UnitProps<number> | string> = {
+export const units: Record<string, UnitProps> = {
   '': {
     quantity: 'UNITLESS',
     value: 1
@@ -307,15 +307,15 @@ export const units: Record<string, UnitProps<number> | string> = {
     commonPrefixes: ['m', 'c', '', 'k'],
     value: '1 m^2'
   },
-  sqin: '1 in^2',
-  sqft: '1 ft^2',
-  sqyd: '1 yd^2',
-  sqmi: '1 mi^2',
-  sqrd: '1 rod^2',
-  sqch: '1 chain^2',
-  sqmil: '1 mil^2',
-  acre: '10 chain^2',
-  hectare: '1e4 m^2',
+  sqin: { value: '1 in^2' },
+  sqft: { value: '1 ft^2' },
+  sqyd: { value: '1 yd^2' },
+  sqmi: { value: '1 mi^2' },
+  sqrd: { value: '1 rod^2' },
+  sqch: { value: '1 chain^2' },
+  sqmil: { value: '1 mil^2' },
+  acre: { value: '10 chain^2' },
+  hectare: { value: '1e4 m^2' },
 
   // Volume
   m3: {
@@ -335,9 +335,9 @@ export const units: Record<string, UnitProps<number> | string> = {
     value: '1 L',
     aliases: ['liter', 'liters', 'litres']
   },
-  cuin: '1 in^3',
-  cuft: '1 ft^3',
-  cuyd: '1 yd^3',
+  cuin: { value: '1 in^3' },
+  cuft: { value: '1 ft^3' },
+  cuyd: { value: '1 yd^3' },
   teaspoon: {
     value: '4.92892159375 mL',
     aliases: ['teaspoons', 'tsp']
@@ -346,8 +346,8 @@ export const units: Record<string, UnitProps<number> | string> = {
     value: '3 teaspoon',
     aliases: ['tablespoons', 'tbsp']
   },
-  drop: '0.05 mL',
-  gtt: '0.05 mL',
+  drop: { value: '0.05 mL' },
+  gtt: { value: '0.05 mL' },
 
   // Liquid volume
   minim: {
@@ -362,7 +362,7 @@ export const units: Record<string, UnitProps<number> | string> = {
     value: '0.125 floz',
     aliases: ['fldr', 'fluiddrams']
   },
-  cc: '1 cm^3',
+  cc: { value: '1 cm^3' },
   cup: {
     value: '236.5882365 mL',
     aliases: ['cp', 'cups']
@@ -402,7 +402,7 @@ export const units: Record<string, UnitProps<number> | string> = {
     value: '0.45359237 kg',
     aliases: ['lb', 'lbs', 'lbm', 'poundmasses']
   },
-  ton: '2000 lbm',
+  ton: { value: '2000 lbm' },
   tonne: {
     prefixes: 'LONG',
     commonPrefixes: ['', 'kilo', 'mega', 'giga'],
@@ -433,7 +433,7 @@ export const units: Record<string, UnitProps<number> | string> = {
     value: '4 oz',
     aliases: ['sticks']
   },
-  stone: '14 lbm',
+  stone: { value: '14 lbm' },
 
   // Time
   s: {
@@ -724,7 +724,7 @@ export const units: Record<string, UnitProps<number> | string> = {
     value: '1 W',
     aliases: ['watts']
   },
-  hp: '550 ft lbf / s',
+  hp: { value: '550 ft lbf / s' },
 
   // Electrical power units
   VA: {
@@ -743,7 +743,7 @@ export const units: Record<string, UnitProps<number> | string> = {
     value: '1 lbf/in^2'
     // kpsi is sometimes used
   },
-  atm: '101325 Pa',
+  atm: { value: '101325 Pa' },
   bar: {
     prefixes: 'SHORT_LONG',
     commonPrefixes: ['m', ''],

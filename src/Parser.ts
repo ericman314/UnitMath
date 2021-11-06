@@ -1,18 +1,18 @@
 import { UnitPropsButCooler, Options, AtomicUnit } from "./Unit"
 
-export interface ParsedUnit<V = any> {
-  units?: AtomicUnit<V>[]
+export interface ParsedUnit {
+  units?: AtomicUnit[]
   dimension?: Record<string, number>,
-  value?: V
+  value?: number
 }
 
-type findUnitFn<T> = (unitString: string) => { unit: UnitPropsButCooler<T>, prefix: string } | null
+type findUnitFn = (unitString: string) => { unit: UnitPropsButCooler, prefix: string } | null
 
 
 /**
  * Returns a new Parser.
  */
-export default function createParser<T> (options: Options<T>, findUnit: findUnitFn<T>) {
+export default function createParser(options: Options, findUnit: findUnitFn) {
   // private variables and functions for the Unit parser
   let text, index, c
 
@@ -156,7 +156,7 @@ export default function createParser<T> (options: Options<T>, findUnit: findUnit
    * @param {string} str        A string like "5.2 inch", "4e2 cm/s^2"
    * @return {Object} { value, unitArray }
    */
-  function parse (str): ParsedUnit<T|number> {
+  function parse(str): ParsedUnit {
     // console.log(`parse("${str}")`)
 
     text = str

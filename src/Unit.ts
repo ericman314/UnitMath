@@ -1,48 +1,55 @@
 // import { systems } from './BuiltIns'
-import createUnitStore from './UnitStore'
+import { createUnitStore, UnitStore } from './UnitStore'
 import { ParsedUnit } from './Parser'
 import { normalize, denormalize, isCompound as _isCompound } from './utils'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
-type n = number
+// Note to self: We've had to remove a lot a functionality to get this to work. 
+// - systems
+// - custom types
+// For reference, see:
+// https://github.com/ericman314/UnitMath/commit/adc4674c6b828912805a4160c48d5f557821c8e7.
+
+// type n = number
 const IS_DEFAULT_FUN = '_IS_UNITMATH_DEFAULT_FUNCTION' as any
 
-export interface TypeArithmetics<T = any> {
-  conv(a: any): T|n
-  conv<S extends T|n>(a: S, b: T|n): S
-  clone<V extends T|n = T|n>(a: V): V
+export interface TypeArithmetics {
+  conv(a: any): number
+  conv(a: number, b: number): number
+  clone(a: number): number
 
-  abs(a: T|n): T|n
+  abs(a: number): number
 
-  add(a: T|n, b: T|n): T|n
-  sub(a: T|n, b: T|n): T|n
-  mul(a: T|n, b: T|n): T|n
-  div(a: T|n, b: T|n): T|n
-  pow(a: T|n, b: T|n): T|n
+  add(a: number, b: number): number
+  sub(a: number, b: number): number
+  mul(a: number, b: number): number
+  div(a: number, b: number): number
+  pow(a: number, b: number): number
 
-  eq(a: T|n, b: T|n): boolean
-  lt(a: T|n, b: T|n): boolean
-  le(a: T|n, b: T|n): boolean
-  ge(a: T|n, b: T|n): boolean
-  gt(a: T|n, b: T|n): boolean
+  eq(a: number, b: number): boolean
+  lt(a: number, b: number): boolean
+  le(a: number, b: number): boolean
+  ge(a: number, b: number): boolean
+  gt(a: number, b: number): boolean
 
-  format?(a: T | n, ...options: any[]): string
+  format?(a: number, ...options: any[]): string
 
-  round(a: T|n): T|n
-  trunc(a: T|n): T|n
+  round(a: number): number
+  trunc(a: number): number
 }
 
-export interface AtomicUnit<V> {
-  unit: UnitPropsButCooler<V>,
+export interface AtomicUnit {
+  unit: UnitPropsButCooler,
   prefix: string,
   power: number
 }
 
 // Is it correct to specify a default type here?
-export interface Options<T = number> {
-  type?: TypeArithmetics<T>
-  definitions?: UnitDefinitions<T> & { skipBuiltIns?: boolean }
+export interface Options {
+  type?: TypeArithmetics
+
+  definitions?: UnitDefinitions & { skipBuiltIns?: boolean }
   // system?: 'auto' | keyof typeof systems // TODO allow custom
   prefix?: 'never' | 'auto' | 'always'
   prefixMin?: number
@@ -71,34 +78,34 @@ interface UnitPropsCommons {
   offset?: number
 }
 
-export interface UnitPropsWithQuantity<T>
+export interface UnitPropsWithQuantity
 extends UnitPropsCommons {
   quantity?: string
-  value: T
+  value: number
 }
 
-export interface UnitPropsStringValue<T>
+export interface UnitPropsStringValue
 extends UnitPropsCommons {
   quantity?: undefined
   value: string
 }
 
-export interface UnitPropsTupleValue<T>
+export interface UnitPropsTupleValue
 extends UnitPropsCommons{
   quantity?: undefined
-  value: [T, string]
+  value: [number, string]
 }
 
-export type UnitProps<T> = UnitPropsStringValue<T> | UnitPropsWithQuantity<T> | UnitPropsTupleValue<T>
+export type UnitProps = UnitPropsStringValue | UnitPropsWithQuantity | UnitPropsTupleValue
 
-export function isUnitPropsWithQuantity<T>(unit: UnitProps<T>): unit is UnitPropsWithQuantity<T> {
+export function isUnitPropsWithQuantity(unit: UnitProps): unit is UnitPropsWithQuantity {
   return unit && unit.quantity !== undefined
 }
 
-export interface UnitPropsButCooler<V> {
+export interface UnitPropsButCooler {
   name: string
   quantity?: string
-  value: V
+  value: number
   dimension: Record<string, number>,
   prefixes: Record<string, number>
   basePrefix?: string
@@ -107,74 +114,74 @@ export interface UnitPropsButCooler<V> {
   offset: number
 }
 
-export interface UnitDefinitions<T> {
+export interface UnitDefinitions {
   prefixes?: UnitPrefixes,
   // systems?: UnitSystems,
-  units: Record<string, UnitProps<T|n> | string>
+  units: Record<string, UnitProps>
 }
 
-export interface UnitDefinitionsButCooler<T> {
+export interface UnitDefinitionsButCooler {
   prefixes: UnitPrefixes,
   // systems: Record<string, any[]>,
-  units: Record<string, UnitPropsButCooler<T>>
+  units: Record<string, UnitPropsButCooler>
   quantities?: Record<string, string>
   baseQuantities?: string[]
 }
 
 
 // Rename so Unit the type does not conflict with Unit the class? Is this interface even necessary? I don't know
-export interface Unit<V> {
+export interface Unit {
   readonly type: 'Unit'
 
-  value: V
-  units: AtomicUnit<V>[]
+  value: number
+  units: AtomicUnit[]
   dimension: Record<string, number>
 
   /** whether the prefix and the units are fixed */
   fixed: boolean
 
-  // new (): Unit<V>
-  // new (str: string): Unit<V>
-  // new (value: V, unit: string): Unit<V>
+  // new (): Unit
+  // new (str: string): Unit
+  // new (value: V, unit: string): Unit
 
 
   /**
    * create a copy of this unit
    */
-  clone(): Unit<V>
+  clone(): Unit
 
   /**
    * Adds two units. Both units' dimensions must be equal.
-   * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
+   * @param {Unit|string|number} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
    * @returns {Unit} The result of adding this and the other unit.
    */
-  add(other: Unit<V> | string | number): Unit<V>
-  add(value: V, unit: string): Unit<V>
+  add(other: Unit | string | number): Unit
+  add(value: number, unit: string): Unit
 
 
   /**
    * Subtracts two units. Both units' dimensions must be equal.
-   * @param {Unit|string} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
+   * @param {Unit|string|number} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
    * @returns {Unit} The result of subtract this and the other unit.
    */
-  sub(other: Unit<V> | string): Unit<V>
-  sub(value: V, unit: string): Unit<V>
+  sub(other: Unit | string | number): Unit
+  sub(value: number, unit: string): Unit
 
   /**
    * Multiplies two units.
-   * @param {Unit|string} other The unit to multiply to this one.
+   * @param {Unit|string|number} other The unit to multiply to this one.
    * @returns {Unit} The result of multiplying this and the other unit.
    */
-  mul(other: Unit<V> | string): Unit<V>
-  mul(value: V, unit: string): Unit<V>
+  mul(other: Unit | string | number): Unit
+  mul(value: number, unit: string): Unit
 
   /**
    * Divides two units.
-   * @param {Unit|string} other The unit to divide this unit by.
+   * @param {Unit|string|number} other The unit to divide this unit by.
    * @returns {Unit} The result of dividing this by the other unit.
    */
-  div(other: Unit<V> | string): Unit<V>
-  div(value: V, unit: string): Unit<V>
+  div(other: Unit | string | number): Unit
+  div(value: number, unit: string): Unit
 
 
   /**
@@ -183,28 +190,28 @@ export interface Unit<V> {
    * @param {number|custom} p
    * @returns {Unit}      The result: this^p
    */
-  pow(p: number | V): Unit<V>
+  pow(p: number): Unit
 
   /**
    * Takes the square root of a unit.
    * @memberof Unit
    * @returns {Unit} The square root of this unit.
    */
-  sqrt(): Unit<V>
+  sqrt(): Unit
 
   /**
    * Returns the absolute value of this unit.
    * @memberOf Unit
    * @returns {Unit} The absolute value of this unit.
    */
-  abs(): Unit<V>
+  abs(): Unit
 
   /**
    * Returns an array of units whose sum is equal to this unit, where each unit in the array is taken from the supplied string array.
    * @param {string[]} units A string array of units to split this unit into.
    * @returns {Unit[]} An array of units
    */
-  split(units: string[]): Unit<V>[]
+  split(units: (string | Unit)[]): Unit[]
 
   /**
    * Convert the unit to a specific unit.
@@ -212,54 +219,54 @@ export interface Unit<V> {
    * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm". If omitted, a new unit is returned which is fixed (will not be auto-simplified)
    * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
    */
-  to(valuelessUnit?: string | Unit<V>): Unit<V>
+  to(valuelessUnit?: string | Unit): Unit
 
   /**
    * Convert the unit to SI units.
    * @memberof Unit
    * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
    */
-  toBaseUnits(): Unit<V>
+  toBaseUnits(): Unit
 
   /**
    * Returns a new unit with the given value.
    * @param {number | string | custom} value
    * @returns A new unit with the given value.
    */
-  setValue(value: V | string | number): Unit<V>
+  setValue(value?: string | number): Unit
 
   /**
    * Returns this unit's value.
    * @returns The value of this unit.
    */
-  getValue(): V
+  getValue(): number
 
   /**
    * Returns this unit's normalized value, which is the value it would have if it were to be converted to SI base units (or whatever base units are defined)
    * @returns The notmalized value of the unit.
    */
-  getNormalizedValue(): V
+  getNormalizedValue(): number
 
   /**
    * Returns a new unit with the given normalized value.
    * @param {number | string | custom} normalizedValue
    * @returns A new unit with the given normalized value.
    */
-  setNormalizedValue (normalizedValue: string | number | V): Unit<V>
+  setNormalizedValue(normalizedValue: string | number): Unit
 
   /**
    * Simplify this Unit's unit list and return a new Unit with the simplified list.
    * The returned Unit will contain a list of the "best" units for formatting.
    * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
    */
-  simplify(): Unit<V>
+  simplify(): Unit
 
   /**
    * Returns this unit without a value.
    * @memberof Unit
    * @returns {Unit} A new unit formed by removing the value from this unit.
    */
-  getUnits(): Unit<V>
+  getUnits(): Unit
 
   /**
    * Returns whether the unit is compound (like m/s, cm^2) or not (kg, N, hogshead)
@@ -280,7 +287,7 @@ export interface Unit<V> {
    * @param {Unit} other
    * @return {boolean} true if equal dimensions
    */
-  equalQuantity(other: Unit<V>): boolean
+  equalQuantity(other: Unit): boolean
 
   /**
    * Returns a string array of all the quantities that match this unit.
@@ -294,42 +301,42 @@ export interface Unit<V> {
    * @param {Unit} other
    * @return {boolean} true if both units are equal
    */
-  equals(other: Unit<V>): boolean
+  equals(other: Unit | string | number): boolean
 
   /**
    * Compare this unit to another and return a value indicating whether this unit is less than, greater than, or equal to the other.
    * @param {Unit} other
    * @return {number} -1 if this unit is less than, 1 if this unit is greater than, and 0 if this unit is equal to the other unit.
    */
-  compare(other: Unit<V>): -1 | 0 | 1
+  compare(other: Unit | string | number): -1 | 0 | 1
 
   /**
    * Compare this unit to another and return whether this unit is less than the other.
    * @param {Unit} other
    * @return {boolean} true if this unit is less than the other.
    */
-  lessThan(other: Unit<V>): boolean
+  lessThan(other: Unit | string | number): boolean
 
   /**
    * Compare this unit to another and return whether this unit is less than or equal to the other.
    * @param {Unit} other
    * @return {boolean} true if this unit is less than or equal the other.
    */
-  lessThanOrEqual(other: Unit<V>): boolean
+  lessThanOrEqual(other: Unit | string | number): boolean
 
   /**
    * Compare this unit to another and return whether this unit is greater than the other.
    * @param {Unit} other
    * @return {boolean} true if this unit is greater than the other.
    */
-  greaterThan(other: Unit<V>): boolean
+  greaterThan(other: Unit | string | number): boolean
 
   /**
    * Compare this unit to another and return whether this unit is greater than or equal to the other.
    * @param {Unit} other
    * @return {boolean} true if this unit is greater than or equal the other.
    */
-  greaterThanOrEqual(other: Unit<V>): boolean
+  greaterThanOrEqual(other: Unit | string | number): boolean
 
   /**
    * Get a string representation of the Unit, with optional formatting options. Alias of `format`.
@@ -350,15 +357,24 @@ export interface Unit<V> {
   format(...userOpts: any[]): string
 }
 
-export interface UnitFactory<V> {
-  (): Unit<V>
-  (str: string): Unit<V>
-  (value: V, unitString: string): Unit<V>
-  config: (newOptions: Options<unknown>) => UnitFactory<unknown>
-  // TODO: Couldn't figure out how to make overloading work
-  getConfig: () => Options<V>
-  definitions: () => UnitDefinitions<V>
-  add: (a: Unit<V> | string | number, b: Unit<V> | string | number) => Unit<V>
+export interface UnitFactory {
+  (): Unit
+  (value: number | string, unitString?: string): Unit
+  config(newOptions: Options): UnitFactory
+  config(): Options
+  // getConfig(): Options
+  definitions(): UnitDefinitions
+  add(a: Unit | string | number, b: Unit | string | number): Unit
+  sub(a: Unit | string | number, b: Unit | string | number): Unit
+  mul(a: Unit | string | number, b: Unit | string | number): Unit
+  div(a: Unit | string | number, b: Unit | string | number): Unit
+  pow(a: Unit | string | number, b: number): Unit
+  sqrt(a: Unit | string | number): Unit
+  abs(a: Unit | string | number): Unit
+  to(a: Unit | string | number, valuelessUnit: Unit | string): Unit
+  toBaseUnits(a: Unit | string | number): Unit
+  exists(unit: string): boolean
+  _unitStore: UnitStore
 }
 
 export type TestFunction = {
@@ -389,7 +405,7 @@ export type TestFunction = {
  * @param {Object} options Configuration options to set on the new instance.
  * @returns {Function} A new instance of the unit factory function with the specified options.
  */
-let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
+let _config = function _config(options: Options): UnitFactory {
   options = Object.assign({}, options)
 
   // Check to make sure options are valid
@@ -448,11 +464,11 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @returns {Unit} The Unit given by the value and unit string.
    */
 
-  // function unitmath<V extends T>(): Unit<V>
-  // function unitmath<V extends T>(str: string): Unit<V>
-  // function unitmath<V extends T>(value: V, unitString: string): Unit<V>
+  // function unitmath<V extends T>(): Unit
+  // function unitmath<V extends T>(str: string): Unit
+  // function unitmath<V extends T>(value: V, unitString: string): Unit
 
-  const unitmath: UnitFactory<T> = function unitmath(value?: any, unitString?: any) {
+  const unitmath: UnitFactory = function unitmath(value?: any, unitString?: any) {
     let unit = new _Unit(value, unitString)
     Object.freeze(unit)
     return unit
@@ -464,12 +480,12 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @param {String} unitString The unit string, unless already included in the `value` parameter.
    * @returns {_Unit} The Unit given by the value and unit string.
    */
-  class _Unit<V extends T|n>
-  implements Unit<V> {
+  class _Unit
+    implements Unit {
     readonly type = 'Unit'
 
-    public value: V
-    public units: AtomicUnit<V>[]
+    public value: number
+    public units: AtomicUnit[]
     public dimension: Record<string, number>
 
     /** whether the prefix and the units are fixed */
@@ -477,9 +493,9 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
     constructor()
     constructor(str: string)
-    constructor(value: V, unit: string)
+    constructor(value: number, unit: string)
 
-    constructor(value?: V | string, unitString?: string) {
+    constructor(value?: number | string, unitString?: string) {
       let parseResult: ParsedUnit
 
       if (typeof value === 'undefined' && typeof unitString === 'undefined') {
@@ -525,8 +541,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {Unit|string} other The unit to add to this one. If a string is supplied, it will be converted to a unit.
      * @returns {Unit} The result of adding this and the other unit.
      */
-    add(other: Unit<V> | string): Unit<V>
-    add(value: V, unit: string): Unit<V>
+    add(other: Unit | string): Unit
+    add(value: number, unit: string): Unit
 
     add(value?: any, unitString?: any) {
       const other = _convertParamToUnit(value, unitString)
@@ -540,8 +556,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {Unit|string} other The unit to subtract from this one. If a string is supplied, it will be converted to a unit.
      * @returns {Unit} The result of subtract this and the other unit.
      */
-    sub(other: Unit<V> | string): Unit<V>
-    sub(value: V, unit: string): Unit<V>
+    sub(other: Unit | string): Unit
+    sub(value: number, unit: string): Unit
 
     sub(value?: any, unitString?: any) {
       const other = _convertParamToUnit(value, unitString)
@@ -555,8 +571,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {Unit|string} other The unit to multiply to this one.
      * @returns {Unit} The result of multiplying this and the other unit.
      */
-    mul(other: Unit<V> | string): Unit<V>
-    mul(value: V, unit: string): Unit<V>
+    mul(other: Unit | string): Unit
+    mul(value: number, unit: string): Unit
 
     mul(value?: any, unitString?: any) {
       const other = _convertParamToUnit(value, unitString)
@@ -570,8 +586,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {Unit|string} other The unit to divide this unit by.
      * @returns {Unit} The result of dividing this by the other unit.
      */
-    div(other: Unit<V> | string): Unit<V>
-    div(value: V, unit: string): Unit<V>
+    div(other: Unit | string): Unit
+    div(value: number, unit: string): Unit
 
     div(value?: any, unitString?: any) {
       const other = _convertParamToUnit(value, unitString)
@@ -586,10 +602,10 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {number|custom} p
      * @returns {Unit}      The result: this^p
      */
-    pow(p: number | V) {
+    pow(p: number) {
       const unit = _pow(this, p)
       Object.freeze(unit)
-      return unit as Unit<V>
+      return unit as Unit
     }
 
     /**
@@ -600,7 +616,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     sqrt() {
       const unit = _sqrt(this)
       Object.freeze(unit)
-      return unit as Unit<V>
+      return unit as Unit
     }
 
     /**
@@ -611,7 +627,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     abs() {
       const unit = _abs(this)
       Object.freeze(unit)
-      return unit as Unit<V>
+      return unit as Unit
     }
 
     /**
@@ -619,7 +635,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {string[]} units A string array of units to split this unit into.
      * @returns {Unit[]} An array of units
      */
-    split(units: string[]): Unit<V>[] {
+    split(units: string[]): Unit[] {
       let us = _split(this, units)
       for (let i = 0; i < us.length; i++) {
         Object.freeze(us[i])
@@ -633,8 +649,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm". If omitted, a new unit is returned which is fixed (will not be auto-simplified)
      * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
      */
-    to(valuelessUnit?: string | Unit<V>): Unit<V> {
-      let unit: Unit<V>
+    to(valuelessUnit?: string | Unit): Unit {
+      let unit: Unit
       if (typeof valuelessUnit === 'undefined') {
         // Special case. Just clone the unit and set as fixed.
         unit = _clone(this)
@@ -657,7 +673,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @memberof Unit
      * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
      */
-    toBaseUnits(): Unit<V> {
+    toBaseUnits(): Unit {
       let unit = _toBaseUnits(this)
       Object.freeze(unit)
       return unit
@@ -668,7 +684,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {number | string | custom} value
      * @returns A new unit with the given value.
      */
-    setValue(value: V | string | number): Unit<V> {
+    setValue(value: string | number): Unit {
       let unit = _setValue(this, value)
       Object.freeze(unit)
       return unit
@@ -678,7 +694,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * Returns this unit's value.
      * @returns The value of this unit.
      */
-    getValue(): V {
+    getValue(): number {
       return this.value
     }
 
@@ -686,7 +702,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * Returns this unit's normalized value, which is the value it would have if it were to be converted to SI base units (or whatever base units are defined)
      * @returns The notmalized value of the unit.
      */
-    getNormalizedValue(): V {
+    getNormalizedValue(): number {
       return normalize(this.units, this.value, options.type)
     }
 
@@ -1113,27 +1129,31 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @returns {Unit} The frozen unit that was converted from the input parameter, or the original unit.
    */
 
-  // function _convertParamToUnit<V extends T | n>(other: Unit<V> | string | n): Unit<V>
-  // function _convertParamToUnit<V extends T|n>(value: V, unit: string): Unit<V>
+  // function _convertParamToUnit<V extends T | n>(other: Unit | string | n): Unit
+  // function _convertParamToUnit<V extends T|n>(value: V, unit: string): Unit
 
-  // function _convertParamToUnit<V extends T|n> (a?: any, b?: any): Unit<V> {
+  // function _convertParamToUnit<V extends T|n> (a?: any, b?: any): Unit {
 
-  function _convertParamToUnit(other: Unit<T> | string | n): Unit<T>
-  function _convertParamToUnit(value: T, unit: string): Unit<T>
+  function _isUnit(a): a is Unit {
+    return a.type === 'Unit'
+  }
 
-  function _convertParamToUnit(a?: any, b?: any): Unit<T> {
-    if (a.type === 'Unit') {
-      return a
+  function _convertParamToUnit(other: Unit | string | number): Unit
+  function _convertParamToUnit(value: number, unit: string): Unit
+
+  function _convertParamToUnit(otherOrValue: Unit | string | number, unit?: string): Unit {
+    if (_isUnit(otherOrValue)) {
+      return otherOrValue
     }
-    return unitmath(a, b)
+    return unitmath(otherOrValue, unit)
   }
 
   /**
    * Private function _clone
    * @param {Unit} unit
    */
-  function _clone<V extends T|n>(unit: Unit<V> | _Unit<V>): Unit<V> {
-    const result = new _Unit<V>()
+  function _clone(unit: Unit | _Unit): Unit {
+    const result = new _Unit()
     result.value = unit.value === null ? null : options.type.clone(unit.value)
     result.dimension = { ...unit.dimension }
     if (unit.fixed) {
@@ -1147,7 +1167,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       }
     }
 
-    return result as Unit<V>
+    return result as Unit
   }
 
   /**
@@ -1155,7 +1175,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @param {unit[]} units Array of unit pieces
    * @returns {unit[]} A new array of unit pieces where the duplicates have been combined together and units with zero power have been removed.
    */
-  function _combineDuplicateUnits<V extends T|n>(units: AtomicUnit<V>[]): AtomicUnit<V>[] {
+  function _combineDuplicateUnits(units: AtomicUnit[]): AtomicUnit[] {
     // Two-level deep copy of units
     let result = units.map(u => Object.assign({}, u))
 
@@ -1277,7 +1297,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     // Append other's units list onto result
     for (let i = 0; i < unit2.units.length; i++) {
       // Make a deep copy
-      const inverted = {} as AtomicUnit<T>
+      const inverted = {} as AtomicUnit
       for (const key of Object.keys(unit2.units[i])) {
         inverted[key] = unit2.units[i][key]
       }
@@ -1314,7 +1334,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     // Invert and append other's units list onto result
     for (let i = 0; i < unit2.units.length; i++) {
       // Make a deep copy
-      const inverted = {} as AtomicUnit<T>
+      const inverted = {} as AtomicUnit
       for (const key of Object.keys(unit2.units[i])) {
         inverted[key] = unit2.units[i][key]
       }
@@ -1404,7 +1424,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     // But instead of comparing x, the remainder, with zero--we will compare the sum of
     // all the parts so far with the original value. If they are nearly equal,
     // we set the remainder to 0.
-    let testSum = options.type.conv<T|n>(0, unit.value)
+    let testSum = options.type.conv(0, unit.value)
     for (let i = 0; i < result.length; i++) {
       testSum = options.type.add(testSum, normalize(result[i].units, result[i].value, options.type))
     }
@@ -1561,7 +1581,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * Private function _toBaseUnits
    * @param {Unit} unit The unit to convert to SI.
    */
-  function _toBaseUnits<V extends T|n>(unit: _Unit<V> | Unit<V>): Unit<V> {
+  function _toBaseUnits(unit: _Unit | Unit): Unit {
     const result = _clone(unit)
 
     const proposedUnitList = []
@@ -1613,12 +1633,12 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @param {string | number | custom} value The value to set
    * @returns {Unit} A new unit with the given value
    */
-  function _setValue<V extends T|n>(unit: _Unit<V> | Unit<V>, value: V | string | number): Unit<V> {
+  function _setValue(unit: _Unit | Unit, value: string | number): Unit {
     let result = _clone(unit)
     if (typeof value === 'undefined' || value === null) {
       result.value = null
     } else {
-      result.value = options.type.conv(value) as V
+      result.value = options.type.conv(value)
     }
     return result
   }
@@ -1694,10 +1714,11 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @param {Object} options Configuration options, in addition to those existing, to set on the new instance.
    * @returns {Function} A new instance of the unit factory function with the specified options
    */
-  // unitmath.config = function config<S>(newOptions?: Options<S>): UnitFactory<T> | Options<S> {
-  unitmath.config = function <S>(newOptions: Options<S>): UnitFactory<T> {
+  function configFunction(newOptions: Options): UnitFactory
+  function configFunction(): Options
+  function configFunction(newOptions?: Options) {
     if (typeof (newOptions) === 'undefined') {
-      throw new Error('options is required')
+      return options
     }
 
     // Shallow copy existing config
@@ -1716,12 +1737,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     return _config(retOptions)
   }
 
-  /**
-   * Get the currently configured options
-   */
-  unitmath.getConfig = function () {
-    return options
-  }
+  unitmath.config = configFunction
 
   unitmath.definitions = function definitions () {
     return unitStore.originalDefinitions
@@ -1826,7 +1842,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
 
 // Define default arithmetic functions
-let defaults: TypeArithmetics<number> = {
+let defaults: TypeArithmetics = {
   add: (a, b) => a + b,
   sub: (a, b) => a - b,
   mul: (a, b) => a * b,
@@ -1852,7 +1868,7 @@ for (const key of Object.keys(defaults)) {
 
 // TODO: setting to say whether to format using only the common prefixes or all prefixes
 
-const defaultOptions: Options<number> = <const>{
+const defaultOptions: Options = <const>{
   parentheses: false,
   precision: 15,
   prefix: 'auto',
@@ -1872,6 +1888,6 @@ const defaultOptions: Options<number> = <const>{
   type: defaults
 }
 
-const firstUnit = _config<number>(defaultOptions)
+const firstUnit = _config(defaultOptions)
 
 export default firstUnit
