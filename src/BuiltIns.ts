@@ -68,14 +68,14 @@ import { UnitProps } from "./Unit"
 //   VOLUMETRIC_FLOW_RATE: 'LENGTH^3 TIME^-1'
 // }
 
-// A unit system is a set of units that are by convention used with the unit system.
-// Units listed here will be treated as belonging to the specified system.
-// TODO: We need a better way to add all of the units which possibly might show up and need to be parsed.
-export const systems = <const>{
-  si: ['m', 'meter', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr', 'm^2'],
-  cgs: ['cm', 's', 'A', 'g', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'erg', 'dyn', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'Pa', 'ohm', 'sr'],
-  us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp', 'mi', 'mile']
-}
+// // A unit system is a set of units that are by convention used with the unit system.
+// // Units listed here will be treated as belonging to the specified system.
+// // TODO: We need a better way to add all of the units which possibly might show up and need to be parsed.
+// export const systems = <const>{
+//   si: ['m', 'meter', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr', 'm^2'],
+//   cgs: ['cm', 's', 'A', 'g', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'erg', 'dyn', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'Pa', 'ohm', 'sr'],
+//   us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp', 'mi', 'mile']
+// }
 
 // Units may or may not use one of the prefix sets (SHORT, LONG, etc).
 export const prefixes = {

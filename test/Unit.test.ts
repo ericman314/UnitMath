@@ -116,13 +116,13 @@ describe('unitmath', () => {
         prefixesToChooseFrom: 'common',
         simplify: 'auto',
         simplifyThreshold: 2,
-        system: 'auto',
-        subsystem: 'auto',
+        // system: 'auto',
+        // subsystem: 'auto',
         definitions: {
           skipBuiltIns: false,
           units: {},
           prefixes: {},
-          systems: {}
+          // systems: {}
         }
       }
       let actualOptions = unit.config()
@@ -309,18 +309,18 @@ describe('unitmath', () => {
         expect(newUnit('3 foo').pow(3).toString()).toEqual('27 flab')
       })
 
-      test('should prepend, but not replace, individual unit systems', () => {
-        let newUnit = unit.config({
-          definitions: {
-            units: { mph: '1 mi/hr' },
-            systems: {
-              us: ['mph', 'mi']
-            }
-          }
-        })
-        expect(newUnit('70 mi').div('60 min').toString()).toEqual('70 mph')
-        expect(newUnit.definitions().systems.us.includes('lbm')).toBeTruthy()
-      })
+      // test('should prepend, but not replace, individual unit systems', () => {
+      //   let newUnit = unit.config({
+      //     definitions: {
+      //       units: { mph: '1 mi/hr' },
+      //       systems: {
+      //         us: ['mph', 'mi']
+      //       }
+      //     }
+      //   })
+      //   expect(newUnit('70 mi').div('60 min').toString()).toEqual('70 mph')
+      //   expect(newUnit.definitions().systems.us.includes('lbm')).toBeTruthy()
+      // })
 
       test('should skip builtins if so desired', () => {
         let newUnit = unit.config({
@@ -338,9 +338,9 @@ describe('unitmath', () => {
               fib: { value: '5 foo', prefixes: 'PREFOO', commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] },
               flab: { value: '1 foo^3', prefixes: 'PREFOO', commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] }
             },
-            systems: {
-              fooSys: ['foo', 'flab']
-            },
+            // systems: {
+            //   fooSys: ['foo', 'flab']
+            // },
             prefixes: {
               PREFOO: {
                 'fff': 0.008,
@@ -1108,47 +1108,47 @@ describe('unitmath', () => {
       expect(nounit2.toString()).toEqual('2')
     })
 
-    test('should simplify units according to chosen unit system', () => {
-      // Simplify explicitly
-      let unit1 = unit.config({ system: 'us' })('10 N')
-      expect(unit1.simplify().toString()).toEqual('2.2480894309971 lbf')
+    // test('should simplify units according to chosen unit system', () => {
+    //   // Simplify explicitly
+    //   let unit1 = unit.config({ system: 'us' })('10 N')
+    //   expect(unit1.simplify().toString()).toEqual('2.2480894309971 lbf')
 
-      let unit2 = unit.config({ system: 'cgs' })('10 N')
-      expect(unit2.simplify().toString()).toEqual('1000 kdyn')
+    //   let unit2 = unit.config({ system: 'cgs' })('10 N')
+    //   expect(unit2.simplify().toString()).toEqual('1000 kdyn')
 
-      // Reduce threshold to 0
-      let newUnit = unit.config({ simplifyThreshold: 0 })
+    //   // Reduce threshold to 0
+    //   let newUnit = unit.config({ simplifyThreshold: 0 })
 
-      let unit3 = newUnit.config({ system: 'us' })('10 N')
-      expect(unit3.toString()).toEqual('2.2480894309971 lbf')
+    //   let unit3 = newUnit.config({ system: 'us' })('10 N')
+    //   expect(unit3.toString()).toEqual('2.2480894309971 lbf')
 
-      let unit4 = newUnit.config({ system: 'cgs' })('10 N')
-      expect(unit4.toString()).toEqual('1000 kdyn')
-    })
+    //   let unit4 = newUnit.config({ system: 'cgs' })('10 N')
+    //   expect(unit4.toString()).toEqual('1000 kdyn')
+    // })
 
-    test('should correctly simplify units when unit system is "auto"', () => {
-      const unit1 = unit(5, 'lbf min / s')
-      expect(unit1.simplify().toString()).toEqual('300 lbf')
-      expect(unit('150 lbf').div('10 in^2').toString()).toEqual('15 psi')
-      expect(unit('400 N').div('10 cm^2').toString()).toEqual('400 kPa')
-    })
+    // test('should correctly simplify units when unit system is "auto"', () => {
+    //   const unit1 = unit(5, 'lbf min / s')
+    //   expect(unit1.simplify().toString()).toEqual('300 lbf')
+    //   expect(unit('150 lbf').div('10 in^2').toString()).toEqual('15 psi')
+    //   expect(unit('400 N').div('10 cm^2').toString()).toEqual('400 kPa')
+    // })
 
-    test('should infer the unit system when using non-preferred units which are members of that system', () => {
-      // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
-      let unit1 = unit('10 mile').mul('10 kip')
-      expect(unit1.toString({ simplifyThreshold: 0 })).toEqual('0.678515620705073 MMBTU')
-    })
+    // test('should infer the unit system when using non-preferred units which are members of that system', () => {
+    //   // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
+    //   let unit1 = unit('10 mile').mul('10 kip')
+    //   expect(unit1.toString({ simplifyThreshold: 0 })).toEqual('0.678515620705073 MMBTU')
+    // })
 
-    test('it should correctly differentiate between si and cgs units when unit system is "auto"', () => {
-      let unit1Cgs = unit('5 cm')
-      let unit2Cgs = unit('10 g')
-      let unit1Si = unit('5 m')
-      let unit2Si = unit('10 kg')
-      let unit3 = unit('2 s')
+    // test('it should correctly differentiate between si and cgs units when unit system is "auto"', () => {
+    //   let unit1Cgs = unit('5 cm')
+    //   let unit2Cgs = unit('10 g')
+    //   let unit1Si = unit('5 m')
+    //   let unit2Si = unit('10 kg')
+    //   let unit3 = unit('2 s')
 
-      expect(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString()).toEqual('12.5 dyn')
-      expect(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString()).toEqual('12.5 N')
-    })
+    //   expect(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString()).toEqual('12.5 dyn')
+    //   expect(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString()).toEqual('12.5 N')
+    // })
 
     test('should try to use preexisting units in the simplified expression', () => {
       let unit1 = unit('10 ft hour / minute')

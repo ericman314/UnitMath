@@ -113,7 +113,7 @@ You can also define custom formatters; see [Custom Formatter](#custom-formatter)
 UnitMath can be configured using `unit.config(options)`. The function returns a *new* instance of UnitMath with the specified configuration options:
 
 ```js
-const unit = require('unitmath').config({ system: 'us' })
+const unit = require('unitmath').config({ precision: 9 })
 ```
 
 To query the current configuration, call `unit.config()` with no arguments.
@@ -153,37 +153,6 @@ These are the available options and their defaults:
   ```js
   unit('8 kg m / s^2').format() // 8 N
   unit('8 kg m / s^2').format({ simplifyThreshold: 6 })) // 8 kg m / s^2
-  ```
-
-- `system` -- *Default:* `'auto'`. The unit system to use when simplifying a `unit`. Available systems are `si`, `cgs`, `us`, and `auto`. When `system === 'auto'`, UnitMath will try to infer the unit system from the individual units that make up that `unit`.
-
-  ```js
-  unit = unit.config({ system: 'auto' })
-
-  unit('150 lbf').div('10 in^2').toString()  // "15 psi"
-  unit('400 N').div('10 cm^2').toString()  // "400 kPa"
-  ```
-
-  Specifying a unit system other than `'auto'` will force UnitMath to use the specified system. Use the `config` function to apply the system everywhere, or use the `format` function to apply to a single statement:
-
-  ```js
-  unit = unit.config({ system: 'us' })
-
-  let a = unit('5 m').div('2 s')
-
-  console.log(a.format()) // 8.202099737532809 ft / s
-  console.log(a.format({ system: 'si'})) // 2.5 m / s
-
-  ```
-
-- `subsystem` -- *Default:* `'auto'` *Not yet implemented.* The subsystem, or technical field, etc., to use when simplifying a `unit`. It can provide additional hints about which units to use when there are multiple options within the same system. Available subsystems are `'mechanics'`, `'chemistry'`, `'electricity_and_magnetism'`, etc. When `subsystem === 'auto'`, UnitMath will try to infer the subsystem from the individual units that make up that `unit`:
-
-  ```js
-  // Proposed, but not yet implemented
-  unit = unit.config({ subsystem: 'auto' })
-
-  unit('240 V').mul('5 A').mul('1 hr').toString()  // "1.2 kWh"
-  unit('4000 kg').mul('9.8 m/s^2').mul('100 m').toString()  // "3.92 MJ"
   ```
 
 - `definitions`. An object that allows you to add to, modify, or remove the built-in units. See [User-Defined Units](#user-defined-units) for complete details.
@@ -371,27 +340,13 @@ prefixes: {
 }
 ```
 
-**definitions.systems**
-
-This object assigns one or more units to a number of systems. Each key in `definitions.systems` becomes a system. Each system lists all the units that should be associated with that system in an array. The units may include prefixes.
-
-```js
-systems: {
-  si: ['m', 'kg', 's', 'N', 'J', 'm^3', 'm/s'],
-  cgs: ['cm', 'g', 's', 'dyn', 'erg', 'cm^3', 'cm/s'],
-  us: ['ft', 'lbm', 's', 'lbf', 'btu', 'gal', 'ft/s']
-}
-```
-
-When UnitMath formats a unit, it will try to use one of the units from the specified system first. If the system does not contain a matching unit, it will choose from all available units.
-
 **definitions.skipBuiltIns**
 
 A boolean value indicating whether to skip creation of the built-in units. If `true`, only the user-defined units and quantities defined in `definitions` will be created.
 
 #### Querying current unit definitions ####
 
-You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefixes, unit systems, base quantities, and quantities. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
+You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units and prefixes. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
 
 ```js
 unit.definitions()

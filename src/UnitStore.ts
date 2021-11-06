@@ -19,25 +19,25 @@ export default function createUnitStore<T>(options: Options<T>) {
 
   // Merge the built-in units with the user's definitions
 
-  let systems: UnitSystems
+  // let systems: UnitSystems
 
-  if (skipBuiltIns) {
-    systems = { ...options.definitions.systems }
-  } else {
-    systems = { ...builtIns.systems } as any
+  // if (skipBuiltIns) {
+  //   systems = { ...options.definitions.systems }
+  // } else {
+  //   systems = { ...builtIns.systems } as any
 
-    // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
-    for (let system of Object.keys(options.definitions.systems)) {
-      if (systems.hasOwnProperty(system)) {
-        systems[system] = [...options.definitions.systems[system], ...systems[system]]
-      } else {
-        systems[system] = [...options.definitions.systems[system]]
-      }
-    }
-  }
+  //   // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
+  //   for (let system of Object.keys(options.definitions.systems)) {
+  //     if (systems.hasOwnProperty(system)) {
+  //       systems[system] = [...options.definitions.systems[system], ...systems[system]]
+  //     } else {
+  //       systems[system] = [...options.definitions.systems[system]]
+  //     }
+  //   }
+  // }
 
   const originalDefinitions: UnitDefinitions<T> = {
-    systems,
+    // systems,
     prefixes: {
       ...(skipBuiltIns ? {} : builtIns.prefixes),
       ...options.definitions.prefixes
@@ -52,11 +52,11 @@ export default function createUnitStore<T>(options: Options<T>) {
   const defs: UnitDefinitionsButCooler<T> = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
-    systems: {}
+    // systems: {}
   }
-  for (let system of Object.keys(originalDefinitions.systems)) {
-    defs.systems[system] = originalDefinitions.systems[system].slice()
-  }
+  // for (let system of Object.keys(originalDefinitions.systems)) {
+  //   defs.systems[system] = originalDefinitions.systems[system].slice()
+  // }
 
   /* All of the prefixes, units, and systems have now been defined.
    *
@@ -192,27 +192,27 @@ export default function createUnitStore<T>(options: Options<T>) {
   }
 
   // Check to make sure config options has selected a unit system that exists.
-  if (options.system !== 'auto') {
-    if (!defs.systems.hasOwnProperty(options.system)) {
-      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.systems).join(', ')} `)
-    }
-  }
+  // if (options.system !== 'auto') {
+  //   if (!defs.systems.hasOwnProperty(options.system)) {
+  //     throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.systems).join(', ')} `)
+  //   }
+  // }
 
   // Replace unit system strings with valueless units
-  for (let system of Object.keys(defs.systems)) {
-    let sys = defs.systems[system]
-    for (let i = 0; i < sys.length; i++) {
-      // Important! The unit below is not a real unit, but for now it is-close enough
-      let unit: any = parser(sys[i])
-      if (unit) {
-        unit.type = 'Unit'
-        Object.freeze(unit)
-        sys[i] = unit
-      } else {
-        throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
-      }
-    }
-  }
+  // for (let system of Object.keys(defs.systems)) {
+  //   let sys = defs.systems[system]
+  //   for (let i = 0; i < sys.length; i++) {
+  //     // Important! The unit below is not a real unit, but for now it is-close enough
+  //     let unit: any = parser(sys[i])
+  //     if (unit) {
+  //       unit.type = 'Unit'
+  //       Object.freeze(unit)
+  //       sys[i] = unit
+  //     } else {
+  //       throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
+  //     }
+  //   }
+  // }
 
   // Final setup for units
   for (let key of Object.keys(defs.units)) {
@@ -276,7 +276,7 @@ export default function createUnitStore<T>(options: Options<T>) {
   }
 
   Object.freeze(defs.prefixes)
-  Object.freeze(defs.systems)
+  // Object.freeze(defs.systems)
   Object.freeze(defs.units)
 
   return { originalDefinitions, defs, exists, findUnit, parser }

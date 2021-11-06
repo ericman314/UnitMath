@@ -1,4 +1,4 @@
-import { systems } from './BuiltIns'
+// import { systems } from './BuiltIns'
 import createUnitStore from './UnitStore'
 import { ParsedUnit } from './Parser'
 import { normalize, denormalize, isCompound as _isCompound } from './utils'
@@ -43,7 +43,7 @@ export interface AtomicUnit<V> {
 export interface Options<T = number> {
   type?: TypeArithmetics<T>
   definitions?: UnitDefinitions<T> & { skipBuiltIns?: boolean }
-  system?: 'auto' | keyof typeof systems // TODO allow custom
+  // system?: 'auto' | keyof typeof systems // TODO allow custom
   prefix?: 'never' | 'auto' | 'always'
   prefixMin?: number
   prefixMax?: number
@@ -58,9 +58,9 @@ export interface UnitPrefixes {
   [prefixSet: string]: Record<string, number>
 }
 
-export interface UnitSystems {
-  [system: string]: string[]
-}
+// export interface UnitSystems {
+//   [system: string]: string[]
+// }
 
 
 interface UnitPropsCommons {
@@ -109,13 +109,13 @@ export interface UnitPropsButCooler<V> {
 
 export interface UnitDefinitions<T> {
   prefixes?: UnitPrefixes,
-  systems?: UnitSystems,
+  // systems?: UnitSystems,
   units: Record<string, UnitProps<T|n> | string>
 }
 
 export interface UnitDefinitionsButCooler<T> {
   prefixes: UnitPrefixes,
-  systems: Record<string, any[]>,
+  // systems: Record<string, any[]>,
   units: Record<string, UnitPropsButCooler<T>>
   quantities?: Record<string, string>
   baseQuantities?: string[]
@@ -415,6 +415,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       allRequiredTypeFnsPresent = false
     } else {
       oneRequiredTypeFnsPresent = true
+
     }
   }
 
@@ -709,29 +710,29 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // console.log(this)
       const result = _clone(this)
 
-      let systemStr: string = options.system
-      if (systemStr === 'auto') {
-        // If unit system is 'auto', then examine the existing units to infer which system is preferred.
-        let identifiedSystems = {}
-        for (let unit of this.units) {
-          for (let system of Object.keys(unitStore.defs.systems)) {
-            for (let systemUnit of unitStore.defs.systems[system]) {
-              let systemUnitString = `${systemUnit.units[0].prefix}${systemUnit.units[0].unit.name}`
-              let unitString = `${unit.prefix}${unit.unit.name}`
-              if (systemUnit.units.length === 1 && systemUnitString === unitString) {
-                identifiedSystems[system] = (identifiedSystems[system] || 0) + 1
-              }
-            }
-          }
-        }
-        let ids = Object.keys(identifiedSystems)
-        // TODO: No need to sort this, can just pick the best
-        ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
-        // console.log(`Identified the following systems when examining unit ${result.clone().to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
-        systemStr = ids[0]
-      }
+      // let systemStr: string = options.system
+      // if (systemStr === 'auto') {
+      //   // If unit system is 'auto', then examine the existing units to infer which system is preferred.
+      //   let identifiedSystems = {}
+      //   for (let unit of this.units) {
+      //     for (let system of Object.keys(unitStore.defs.systems)) {
+      //       for (let systemUnit of unitStore.defs.systems[system]) {
+      //         let systemUnitString = `${systemUnit.units[0].prefix}${systemUnit.units[0].unit.name}`
+      //         let unitString = `${unit.prefix}${unit.unit.name}`
+      //         if (systemUnit.units.length === 1 && systemUnitString === unitString) {
+      //           identifiedSystems[system] = (identifiedSystems[system] || 0) + 1
+      //         }
+      //       }
+      //     }
+      //   }
+      //   let ids = Object.keys(identifiedSystems)
+      //   // TODO: No need to sort this, can just pick the best
+      //   ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
+      //   // console.log(`Identified the following systems when examining unit ${result.clone().to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+      //   systemStr = ids[0]
+      // }
 
-      let system = unitStore.defs.systems[systemStr] || []
+      // let system = unitStore.defs.systems[systemStr] || []
 
       const proposedUnitList = []
 
@@ -740,31 +741,31 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // Several methods to decide on the best unit for simplifying
 
       // 1. Search for a matching dimension in the given unit system
-      if (!matchingUnit) {
-        let matchingUnitsOfSystem = []
-        for (let unit of system) {
-          if (this.equalQuantity(unit)) {
-            matchingUnitsOfSystem.push(unit)
-          }
-        }
+      // if (!matchingUnit) {
+      //   let matchingUnitsOfSystem = []
+      //   for (let unit of system) {
+      //     if (this.equalQuantity(unit)) {
+      //       matchingUnitsOfSystem.push(unit)
+      //     }
+      //   }
 
-        // Default to the first matching unit of the system
-        if (matchingUnitsOfSystem.length > 0) {
-          matchingUnit = matchingUnitsOfSystem[0]
-        }
+      //   // Default to the first matching unit of the system
+      //   if (matchingUnitsOfSystem.length > 0) {
+      //     matchingUnit = matchingUnitsOfSystem[0]
+      //   }
 
-        // If one of our current units matches one in the system, use that instead
-        for (let unit of this.units) {
-          for (let systemUnit of matchingUnitsOfSystem) {
-            let systemUnitString = `${systemUnit.units[0].prefix}${systemUnit.units[0].unit.name}`
-            let unitString = `${unit.prefix}${unit.unit.name}`
-            if (systemUnit.units.length === 1 && systemUnitString === unitString) {
-              matchingUnit = systemUnit
-              break
-            }
-          }
-        }
-      }
+      //   // If one of our current units matches one in the system, use that instead
+      //   for (let unit of this.units) {
+      //     for (let systemUnit of matchingUnitsOfSystem) {
+      //       let systemUnitString = `${systemUnit.units[0].prefix}${systemUnit.units[0].unit.name}`
+      //       let unitString = `${unit.prefix}${unit.unit.name}`
+      //       if (systemUnit.units.length === 1 && systemUnitString === unitString) {
+      //         matchingUnit = systemUnit
+      //         break
+      //       }
+      //     }
+      //   }
+      // }
 
       // 2. Search for a matching unit in the current units
       if (!matchingUnit) {
@@ -1860,13 +1861,13 @@ const defaultOptions: Options<number> = <const>{
   prefixesToChooseFrom: 'common',
   simplify: 'auto',
   simplifyThreshold: 2,
-  system: 'auto',
+  // system: 'auto',
   // subsystem: 'auto',
   definitions: {
     skipBuiltIns: false,
     units: {},
     prefixes: {},
-    systems: {}
+    // systems: {}
   },
   type: defaults
 }
