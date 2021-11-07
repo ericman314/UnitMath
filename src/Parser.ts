@@ -6,7 +6,7 @@ import { findUnitFn, Options, ParsedUnit } from "./types"
  */
 export function createParser(options: Options, findUnit: findUnitFn) {
   // private variables and functions for the Unit parser
-  let text, index, c
+  let text: string, index: number, c: string
 
   function skipWhitespace () {
     while (c === ' ' || c === '\t') {
@@ -14,11 +14,11 @@ export function createParser(options: Options, findUnit: findUnitFn) {
     }
   }
 
-  function isDigitDot (c) {
+  function isDigitDot(c: string) {
     return ((c >= '0' && c <= '9') || c === '.')
   }
 
-  function isDigit (c) {
+  function isDigit(c: string) {
     return ((c >= '0' && c <= '9'))
   }
 
@@ -27,7 +27,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
     c = text.charAt(index)
   }
 
-  function revert (oldIndex) {
+  function revert(oldIndex: number) {
     index = oldIndex
     c = text.charAt(index)
   }
@@ -84,6 +84,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
       tentativeNumber += c
       next()
 
+      // @ts-ignore: Typescript does not realize that c has changed
       if (c === '+' || c === '-') {
         tentativeNumber += c
         next()
@@ -130,7 +131,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
     }
   }
 
-  function parseCharacter (toFind) {
+  function parseCharacter(toFind: string) {
     if (c === toFind) {
       next()
       return toFind
@@ -148,7 +149,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
    * @param {string} str        A string like "5.2 inch", "4e2 cm/s^2"
    * @return {Object} { value, unitArray }
    */
-  function parse(str): ParsedUnit {
+  function parse(str: string): ParsedUnit {
     // console.log(`parse("${str}")`)
 
     text = str
@@ -161,7 +162,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
 
     const unit: ParsedUnit = {}
 
-    unit.units = []
+    unit.baseUnits = []
 
     // Initialize this unit's dimensions
     unit.dimension = {}
@@ -246,7 +247,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
       }
 
       // Add the unit to the list
-      unit.units.push({
+      unit.baseUnits.push({
         unit: found.unit,
         prefix: found.prefix,
         power: power

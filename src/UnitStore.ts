@@ -2,7 +2,7 @@ import { createParser } from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
 import { isUnitPropsWithQuantity } from "./Unit";
-import { Options, ParsedUnit, UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler, UnitStore, UnitSystems } from './types';
+import { Options, ParsedUnit, Definitions, DefinitionsExtended, UnitProps, UnitPropsExtended, UnitStore, UnitSystems } from './types';
 
 /**
  * Creates a new unit store.
@@ -36,7 +36,7 @@ export function createUnitStore(options: Options): UnitStore {
     }
   }
 
-  const originalDefinitions: UnitDefinitions = {
+  const originalDefinitions: Definitions = {
     systems,
     prefixes: {
       ...(skipBuiltIns ? {} : builtIns.prefixes),
@@ -49,14 +49,14 @@ export function createUnitStore(options: Options): UnitStore {
   }
 
   // These will contain copies we can mutate without affecting the originals
-  const defs: UnitDefinitionsButCooler = {
+  const defs: DefinitionsExtended = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
     systems: {}
   }
-  for (let system of Object.keys(originalDefinitions.systems)) {
-    defs.systems[system] = originalDefinitions.systems[system].slice()
-  }
+  // for (let system of Object.keys(originalDefinitions.systems)) {
+  //   defs.systems[system] = originalDefinitions.systems[system].slice()
+  // }
 
   /* All of the prefixes, units, and systems have now been defined.
    *
@@ -143,7 +143,7 @@ export function createUnitStore(options: Options): UnitStore {
           } else {
             throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
           }
-          unitValue = normalize(parsed.units, parsed.value, options.type)
+          unitValue = normalize(parsed.baseUnits, parsed.value, options.type)
           unitDimension = Object.freeze(parsed.dimension)
         } catch (ex) {
           if (/Unit.*not found/.test(ex.toString())) {
@@ -166,7 +166,7 @@ export function createUnitStore(options: Options): UnitStore {
           if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(newUnitName) && newUnitName !== '') {
             throw new SyntaxError(`Unit name contains non-alphanumeric characters or begins with a number: '${newUnitName}'`)
           }
-          const newUnit: UnitPropsButCooler = {
+          const newUnit: UnitPropsExtended = {
             name: newUnitName,
             value: unitValue,
             offset: unitDefObj?.offset ?? 0,
@@ -193,21 +193,22 @@ export function createUnitStore(options: Options): UnitStore {
 
   // Check to make sure config options has selected a unit system that exists.
   if (options.system !== 'auto') {
-    if (!defs.systems.hasOwnProperty(options.system)) {
-      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.systems).join(', ')} `)
+    if (!originalDefinitions.systems.hasOwnProperty(options.system)) {
+      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(originalDefinitions.systems).join(', ')} `)
     }
   }
 
   // Replace unit system strings with valueless units
-  for (let system of Object.keys(defs.systems)) {
-    let sys = defs.systems[system]
+  for (let system of Object.keys(originalDefinitions.systems)) {
+    let sys = originalDefinitions.systems[system]
+    defs.systems[system] = []
     for (let i = 0; i < sys.length; i++) {
       // Important! The unit below is not a real unit, but for now it is-close enough
-      let unit: any = parser(sys[i])
+      let unit = parser(sys[i])
       if (unit) {
         unit.type = 'Unit'
         Object.freeze(unit)
-        sys[i] = unit
+        defs.systems[system][i] = unit
       } else {
         throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
       }
@@ -243,7 +244,7 @@ export function createUnitStore(options: Options): UnitStore {
    *                                  prefix is returned. Else, null is returned.
    * @private
    */
-  function findUnit(unitString: string): { unit: UnitPropsButCooler, prefix: string } | null {
+  function findUnit(unitString: string): { unit: UnitPropsExtended, prefix: string } | null {
     if (typeof unitString !== 'string') {
       throw new TypeError(`parameter must be a string (${unitString} given)`)
     }

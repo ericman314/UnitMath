@@ -24,8 +24,8 @@ export interface TypeArithmetics {
   trunc(a: number): number
 }
 
-export interface AtomicUnit {
-  unit: UnitPropsButCooler,
+export interface BaseUnit {
+  unit: UnitPropsExtended,
   prefix: string,
   power: number
 }
@@ -33,7 +33,7 @@ export interface AtomicUnit {
 // Is it correct to specify a default type here?
 export interface Options {
   type?: TypeArithmetics
-  definitions?: UnitDefinitions & { skipBuiltIns?: boolean }
+  definitions?: Definitions & { skipBuiltIns?: boolean }
   system?: string // TODO allow custom
   prefix?: 'never' | 'auto' | 'always'
   prefixMin?: number
@@ -83,7 +83,7 @@ export interface UnitPropsTupleValue
 export type UnitProps = UnitPropsStringValue | UnitPropsWithQuantity | UnitPropsTupleValue
 
 
-export interface UnitPropsButCooler {
+export interface UnitPropsExtended {
   name: string
   quantity?: string
   value: number
@@ -95,16 +95,16 @@ export interface UnitPropsButCooler {
   offset: number
 }
 
-export interface UnitDefinitions {
+export interface Definitions {
   prefixes?: UnitPrefixes,
   systems?: UnitSystems,
   units: Record<string, UnitProps>
 }
 
-export interface UnitDefinitionsButCooler {
+export interface DefinitionsExtended {
   prefixes: UnitPrefixes,
-  systems: Record<string, any[]>,
-  units: Record<string, UnitPropsButCooler>
+  systems: Record<string, ParsedUnit[]>,
+  units: Record<string, UnitPropsExtended>
   // quantities?: Record<string, string>
   // baseQuantities?: string[]
 }
@@ -115,7 +115,7 @@ export interface Unit {
   readonly type: 'Unit'
 
   value: number
-  units: AtomicUnit[]
+  baseUnits: BaseUnit[]
   dimension: Record<string, number>
 
   /** whether the prefix and the units are fixed */
@@ -344,7 +344,7 @@ export interface UnitFactory {
   config(newOptions: Options): UnitFactory
   config(): Options
   // getConfig(): Options
-  definitions(): UnitDefinitions
+  definitions(): Definitions
   add(a: Unit | string | number, b: Unit | string | number): Unit
   sub(a: Unit | string | number, b: Unit | string | number): Unit
   mul(a: Unit | string | number, b: Unit | string | number): Unit
@@ -358,23 +358,20 @@ export interface UnitFactory {
   _unitStore: UnitStore
 }
 
-export type TestFunction = {
-  (string): string
-  (number): number
-}
-
 export interface UnitStore {
   parser(input: string): ParsedUnit
-  originalDefinitions: UnitDefinitions
-  defs: UnitDefinitionsButCooler
+  originalDefinitions: Definitions
+  defs: DefinitionsExtended
   exists(name: string): boolean
-  findUnit(unitString: string): { unit: UnitPropsButCooler, prefix: string } | null
+  findUnit(unitString: string): { unit: UnitPropsExtended, prefix: string } | null
 }
 
+// A stripped down version of a Unit
 export interface ParsedUnit {
-  units?: AtomicUnit[]
+  type?: 'Unit'
+  baseUnits?: BaseUnit[]
   dimension?: Record<string, number>,
   value?: number
 }
 
-type findUnitFn = (unitString: string) => { unit: UnitPropsButCooler, prefix: string } | null
+type findUnitFn = (unitString: string) => { unit: UnitPropsExtended, prefix: string } | null

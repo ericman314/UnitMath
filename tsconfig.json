@@ -4,6 +4,6 @@
         "module": "ESNext",
         "noImplicitAny": false,
         "target": "ESNext",
-        "rootDir": "src/"
+        "rootDir": "src/",
     }
 }
