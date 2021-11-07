@@ -1,4 +1,5 @@
-import unit, { Options, UnitProps } from '../src/Unit'
+import { Options, UnitProps } from '../src/types'
+import unit from '../src/Unit'
 // import Decimal from 'decimal.js'
 import './approx'
 
@@ -116,13 +117,13 @@ describe('unitmath', () => {
         prefixesToChooseFrom: 'common',
         simplify: 'auto',
         simplifyThreshold: 2,
-        // system: 'auto',
+        system: 'auto',
         // subsystem: 'auto',
         definitions: {
           skipBuiltIns: false,
           units: {},
           prefixes: {},
-          // systems: {}
+          systems: {}
         }
       }
       let actualOptions = unit.config()

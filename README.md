@@ -208,12 +208,12 @@ This object contains the units that are made available by UnitMath. Each key in 
 
 ```js
 units: {
-  minute: '60 seconds',
-  newton: '1 kg m/s^2'
+  minute: { value: '60 seconds' },
+  newton: { value: '1 kg m/s^2' }
 }
 ```
 
-You can also supply an object for additional customization. These are all the options you can specify:
+Here are all the options you can specify:
 
 - `value`: (Required) The value of the unit. It can be a string or an array containing two items:
 
@@ -677,6 +677,7 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
   unit('34 kg m / s^2').isCompound() // true
   ```
 
+<!---
 - `#getQuantities()`
 
   Returns a string array of all of this unit's matching quantities.
@@ -696,6 +697,7 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
   ```js
   unit('5 m/s^2').hasQuantity('ACCELERATION') // true
   ```
+  -->
 
 - `#equalQuantity(other: unit | string)`
 

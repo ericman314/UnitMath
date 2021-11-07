@@ -1,18 +1,10 @@
-import { UnitPropsButCooler, Options, AtomicUnit } from "./Unit"
-
-export interface ParsedUnit {
-  units?: AtomicUnit[]
-  dimension?: Record<string, number>,
-  value?: number
-}
-
-type findUnitFn = (unitString: string) => { unit: UnitPropsButCooler, prefix: string } | null
+import { findUnitFn, Options, ParsedUnit } from "./types"
 
 
 /**
  * Returns a new Parser.
  */
-export default function createParser(options: Options, findUnit: findUnitFn) {
+export function createParser(options: Options, findUnit: findUnitFn) {
   // private variables and functions for the Unit parser
   let text, index, c
 

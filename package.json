@@ -13,7 +13,7 @@
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm test && npm run test:bundle",
-    "test": "npm run test:src && npm run lint",
+    "test": "npm run lint && npm run test:src",
     "test:src": "jest --watch",
     "test:bundle": "npm run build && jest --testMatch '**/test/**/*.test-bundle.js'",
     "test:compiled": "npm run build && jest --testMatch '**/test/**/*.test-compiled.js'",
@@ -58,5 +58,10 @@
     "standard": "^12.0.1",
     "ts-jest": "^26.5.6",
     "typescript": "^4.1.3"
+  },
+  "standard": {
+    "ignore": [
+      "*.test-compiled.js"
+    ]
   }
 }

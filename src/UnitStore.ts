@@ -1,16 +1,8 @@
-import createParser, { ParsedUnit } from './Parser'
+import { createParser } from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
-import { isUnitPropsWithQuantity, Options, UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler } from "./Unit";
-
-
-export interface UnitStore {
-  parser(input: string): ParsedUnit
-  originalDefinitions: UnitDefinitions
-  defs: UnitDefinitionsButCooler
-  exists(name: string): boolean
-  findUnit(unitString: string): { unit: UnitPropsButCooler, prefix: string } | null
-}
+import { isUnitPropsWithQuantity } from "./Unit";
+import { Options, ParsedUnit, UnitDefinitions, UnitDefinitionsButCooler, UnitProps, UnitPropsButCooler, UnitStore, UnitSystems } from './types';
 
 /**
  * Creates a new unit store.
@@ -27,25 +19,25 @@ export function createUnitStore(options: Options): UnitStore {
 
   // Merge the built-in units with the user's definitions
 
-  // let systems: UnitSystems
+  let systems: UnitSystems
 
-  // if (skipBuiltIns) {
-  //   systems = { ...options.definitions.systems }
-  // } else {
-  //   systems = { ...builtIns.systems } as any
+  if (skipBuiltIns) {
+    systems = { ...options.definitions.systems }
+  } else {
+    systems = { ...builtIns.systems } as any
 
-  //   // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
-  //   for (let system of Object.keys(options.definitions.systems)) {
-  //     if (systems.hasOwnProperty(system)) {
-  //       systems[system] = [...options.definitions.systems[system], ...systems[system]]
-  //     } else {
-  //       systems[system] = [...options.definitions.systems[system]]
-  //     }
-  //   }
-  // }
+    // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
+    for (let system of Object.keys(options.definitions.systems)) {
+      if (systems.hasOwnProperty(system)) {
+        systems[system] = [...options.definitions.systems[system], ...systems[system]]
+      } else {
+        systems[system] = [...options.definitions.systems[system]]
+      }
+    }
+  }
 
   const originalDefinitions: UnitDefinitions = {
-    // systems,
+    systems,
     prefixes: {
       ...(skipBuiltIns ? {} : builtIns.prefixes),
       ...options.definitions.prefixes
@@ -60,11 +52,11 @@ export function createUnitStore(options: Options): UnitStore {
   const defs: UnitDefinitionsButCooler = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
-    // systems: {}
+    systems: {}
   }
-  // for (let system of Object.keys(originalDefinitions.systems)) {
-  //   defs.systems[system] = originalDefinitions.systems[system].slice()
-  // }
+  for (let system of Object.keys(originalDefinitions.systems)) {
+    defs.systems[system] = originalDefinitions.systems[system].slice()
+  }
 
   /* All of the prefixes, units, and systems have now been defined.
    *
@@ -200,27 +192,27 @@ export function createUnitStore(options: Options): UnitStore {
   }
 
   // Check to make sure config options has selected a unit system that exists.
-  // if (options.system !== 'auto') {
-  //   if (!defs.systems.hasOwnProperty(options.system)) {
-  //     throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.systems).join(', ')} `)
-  //   }
-  // }
+  if (options.system !== 'auto') {
+    if (!defs.systems.hasOwnProperty(options.system)) {
+      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.systems).join(', ')} `)
+    }
+  }
 
   // Replace unit system strings with valueless units
-  // for (let system of Object.keys(defs.systems)) {
-  //   let sys = defs.systems[system]
-  //   for (let i = 0; i < sys.length; i++) {
-  //     // Important! The unit below is not a real unit, but for now it is-close enough
-  //     let unit: any = parser(sys[i])
-  //     if (unit) {
-  //       unit.type = 'Unit'
-  //       Object.freeze(unit)
-  //       sys[i] = unit
-  //     } else {
-  //       throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
-  //     }
-  //   }
-  // }
+  for (let system of Object.keys(defs.systems)) {
+    let sys = defs.systems[system]
+    for (let i = 0; i < sys.length; i++) {
+      // Important! The unit below is not a real unit, but for now it is-close enough
+      let unit: any = parser(sys[i])
+      if (unit) {
+        unit.type = 'Unit'
+        Object.freeze(unit)
+        sys[i] = unit
+      } else {
+        throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
+      }
+    }
+  }
 
   // Final setup for units
   for (let key of Object.keys(defs.units)) {
@@ -284,7 +276,7 @@ export function createUnitStore(options: Options): UnitStore {
   }
 
   Object.freeze(defs.prefixes)
-  // Object.freeze(defs.systems)
+  Object.freeze(defs.systems)
   Object.freeze(defs.units)
 
   return { originalDefinitions, defs, exists, findUnit, parser }

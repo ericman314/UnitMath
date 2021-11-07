@@ -1,7 +1,7 @@
 // A base quantity is a physical quantity in a subset of a given system of quantities that is chosen by convention, where no quantity in the set can be expressed in terms of the others.
 // export const baseQuantities = ['MASS', 'LENGTH', 'TIME', 'CURRENT', 'TEMPERATURE', 'LUMINOUS_INTENSITY', 'AMOUNT_OF_SUBSTANCE', 'ANGLE', 'BIT', 'SOLID_ANGLE']
 
-import { UnitProps } from "./Unit"
+import { UnitProps } from "./types"
 
 // A derived quantity is a quantity in a system of quantities that is a defined in terms of the base quantities of that system.
 // export const quantities = {
@@ -71,11 +71,11 @@ import { UnitProps } from "./Unit"
 // // A unit system is a set of units that are by convention used with the unit system.
 // // Units listed here will be treated as belonging to the specified system.
 // // TODO: We need a better way to add all of the units which possibly might show up and need to be parsed.
-// export const systems = <const>{
-//   si: ['m', 'meter', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr', 'm^2'],
-//   cgs: ['cm', 's', 'A', 'g', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'erg', 'dyn', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'Pa', 'ohm', 'sr'],
-//   us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp', 'mi', 'mile']
-// }
+export const systems = <const>{
+  si: ['m', 'meter', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr', 'm^2'],
+  cgs: ['cm', 's', 'A', 'g', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'erg', 'dyn', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'Pa', 'ohm', 'sr'],
+  us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp', 'mi', 'mile']
+}
 
 // Units may or may not use one of the prefix sets (SHORT, LONG, etc).
 export const prefixes = {
