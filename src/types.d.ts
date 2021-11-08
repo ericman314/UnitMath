@@ -1,27 +1,69 @@
 
 export interface TypeArithmetics {
-  conv(a: any): number
-  conv(a: number, b: number): number
-  clone(a: number): number
-
-  abs(a: number): number
-
-  add(a: number, b: number): number
-  sub(a: number, b: number): number
-  mul(a: number, b: number): number
-  div(a: number, b: number): number
-  pow(a: number, b: number): number
-
-  eq(a: number, b: number): boolean
-  lt(a: number, b: number): boolean
-  le(a: number, b: number): boolean
-  ge(a: number, b: number): boolean
-  gt(a: number, b: number): boolean
-
-  format?(a: number, ...options: any[]): string
-
-  round(a: number): number
-  trunc(a: number): number
+  conv: {
+    (a: any): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  clone: {
+    (a: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  abs: {
+    (a: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  add: {
+    (a: number, b: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  sub: {
+    (a: number, b: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  mul: {
+    (a: number, b: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  div: {
+    (a: number, b: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  pow: {
+    (a: number, b: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  eq: {
+    (a: number, b: number): boolean
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  lt: {
+    (a: number, b: number): boolean
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  le: {
+    (a: number, b: number): boolean
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  ge: {
+    (a: number, b: number): boolean
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  gt: {
+    (a: number, b: number): boolean
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  format: {
+    (a: number, ...options: any[]): string
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  round: {
+    (a: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
+  trunc: {
+    (a: number): number
+    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+  }
 }
 
 export interface BaseUnit {
@@ -30,20 +72,30 @@ export interface BaseUnit {
   power: number
 }
 
-// Is it correct to specify a default type here?
-export interface Options {
-  type?: TypeArithmetics
-  definitions?: Definitions & { skipBuiltIns?: boolean }
-  system?: string // TODO allow custom
-  prefix?: 'never' | 'auto' | 'always'
-  prefixMin?: number
-  prefixMax?: number
-  prefixesToChooseFrom?: 'common' | 'all'
-  simplify?: 'never' | 'auto' | 'always'
-  precision?: number
-  parentheses?: boolean
-  simplifyThreshold?: number
+export interface FormatOptions {
+  simplify: 'never' | 'auto' | 'always'
+  simplifyThreshold: number
+  prefix: 'never' | 'auto' | 'always'
+  precision: number
+  prefixMin: number
+  prefixMax: number
+  parentheses: boolean
+  prefixesToChooseFrom: 'common' | 'all'
+  system: string // TODO allow custom
 }
+
+// Is it correct to specify a default type here?
+export interface Options
+  extends FormatOptions {
+  type: TypeArithmetics
+  definitions: Definitions & { skipBuiltIns?: boolean }
+}
+
+export interface PartialOptions
+  extends Omit<Partial<Options>, 'definitions'> {
+  definitions?: Partial<NullableDefinitions> & { skipBuiltIns?: boolean }
+}
+
 
 export interface UnitPrefixes {
   [prefixSet: string]: Record<string, number>
@@ -64,7 +116,7 @@ interface UnitPropsCommons {
 
 export interface UnitPropsWithQuantity
   extends UnitPropsCommons {
-  quantity?: string
+  quantity: string
   value: number
 }
 
@@ -96,9 +148,14 @@ export interface UnitPropsExtended {
 }
 
 export interface Definitions {
-  prefixes?: UnitPrefixes,
-  systems?: UnitSystems,
+  prefixes: UnitPrefixes,
+  systems: UnitSystems,
   units: Record<string, UnitProps>
+}
+
+export interface NullableDefinitions
+  extends Omit<Definitions, 'units'> {
+  units: Record<string, UnitProps | null | false | undefined>
 }
 
 export interface DefinitionsExtended {
@@ -114,7 +171,7 @@ export interface DefinitionsExtended {
 export interface Unit {
   readonly type: 'Unit'
 
-  value: number
+  value: number | null
   baseUnits: BaseUnit[]
   dimension: Record<string, number>
 
@@ -214,19 +271,19 @@ export interface Unit {
    * @param {number | string | custom} value
    * @returns A new unit with the given value.
    */
-  setValue(value?: string | number): Unit
+  setValue(value?: string | number | null): Unit
 
   /**
    * Returns this unit's value.
    * @returns The value of this unit.
    */
-  getValue(): number
+  getValue(): number | null
 
   /**
    * Returns this unit's normalized value, which is the value it would have if it were to be converted to SI base units (or whatever base units are defined)
    * @returns The notmalized value of the unit.
    */
-  getNormalizedValue(): number
+  getNormalizedValue(): number | null
 
   /**
    * Returns a new unit with the given normalized value.
@@ -240,7 +297,7 @@ export interface Unit {
    * The returned Unit will contain a list of the "best" units for formatting.
    * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
    */
-  simplify(): Unit
+  simplify(system?: string): Unit
 
   /**
    * Returns this unit without a value.
@@ -325,7 +382,7 @@ export interface Unit {
    * @param {Object} [opts]  Formatting options.
    * @return {string}
    */
-  toString(...opts: any[]): string
+  toString(formatOptions?: Partial<FormatOptions>, ...userArgs: any[]): string
 
   /**
    * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
@@ -335,13 +392,14 @@ export interface Unit {
   /**
    * Get a string representation of the Unit, with optional formatting options.
    */
-  format(...userOpts: any[]): string
+  format(formatOptions?: Partial<FormatOptions>, ...userArgs: any[]): string
 }
 
 export interface UnitFactory {
   (): Unit
-  (value: number | string, unitString?: string): Unit
-  config(newOptions: Options): UnitFactory
+  (str: string): Unit
+  (value: number | string | null, unitString?: string): Unit
+  config(newOptions: PartialOptions): UnitFactory
   config(): Options
   // getConfig(): Options
   definitions(): Definitions
@@ -368,10 +426,10 @@ export interface UnitStore {
 
 // A stripped down version of a Unit
 export interface ParsedUnit {
-  type?: 'Unit'
-  baseUnits?: BaseUnit[]
-  dimension?: Record<string, number>,
-  value?: number
+  type: 'Unit'
+  baseUnits: BaseUnit[]
+  dimension: Record<string, number>,
+  value: number | null
 }
 
 type findUnitFn = (unitString: string) => { unit: UnitPropsExtended, prefix: string } | null

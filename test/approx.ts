@@ -86,7 +86,7 @@ declare global {
 // }
 
 
-function deepApproxEqual(a, b) {
+function deepApproxEqual(a: any, b: any) {
   if (typeof a !== typeof b) return false
   let type = typeof a
 

@@ -160,12 +160,13 @@ export function createParser(options: Options, findUnit: findUnitFn) {
       throw new TypeError('Invalid argument in parse, string expected')
     }
 
-    const unit: ParsedUnit = {}
+    const unit: ParsedUnit = {
+      type: 'Unit',
+      value: null,
+      baseUnits: [],
+      dimension: {}
+    }
 
-    unit.baseUnits = []
-
-    // Initialize this unit's dimensions
-    unit.dimension = {}
 
     let powerMultiplierCurrent = 1
     let expectingUnit = false

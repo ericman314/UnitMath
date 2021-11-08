@@ -19,7 +19,8 @@
     "test:compiled": "npm run build && jest --testMatch '**/test/**/*.test-compiled.js'",
     "lint": "standard --env=jest --env=worker --verbose",
     "lint:fix": "standard --env=jest --env=worker --fix --verbose",
-    "coverage": "jest --coverage"
+    "coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",

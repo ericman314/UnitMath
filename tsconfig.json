@@ -1,9 +1,17 @@
 {
     "include": [ "src/**/*" ],
     "compilerOptions": {
+        "allowUnreachableCode": false,
+        "strict": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitAny": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "module": "ESNext",
-        "noImplicitAny": false,
         "target": "ESNext",
         "rootDir": "src/",
+        "moduleResolution": "node"
     }
 }

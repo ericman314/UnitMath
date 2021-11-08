@@ -108,7 +108,7 @@ export function createUnitStore(options: Options): UnitStore {
       const unitDef = originalDefinitions.units[unitDefKey]
       if (!unitDef) continue
 
-      const unitDefObj = typeof unitDef === 'string' ? null : unitDef
+      const unitDefObj = unitDef
 
       // uses unknown set of prefixes?
       if (unitDefObj && unitDefObj.prefixes && !defs.prefixes.hasOwnProperty(unitDefObj.prefixes)) {
@@ -136,17 +136,20 @@ export function createUnitStore(options: Options): UnitStore {
               parsed = parser(unitDefObj.value[1])
               parsed.value = options.type.conv(unitDefObj.value[0])
             } else {
-              throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
+              throw new TypeError(`Unit definition for '${unitDefKey}' must be an object with a value property where the value is a string or a two-element array.`)
             }
           } else if (typeof unitDef === 'string') {
             parsed = parser(unitDef)
           } else {
-            throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
+            throw new TypeError(`Unit definition for '${unitDefKey}' must be an object with a value property where the value is a string or a two-element array.`)
+          }
+          if (parsed.value == null) {
+            throw new Error(`Parsing value for '${unitDefKey}' resulted in invalid value: ${parsed.value}`)
           }
           unitValue = normalize(parsed.baseUnits, parsed.value, options.type)
           unitDimension = Object.freeze(parsed.dimension)
         } catch (ex) {
-          if (/Unit.*not found/.test(ex.toString())) {
+          if (ex instanceof Error && /Unit.*not found/.test(ex.toString())) {
             unitsSkipped.push(unitDefKey)
             reasonsSkipped.push(ex.toString())
             skipThisUnit = true
@@ -171,7 +174,7 @@ export function createUnitStore(options: Options): UnitStore {
             value: unitValue,
             offset: unitDefObj?.offset ?? 0,
             dimension: unitDimension,
-            prefixes: defs.prefixes[unitDefObj?.prefixes] ?? { '': 1 },
+            prefixes: (unitDefObj.prefixes && defs.prefixes[unitDefObj.prefixes]) || { '': 1 },
             commonPrefixes: unitDefObj?.commonPrefixes // Default should be undefined
             // systems: []
           }

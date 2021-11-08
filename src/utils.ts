@@ -16,18 +16,18 @@ export function normalize(baseUnits: BaseUnit[], value: number, type: TypeArithm
     let result: number = value
 
     for (let i = 0; i < baseUnits.length; i++) {
-      unitValue = type.conv(baseUnits[i].unit.value, value)
-      unitPrefixValue = type.conv(baseUnits[i].unit.prefixes[baseUnits[i].prefix], value)
-      unitPower = type.conv(baseUnits[i].power, value)
+      unitValue = type.conv(baseUnits[i].unit.value)
+      unitPrefixValue = type.conv(baseUnits[i].unit.prefixes[baseUnits[i].prefix])
+      unitPower = type.conv(baseUnits[i].power)
       result = type.mul(result, type.pow(type.mul(unitValue, unitPrefixValue), unitPower))
     }
 
     return result
   } else {
     // units is a single unit of power 1, like kg or degC
-    unitValue = type.conv(baseUnits[0].unit.value, value)
-    unitOffset = type.conv(baseUnits[0].unit.offset, value)
-    unitPrefixValue = type.conv(baseUnits[0].unit.prefixes[baseUnits[0].prefix], value)
+    unitValue = type.conv(baseUnits[0].unit.value)
+    unitOffset = type.conv(baseUnits[0].unit.offset)
+    unitPrefixValue = type.conv(baseUnits[0].unit.prefixes[baseUnits[0].prefix])
 
     return type.mul(type.add(type.mul(value, unitPrefixValue), unitOffset), unitValue)
     // (value*unitPrefixValue+unitOffset)*unitValue
@@ -51,9 +51,9 @@ export function denormalize(baseUnits: BaseUnit[], value: number, type: TypeArit
     let result = value
 
     for (let i = 0; i < baseUnits.length; i++) {
-      unitValue = type.conv(baseUnits[i].unit.value, value)
-      unitPrefixValue = type.conv(baseUnits[i].unit.prefixes[baseUnits[i].prefix], value)
-      unitPower = type.conv(baseUnits[i].power, value)
+      unitValue = type.conv(baseUnits[i].unit.value)
+      unitPrefixValue = type.conv(baseUnits[i].unit.prefixes[baseUnits[i].prefix])
+      unitPower = type.conv(baseUnits[i].power)
       result = type.div(result, type.pow(type.mul(unitValue, unitPrefixValue), unitPower))
     }
 
@@ -61,9 +61,9 @@ export function denormalize(baseUnits: BaseUnit[], value: number, type: TypeArit
   } else {
     // unit is a single unit of power 1, like kg or degC
 
-    unitValue = type.conv(baseUnits[0].unit.value, value)
-    unitPrefixValue = type.conv(baseUnits[0].unit.prefixes[baseUnits[0].prefix], value)
-    unitOffset = type.conv(baseUnits[0].unit.offset, value)
+    unitValue = type.conv(baseUnits[0].unit.value)
+    unitPrefixValue = type.conv(baseUnits[0].unit.prefixes[baseUnits[0].prefix])
+    unitOffset = type.conv(baseUnits[0].unit.offset)
 
     return type.div(type.sub(type.div(value, unitValue), unitOffset), unitPrefixValue)
     // (value/unitValue-unitOffset)/unitPrefixValue
@@ -76,7 +76,7 @@ export function denormalize(baseUnits: BaseUnit[], value: number, type: TypeArit
    * @returns True if the unit is compound
    * @private
    */
-export function isCompound<T>(baseUnits: BaseUnit[]): boolean {
+export function isCompound(baseUnits: BaseUnit[]): boolean {
   if (baseUnits.length === 0) {
     return false
   }
