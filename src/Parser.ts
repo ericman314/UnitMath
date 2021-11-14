@@ -1,10 +1,10 @@
-import { findUnitFn, Options, ParsedUnit } from "./types"
+import { FindUnitFn, Options, ParsedUnit } from "./types"
 
 
 /**
  * Returns a new Parser.
  */
-export function createParser(options: Options, findUnit: findUnitFn) {
+export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
   // private variables and functions for the Unit parser
   let text: string, index: number, c: string
 
@@ -161,7 +161,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
    * @param {string} str        A string like "5.2 inch", "4e2 cm/s^2"
    * @return {Object} { value, unitArray }
    */
-  function parse(str: string): ParsedUnit {
+  function parse(str: string): ParsedUnit<T> {
     // console.log(`parse("${str}")`)
 
     text = str
@@ -172,7 +172,7 @@ export function createParser(options: Options, findUnit: findUnitFn) {
       throw new TypeError('Invalid argument in parse, string expected')
     }
 
-    const unit: ParsedUnit = {
+    const unit: ParsedUnit<T> = {
       type: 'Unit',
       value: null,
       baseUnits: [],

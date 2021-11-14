@@ -1,6 +1,6 @@
-import { NullableDefinitions, PartialOptions, Unit, UnitProps } from '../src/types'
+import { NullableDefinitions, PartialOptions, TypeArithmetics, Unit, UnitFactory, UnitProps } from '../src/types'
 import unit from '../src/Unit'
-// import Decimal from 'decimal.js'
+import Decimal from 'decimal.js'
 import './approx'
 
 function configCustomUnits(units: NullableDefinitions['units']) {
@@ -11,81 +11,85 @@ function configCustomUnits(units: NullableDefinitions['units']) {
   })
 }
 
-// let unitDec
-// let typeNoPow, typeNoGt, typeNoComp, typeFunnyFormat, typeNoRound
+let unitDec: UnitFactory<Decimal>
+let typeNoPow: Partial<TypeArithmetics<Decimal>>
+let typeNoGt: Partial<TypeArithmetics<Decimal>>
+let typeNoComp: Partial<TypeArithmetics<Decimal>>
+let typeFunnyFormat: Partial<TypeArithmetics<Decimal>>
+let typeNoRound: Partial<TypeArithmetics<Decimal>>
 
-// beforeAll(() => {
-//   Decimal.set({ precision: 32 })
+beforeAll(() => {
+  Decimal.set({ precision: 32 })
 
-//   // Use strict type checking to make sure no numbers sneak in
-//   const isDec = a => expect(a).toBeInstanceOf(Decimal)
+  // Use strict type checking to make sure no numbers sneak in
+  const isDec = (a: any) => expect(a).toBeInstanceOf(Decimal)
 
-//   let typeComplete = {
-//     conv: a => new Decimal(a),
-//     clone: a => { isDec(a); return new Decimal(a) },
-//     add: (a, b) => {
-//       isDec(a)
-//       isDec(b)
-//       return Decimal.add(a, b)
-//     },
-//     sub: (a, b) => {
-//       isDec(a)
-//       isDec(b)
-//       return Decimal.sub(a, b)
-//     },
-//     mul: (a, b) => {
-//       isDec(a)
-//       isDec(b)
-//       return Decimal.mul(a, b)
-//     },
-//     div: (a, b) => {
-//       isDec(a)
-//       isDec(b)
-//       return Decimal.div(a, b)
-//     },
-//     pow: (a, b) => {
-//       isDec(a)
-//       isDec(b)
-//       return Decimal.pow(a, b)
-//     },
-//     eq: (a, b) => {
-//       isDec(a)
-//       isDec(b)
-//       return a.equals(b)
-//     },
-//     lt: (a, b) => a.lt(b),
-//     le: (a, b) => a.lte(b),
-//     gt: (a, b) => a.gt(b),
-//     ge: (a, b) => a.gte(b),
-//     abs: (a) => a.abs(),
-//     round: (a) => a.round(),
-//     trunc: (a) => Decimal.trunc(a)
-//   }
+  let typeComplete: Partial<TypeArithmetics<Decimal>> = {
+    conv: a => new Decimal(a),
+    clone: a => { isDec(a); return new Decimal(a) },
+    add: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.add(a, b)
+    },
+    sub: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.sub(a, b)
+    },
+    mul: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.mul(a, b)
+    },
+    div: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.div(a, b)
+    },
+    pow: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return Decimal.pow(a, b)
+    },
+    eq: (a, b) => {
+      isDec(a)
+      isDec(b)
+      return a.equals(b)
+    },
+    lt: (a, b) => a.lt(b),
+    le: (a, b) => a.lte(b),
+    gt: (a, b) => a.gt(b),
+    ge: (a, b) => a.gte(b),
+    abs: (a) => a.abs(),
+    round: (a) => a.round(),
+    trunc: (a) => Decimal.trunc(a)
+  }
 
-//   typeNoPow = Object.assign({}, typeComplete)
-//   delete typeNoPow.pow
+  typeNoPow = Object.assign({}, typeComplete)
+  delete typeNoPow.pow
 
-//   typeNoGt = Object.assign({}, typeComplete)
-//   delete typeNoGt.gt
+  typeNoGt = Object.assign({}, typeComplete)
+  delete typeNoGt.gt
 
-//   typeNoRound = Object.assign({}, typeComplete)
-//   delete typeNoRound.round
+  typeNoRound = Object.assign({}, typeComplete)
+  delete typeNoRound.round
 
-//   typeNoComp = Object.assign({}, typeComplete)
-//   delete typeNoComp.eq
-//   delete typeNoComp.lt
-//   delete typeNoComp.le
-//   delete typeNoComp.gt
-//   delete typeNoComp.ge
+  typeNoComp = Object.assign({}, typeComplete)
+  delete typeNoComp.eq
+  delete typeNoComp.lt
+  delete typeNoComp.le
+  delete typeNoComp.gt
+  delete typeNoComp.ge
 
-//   typeFunnyFormat = { format: (a, b, c) => b + a.toString().split('').reverse().join(c) }
-//   unitDec = unit.config({ type: typeComplete })
+  typeFunnyFormat = { format: (a, b, c) => b + a.toString().split('').reverse().join(c) }
+  unitDec = unit.config({ type: typeComplete })
 
-//   // These will be tested below
-//   // unitDecNoPow = unit.config({ type: typeNoPow })
-//   // unitDecNoGt = unit.config({ type: typeNoGt })
-//   // unitDecNoEq = unit.config({ type: typeNoEq })
-// })
+  // These will be tested below
+  // unitDecNoPow = unit.config({ type: typeNoPow })
+  // unitDecNoGt = unit.config({ type: typeNoGt })
+  // unitDecNoEq = unit.config({ type: typeNoEq })
+})
 
 describe('unitmath', () => {
   describe('unitmath namespace', () => {
@@ -141,7 +145,7 @@ describe('unitmath', () => {
     })
 
     test('should clone the options argument', () => {
-      let options: PartialOptions = { prefix: 'always' }
+      let options: PartialOptions<number> = { prefix: 'always' }
       let newUnit = unit.config(options)
       expect(options).not.toBe(newUnit.config())
     })
@@ -1237,7 +1241,7 @@ describe('unitmath', () => {
 
   describe('parse', () => {
     test('should parse units correctly', () => {
-      let unit1: Unit
+      let unit1: Unit<number>
 
       unit1 = unit('5kg')
       expect(unit1.value).toEqual(5)
@@ -1789,178 +1793,178 @@ describe('unitmath', () => {
   })
 
   describe('custom types', () => {
-    // describe('configuration', () => {
-    //   test('should throw if failed to include all custom type functions', () => {
-    //     expect(() => unit.config({ type: typeNoPow })).toThrow(/You must supply all required custom type functions/)
-    //   })
+    describe('configuration', () => {
+      test('should throw if failed to include all custom type functions', () => {
+        expect(() => unit.config({ type: typeNoPow })).toThrow(/You must supply all required custom type functions/)
+      })
 
-    //   test('should throw if failed to include conditionally required functions', () => {
-    //     expect(() => unit.config({ type: typeNoGt })).toThrow(/The following custom type functions are required when prefix is/)
-    //     expect(() => unit.config({ type: typeNoGt, prefix: 'never' })).not.toThrow()
-    //   })
+      test('should throw if failed to include conditionally required functions', () => {
+        expect(() => unit.config({ type: typeNoGt })).toThrow(/The following custom type functions are required when prefix is/)
+        expect(() => unit.config({ type: typeNoGt, prefix: 'never' })).not.toThrow()
+      })
 
-    //   test('should throw if attempting to call a method that depends on a custom type function that was not provided', () => {
-    //     let unitDecNoComp = unit.config({ type: typeNoComp, prefix: 'never' })
-    //     let unitDecNoRound = unit.config({ type: typeNoRound })
-    //     expect(() => unitDecNoComp('3 m').equals('4 m')).toThrow(/When using custom types, equals requires a type.eq function/)
-    //     expect(() => unitDecNoComp('3 m').compare('4 m')).toThrow(/When using custom types, compare requires a type.gt and a type.lt function/)
-    //     expect(() => unitDecNoComp('3 m').lessThan('4 m')).toThrow(/When using custom types, lessThan requires a type.lt function/)
-    //     expect(() => unitDecNoComp('3 m').lessThanOrEqual('4 m')).toThrow(/When using custom types, lessThanOrEqual requires a type.le function/)
-    //     expect(() => unitDecNoComp('3 m').greaterThan('4 m')).toThrow(/When using custom types, greaterThan requires a type.gt function/)
-    //     expect(() => unitDecNoComp('3 m').greaterThanOrEqual('4 m')).toThrow(/When using custom types, greaterThanOrEqual requires a type.ge function/)
-    //     expect(() => unitDecNoRound('3 m').split(['ft', 'in'])).toThrow(/When using custom types, split requires a type.round and a type.trunc function/)
-    //   })
-    // })
+      test('should throw if attempting to call a method that depends on a custom type function that was not provided', () => {
+        let unitDecNoComp = unit.config({ type: typeNoComp, prefix: 'never' })
+        let unitDecNoRound = unit.config({ type: typeNoRound })
+        expect(() => unitDecNoComp('3 m').equals('4 m')).toThrow(/When using custom types, equals requires a type.eq function/)
+        expect(() => unitDecNoComp('3 m').compare('4 m')).toThrow(/When using custom types, compare requires a type.gt and a type.lt function/)
+        expect(() => unitDecNoComp('3 m').lessThan('4 m')).toThrow(/When using custom types, lessThan requires a type.lt function/)
+        expect(() => unitDecNoComp('3 m').lessThanOrEqual('4 m')).toThrow(/When using custom types, lessThanOrEqual requires a type.le function/)
+        expect(() => unitDecNoComp('3 m').greaterThan('4 m')).toThrow(/When using custom types, greaterThan requires a type.gt function/)
+        expect(() => unitDecNoComp('3 m').greaterThanOrEqual('4 m')).toThrow(/When using custom types, greaterThanOrEqual requires a type.ge function/)
+        expect(() => unitDecNoRound('3 m').split(['ft', 'in'])).toThrow(/When using custom types, split requires a type.round and a type.trunc function/)
+      })
+    })
 
-    // describe('constructing a unit', () => {
-      // test('if given a single string, should parse the numeric portion using type.conv', () => {
-      //   let u = unitDec('3.1415926535897932384626433832795 rad')
-      //   expect(u.value).toBeInstanceOf(Decimal)
-      //   expect(u.toString()).toEqual('3.1415926535897932384626433832795 rad')
-      // })
+    describe('constructing a unit', () => {
+      test('if given a single string, should parse the numeric portion using type.conv', () => {
+        let u = unitDec('3.1415926535897932384626433832795 rad')
+        expect(u.value).toBeInstanceOf(Decimal)
+        expect(u.toString()).toEqual('3.1415926535897932384626433832795 rad')
+      })
 
-      // test('if given a number, should convert it to custom type', () => {
-      //   expect(unitDec(3.1415, 'rad').value).toBeInstanceOf(Decimal)
-      // })
+      test('if given a number, should convert it to custom type', () => {
+        expect(unitDec(3.1415, 'rad').value).toBeInstanceOf(Decimal)
+      })
 
-      // test('should work if given the custom type directly', () => {
-      //   let u = unitDec(new Decimal('3.1415926535897932384626433832795'), 'rad')
-      //   expect(u.toString()).toEqual('3.1415926535897932384626433832795 rad')
-      //   expect(u.value).toBeInstanceOf(Decimal)
-      // })
+      test('should work if given the custom type directly', () => {
+        let u = unitDec(new Decimal('3.1415926535897932384626433832795'), 'rad')
+        expect(u.toString()).toEqual('3.1415926535897932384626433832795 rad')
+        expect(u.value).toBeInstanceOf(Decimal)
+      })
 
-      // test('should create valueless units', () => {
-      //   let u = unitDec('rad')
-      //   expect(u.toString()).toEqual('rad')
-      //   expect(u.value).toBeNull()
-      // })
-    // })
+      test('should create valueless units', () => {
+        let u = unitDec('rad')
+        expect(u.toString()).toEqual('rad')
+        expect(u.value).toBeNull()
+      })
+    })
 
-    // describe('operations', () => {
-      // test('should add custom typed units', () => {
-      //   let u1 = unitDec('0.3333333333333333333333 kg/m^3')
-      //   let u2 = unitDec('0.6666666666666666666666 kg/m^3')
-      //   let u3 = u1.add(u2)
-      //   expect(u3.toString()).toEqual('0.9999999999999999999999 kg / m^3')
-      //   expect(u3.value).toBeInstanceOf(Decimal)
-      // })
+    describe('operations', () => {
+      test('should add custom typed units', () => {
+        let u1 = unitDec('0.3333333333333333333333 kg/m^3')
+        let u2 = unitDec('0.6666666666666666666666 kg/m^3')
+        let u3 = u1.add(u2)
+        expect(u3.toString()).toEqual('0.9999999999999999999999 kg / m^3')
+        expect(u3.value).toBeInstanceOf(Decimal)
+      })
 
-      // test('should subtract custom typed units', () => {
-      //   let u1 = unitDec('0.3333333333333333333333 kg/m^3')
-      //   let u2 = unitDec('0.6666666666666666666666 kg/m^3')
-      //   let u3 = u1.sub(u2)
-      //   expect(u3.toString()).toEqual('-0.3333333333333333333333 kg / m^3')
-      //   expect(u3.value).toBeInstanceOf(Decimal)
-      // })
+      test('should subtract custom typed units', () => {
+        let u1 = unitDec('0.3333333333333333333333 kg/m^3')
+        let u2 = unitDec('0.6666666666666666666666 kg/m^3')
+        let u3 = u1.sub(u2)
+        expect(u3.toString()).toEqual('-0.3333333333333333333333 kg / m^3')
+        expect(u3.value).toBeInstanceOf(Decimal)
+      })
 
-      // test('should multiply custom typed units', () => {
-      //   let u1 = unitDec('0.3333333333333333333333 kg/m^3')
-      //   let u2 = unitDec('3 m^3')
-      //   let u3 = u1.mul(u2)
-      //   expect(u3.toString()).toEqual('0.9999999999999999999999 kg')
-      //   expect(u3.value).toBeInstanceOf(Decimal)
-      // })
+      test('should multiply custom typed units', () => {
+        let u1 = unitDec('0.3333333333333333333333 kg/m^3')
+        let u2 = unitDec('3 m^3')
+        let u3 = u1.mul(u2)
+        expect(u3.toString()).toEqual('0.9999999999999999999999 kg')
+        expect(u3.value).toBeInstanceOf(Decimal)
+      })
 
-      // test('should divide custom typed units', () => {
-      //   let u1 = unitDec('1 kg')
-      //   let u2 = unitDec('3 m^3')
-      //   let u3 = u1.div(u2)
-      //   expect(u3.toString()).toEqual('0.33333333333333333333333333333333 kg / m^3') // 32 3's
-      //   expect(u3.value).toBeInstanceOf(Decimal)
-      // })
+      test('should divide custom typed units', () => {
+        let u1 = unitDec('1 kg')
+        let u2 = unitDec('3 m^3')
+        let u3 = u1.div(u2)
+        expect(u3.toString()).toEqual('0.33333333333333333333333333333333 kg / m^3') // 32 3's
+        expect(u3.value).toBeInstanceOf(Decimal)
+      })
 
-      // test('should do powers', () => {
-      //   let u1 = unitDec('11 s')
-      //   let u2 = u1.pow(30)
-      //   expect(u2.toString()).toEqual('1.7449402268886407318558803753801e+31 s^30')
-      //   expect(u2.value).toBeInstanceOf(Decimal)
-      // })
+      test('should do powers', () => {
+        let u1 = unitDec('11 s')
+        let u2 = u1.pow(30)
+        expect(u2.toString()).toEqual('1.7449402268886407318558803753801e+31 s^30')
+        expect(u2.value).toBeInstanceOf(Decimal)
+      })
 
-      // test('should do sqrt', () => {
-      //   expect(unitDec('64 m^2/s^2').sqrt().format()).toEqual('8 m / s')
-      //   expect(unitDec('2 W').sqrt().format()).toEqual('1.4142135623730950488016887242097 W^0.5')
-      // })
+      test('should do sqrt', () => {
+        expect(unitDec('64 m^2/s^2').sqrt().format()).toEqual('8 m / s')
+        expect(unitDec('2 W').sqrt().format()).toEqual('1.4142135623730950488016887242097 W^0.5')
+      })
 
-      // test('should do split', () => {
-      //   expect(unitDec(1, 'm').split(['ft', 'in']).join(',')).toEqual('3 ft,3.3700787401574803149606299212595 in')
-      //   expect(unitDec(-1, 'm').split(['ft', 'in']).join(',')).toEqual('-3 ft,-3.3700787401574803149606299212595 in')
-      //   expect(unitDec(1, 'm/s').split(['m/s']).join(',')).toEqual('1 m / s')
-      //   expect(unitDec(1, 'm').split(['ft', 'ft']).join(',')).toEqual('3 ft,0.28083989501312335958005249343829 ft')
-      //   expect(unitDec(1.23, 'm/s').split([]).join(',')).toEqual('1.23 m / s')
-      //   expect(unitDec(1, 'm').split(['in', 'ft']).join(',')).toEqual('39 in,0.03083989501312335958005249343832 ft')
-      //   expect(unitDec(10, 'km').split(['mi', 'ft', 'in']).join(',')).toEqual('6 mi,1128 ft,4.7874015748031496062992125984252 in')
-      //   expect(unitDec(1, 'm').split([unit(null, 'ft'), unit(null, 'in')]).join(',')).toEqual('3 ft,3.3700787401574803149606299212598 in')
-      //   expect(unitDec(100, 'in').split(['ft', 'in']).join(',')).toEqual('8 ft,4 in')
-      //   // TODO: Try redefining deg using a more precise value of pi
-      //   expect(unitDec('51.4934 deg').split(['deg', 'arcmin', 'arcsec']).map(a => a.toString({ precision: 6 })).join(',')).toEqual('51 deg,29 arcmin,36.240000000000072499200000000012 arcsec')
-      // })
+      test('should do split', () => {
+        expect(unitDec(1, 'm').split(['ft', 'in']).join(',')).toEqual('3 ft,3.3700787401574803149606299212595 in')
+        expect(unitDec(-1, 'm').split(['ft', 'in']).join(',')).toEqual('-3 ft,-3.3700787401574803149606299212595 in')
+        expect(unitDec(1, 'm/s').split(['m/s']).join(',')).toEqual('1 m / s')
+        expect(unitDec(1, 'm').split(['ft', 'ft']).join(',')).toEqual('3 ft,0.28083989501312335958005249343829 ft')
+        expect(unitDec(1.23, 'm/s').split([]).join(',')).toEqual('1.23 m / s')
+        expect(unitDec(1, 'm').split(['in', 'ft']).join(',')).toEqual('39 in,0.03083989501312335958005249343832 ft')
+        expect(unitDec(10, 'km').split(['mi', 'ft', 'in']).join(',')).toEqual('6 mi,1128 ft,4.7874015748031496062992125984252 in')
+        expect(unitDec(1, 'm').split([unitDec(null, 'ft'), unitDec(null, 'in')]).join(',')).toEqual('3 ft,3.3700787401574803149606299212595 in')
+        expect(unitDec(100, 'in').split(['ft', 'in']).join(',')).toEqual('8 ft,4 in')
+        // TODO: Try redefining deg using a more precise value of pi
+        expect(unitDec('51.4934 deg').split(['deg', 'arcmin', 'arcsec']).map(a => a.toString({ precision: 6 })).join(',')).toEqual('51 deg,29 arcmin,36.240000000000072499200000000012 arcsec')
+      })
 
-      // describe('equals', () => {
-      //   test('should test if two custom typed units are equal', () => {
-      //     expect(unitDec(100, 'cm').equals(unitDec(1, 'm'))).toBeTruthy()
-      //     expect(unitDec(100, 'cm').equals(unitDec(2, 'm'))).toBeFalsy()
-      //     expect(unitDec(100, 'cm').equals(unitDec(1, 'kg'))).toBeFalsy()
-      //     expect(unitDec(100, 'ft lbf').equals(unitDec(1200, 'in lbf'))).toBeTruthy()
-      //     expect(unitDec(100, 'N').equals(unitDec(100, 'kg m / s ^ 2'))).toBeTruthy()
-      //     expect(unitDec(100, 'N').equals(unitDec(100, 'kg m / s'))).toBeFalsy()
-      //     expect(unitDec(100, 'Hz').equals(unitDec(100, 's ^ -1'))).toBeTruthy()
-      //   })
+      describe('equals', () => {
+        test('should test if two custom typed units are equal', () => {
+          expect(unitDec(100, 'cm').equals(unitDec(1, 'm'))).toBeTruthy()
+          expect(unitDec(100, 'cm').equals(unitDec(2, 'm'))).toBeFalsy()
+          expect(unitDec(100, 'cm').equals(unitDec(1, 'kg'))).toBeFalsy()
+          expect(unitDec(100, 'ft lbf').equals(unitDec(1200, 'in lbf'))).toBeTruthy()
+          expect(unitDec(100, 'N').equals(unitDec(100, 'kg m / s ^ 2'))).toBeTruthy()
+          expect(unitDec(100, 'N').equals(unitDec(100, 'kg m / s'))).toBeFalsy()
+          expect(unitDec(100, 'Hz').equals(unitDec(100, 's ^ -1'))).toBeTruthy()
+        })
 
-      //   test('should work with valueless units', () => {
-      //     expect(unitDec('cm').equals(unitDec('cm'))).toBeTruthy()
-      //     expect(unitDec('cm').equals(unitDec('m'))).toBeFalsy()
-      //     expect(unitDec('cm/s').equals(unitDec('cm/s'))).toBeTruthy()
-      //   })
+        test('should work with valueless units', () => {
+          expect(unitDec('cm').equals(unitDec('cm'))).toBeTruthy()
+          expect(unitDec('cm').equals(unitDec('m'))).toBeFalsy()
+          expect(unitDec('cm/s').equals(unitDec('cm/s'))).toBeTruthy()
+        })
 
-      //   test('should convert parameter to a unit', () => {
-      //     expect(unitDec(100, 'cm').equals('1 m')).toBeTruthy()
-      //     expect(unitDec('3 kg / kg').equals(3)).toBeTruthy()
-      //   })
-      // })
+        test('should convert parameter to a unit', () => {
+          expect(unitDec(100, 'cm').equals('1 m')).toBeTruthy()
+          expect(unitDec('3 kg / kg').equals(new Decimal(3))).toBeTruthy()
+        })
+      })
 
-      // test('should do comparisons', () => {
-      //   expect(unitDec('10 m').lessThan('1 km')).toBeTruthy()
-      //   expect(unitDec('5 km').lessThanOrEqual('500000 cm')).toBeTruthy()
-      //   expect(unitDec('5 N').greaterThan('5 dyne')).toBeTruthy()
-      //   expect(unitDec('10 kg').greaterThanOrEqual('1 kg')).toBeTruthy()
-      //   expect(unitDec('60 min').compare('2 hour')).toEqual(-1)
-      //   expect(unitDec('60 min').compare('1 hour')).toEqual(0)
-      //   expect(unitDec('60 min').compare('0.5 hour')).toEqual(1)
-      // })
+      test('should do comparisons', () => {
+        expect(unitDec('10 m').lessThan('1 km')).toBeTruthy()
+        expect(unitDec('5 km').lessThanOrEqual('500000 cm')).toBeTruthy()
+        expect(unitDec('5 N').greaterThan('5 dyne')).toBeTruthy()
+        expect(unitDec('10 kg').greaterThanOrEqual('1 kg')).toBeTruthy()
+        expect(unitDec('60 min').compare('2 hour')).toEqual(-1)
+        expect(unitDec('60 min').compare('1 hour')).toEqual(0)
+        expect(unitDec('60 min').compare('0.5 hour')).toEqual(1)
+      })
 
-      // test('should do setValue', () => {
-      //   expect(unitDec('64 m^2/s^2').setValue(10).format()).toEqual('10 m^2 / s^2')
-      //   expect(unitDec('64 m^2/s^2').setValue('1.4142135623730950488016887242097').format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
-      //   // expect(unitDec('64 m^2/s^2').setValue(new Decimal('1.4142135623730950488016887242097')).format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
-      // })
+      test('should do setValue', () => {
+        expect(unitDec('64 m^2/s^2').setValue(new Decimal(10)).format()).toEqual('10 m^2 / s^2')
+        expect(unitDec('64 m^2/s^2').setValue('1.4142135623730950488016887242097').format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
+        // expect(unitDec('64 m^2/s^2').setValue(new Decimal('1.4142135623730950488016887242097')).format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
+      })
 
       // TODO: Test all other custom functions
-    // })
+    })
 
-    // describe('formatting', () => {
-    //   test('should choose the best prefix', () => {
-    //     expect(unitDec('0.000001 m').format(8)).toEqual('1 um')
-    //     expect(unitDec('0.00001 m').format(8)).toEqual('10 um')
-    //     expect(unitDec('0.0001 m').format(8)).toEqual('0.1 mm')
-    //     expect(unitDec('0.0005 m').format(8)).toEqual('0.5 mm')
-    //     expect(unitDec('0.0006 m').toString()).toEqual('0.6 mm')
-    //     expect(unitDec('0.001 m').toString()).toEqual('0.1 cm')
-    //     expect(unitDec('0.01 m').toString()).toEqual('1 cm')
-    //     expect(unitDec('100000 m').toString()).toEqual('100 km')
-    //     expect(unitDec('300000 m').toString()).toEqual('300 km')
-    //     expect(unitDec('500000 m').toString()).toEqual('500 km')
-    //     expect(unitDec('600000 m').toString()).toEqual('600 km')
-    //     expect(unitDec('1000000 m').toString()).toEqual('1000 km')
-    //     expect(unitDec('10000000 m').toString()).toEqual('10000 km')
-    //     expect(unitDec('1232123212321232123212321 m').toString()).toEqual('1.232123212321232123212321e+21 km')
-    //     expect(unitDec('2000 ohm').toString()).toEqual('2 kohm')
-    //   })
+    describe('formatting', () => {
+      test('should choose the best prefix', () => {
+        expect(unitDec('0.000001 m').format({ precision: 8 })).toEqual('1 um')
+        expect(unitDec('0.00001 m').format({ precision: 8 })).toEqual('10 um')
+        expect(unitDec('0.0001 m').format({ precision: 8 })).toEqual('0.1 mm')
+        expect(unitDec('0.0005 m').format({ precision: 8 })).toEqual('0.5 mm')
+        expect(unitDec('0.0006 m').toString()).toEqual('0.6 mm')
+        expect(unitDec('0.001 m').toString()).toEqual('0.1 cm')
+        expect(unitDec('0.01 m').toString()).toEqual('1 cm')
+        expect(unitDec('100000 m').toString()).toEqual('100 km')
+        expect(unitDec('300000 m').toString()).toEqual('300 km')
+        expect(unitDec('500000 m').toString()).toEqual('500 km')
+        expect(unitDec('600000 m').toString()).toEqual('600 km')
+        expect(unitDec('1000000 m').toString()).toEqual('1000 km')
+        expect(unitDec('10000000 m').toString()).toEqual('10000 km')
+        expect(unitDec('1232123212321232123212321 m').toString()).toEqual('1.232123212321232123212321e+21 km')
+        expect(unitDec('2000 ohm').toString()).toEqual('2 kohm')
+      })
 
-    //   test('should use custom formatter', () => {
-    //     let unitFunny = unit.config({ type: typeFunnyFormat })
-    //     expect(unitFunny('3.14159 rad').toString('$', '_')).toEqual('$9_5_1_4_1_._3 rad')
-    //   })
-    // })
+      test('should use custom formatter', () => {
+        let unitFunny = unit.config({ type: typeFunnyFormat })
+        expect(unitFunny('3.14159 rad').toString({}, '$', '_')).toEqual('$9_5_1_4_1_._3 rad')
+      })
+    })
   })
 
   describe('built-in units', () => {

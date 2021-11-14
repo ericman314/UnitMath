@@ -458,7 +458,7 @@ const unit = require('unitmath').config({
 let u = unit('2.74518864784926316174649567946 m')
 ```
 
-Below is a list of functions, their signatures, and when they are required.
+Below is a list of functions, their signatures, and whether they are required if using a custom type.
 
 Required always:
   - `clone: (a: T) => T`          

@@ -7,7 +7,7 @@ import { Options, ParsedUnit, Definitions, DefinitionsExtended, UnitProps, UnitP
 /**
  * Creates a new unit store.
  */
-export function createUnitStore(options: Options): UnitStore {
+export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
   /* Units are defined by these objects:
    * defs.prefixes
    * defs.units
@@ -49,7 +49,7 @@ export function createUnitStore(options: Options): UnitStore {
   }
 
   // These will contain copies we can mutate without affecting the originals
-  const defs: DefinitionsExtended = {
+  const defs: DefinitionsExtended<T> = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
     systems: {}
@@ -115,19 +115,19 @@ export function createUnitStore(options: Options): UnitStore {
         throw new Error(`Unknown prefixes '${unitDefObj.prefixes}' for unit '${unitDefKey}'`)
       }
 
-      let unitValue: number
+      let unitValue: T
       let unitDimension: { [s: string]: number }
       let unitQuantity: UnitProps['quantity']
 
       let skipThisUnit = false
       if (isUnitPropsWithQuantity(unitDefObj)) {
         // Defining the unit based on a quantity.
-        unitValue = unitDefObj.value
+        unitValue = options.type.conv(unitDefObj.value)
         unitDimension = { [unitDefObj.quantity]: 1 }
         unitQuantity = unitDefObj.quantity
       } else {
         // Defining the unit based on other units.
-        let parsed: ParsedUnit
+        let parsed: ParsedUnit<T>
         try {
           if (unitDef.hasOwnProperty('value')) {
             if (unitDefObj && typeof unitDefObj.value === 'string') {
@@ -169,10 +169,10 @@ export function createUnitStore(options: Options): UnitStore {
           if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(newUnitName) && newUnitName !== '') {
             throw new SyntaxError(`Unit name contains non-alphanumeric characters or begins with a number: '${newUnitName}'`)
           }
-          const newUnit: UnitPropsExtended = {
+          const newUnit: UnitPropsExtended<T> = {
             name: newUnitName,
             value: unitValue,
-            offset: unitDefObj?.offset ?? 0,
+            offset: options.type.conv(unitDefObj?.offset ?? 0),
             dimension: unitDimension,
             prefixes: (unitDefObj.prefixes && defs.prefixes[unitDefObj.prefixes]) || { '': 1 },
             commonPrefixes: unitDefObj?.commonPrefixes // Default should be undefined
@@ -247,7 +247,7 @@ export function createUnitStore(options: Options): UnitStore {
    *                                  prefix is returned. Else, null is returned.
    * @private
    */
-  function findUnit(unitString: string): { unit: UnitPropsExtended, prefix: string } | null {
+  function findUnit(unitString: string): { unit: UnitPropsExtended<T>, prefix: string } | null {
     if (typeof unitString !== 'string') {
       throw new TypeError(`parameter must be a string (${unitString} given)`)
     }
