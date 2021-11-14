@@ -5,7 +5,7 @@ import { TypeArithmetics, BaseUnit } from "./types"
    * Normalize a value, based on an array of unit pieces
    * @private
    */
-export function normalize(baseUnits: BaseUnit[], value: number, type: TypeArithmetics): number {
+export function normalize<T>(baseUnits: BaseUnit<T>[], value: T, type: TypeArithmetics<T>): T {
   let unitValue, unitOffset, unitPower, unitPrefixValue
 
   if (value === null || value === undefined || baseUnits.length === 0) {
@@ -13,7 +13,7 @@ export function normalize(baseUnits: BaseUnit[], value: number, type: TypeArithm
   } else if (isCompound(baseUnits)) {
     // units is a compound unit, so do not apply offsets.
     // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
-    let result: number = value
+    let result: T = value
 
     for (let i = 0; i < baseUnits.length; i++) {
       unitValue = type.conv(baseUnits[i].unit.value)
@@ -40,7 +40,7 @@ export function normalize(baseUnits: BaseUnit[], value: number, type: TypeArithm
    * @returns denormalized value
    * @private
    */
-export function denormalize(baseUnits: BaseUnit[], value: number, type: TypeArithmetics): number {
+export function denormalize<T>(baseUnits: BaseUnit<T>[], value: T, type: TypeArithmetics<T>): T {
   let unitValue, unitOffset, unitPower, unitPrefixValue
 
   if (value === null || value === undefined || baseUnits.length === 0) {
@@ -76,7 +76,7 @@ export function denormalize(baseUnits: BaseUnit[], value: number, type: TypeArit
    * @returns True if the unit is compound
    * @private
    */
-export function isCompound(baseUnits: BaseUnit[]): boolean {
+export function isCompound<T>(baseUnits: BaseUnit<T>[]): boolean {
   if (baseUnits.length === 0) {
     return false
   }
