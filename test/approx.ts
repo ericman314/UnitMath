@@ -1,3 +1,12 @@
+export { };
+
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toApproximatelyEqual: (expected: any) => CustomMatcherResult;
+    }
+  }
+}
 // const assert = require('assert')
 
 // const EPSILON = 0.0001
@@ -77,7 +86,7 @@
 // }
 
 
-function deepApproxEqual(a, b) {
+function deepApproxEqual(a: any, b: any) {
   if (typeof a !== typeof b) return false
   let type = typeof a
 
@@ -101,8 +110,9 @@ function deepApproxEqual(a, b) {
   return false
 }
 
+
 expect.extend({
-  toApproximatelyEqual(received, expected) {
+  toApproximatelyEqual(received: any, expected: any) {
     const pass = deepApproxEqual(received, expected)
     const options = {
       comment: 'Approximate deep equality',

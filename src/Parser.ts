@@ -1,9 +1,12 @@
+import { findUnitFn, Options, ParsedUnit } from "./types"
+
+
 /**
  * Returns a new Parser.
  */
-export default function createParser (options, findUnit) {
+export function createParser(options: Options, findUnit: findUnitFn) {
   // private variables and functions for the Unit parser
-  let text, index, c
+  let text: string, index: number, c: string
 
   function skipWhitespace () {
     while (c === ' ' || c === '\t') {
@@ -11,11 +14,11 @@ export default function createParser (options, findUnit) {
     }
   }
 
-  function isDigitDot (c) {
+  function isDigitDot(c: string) {
     return ((c >= '0' && c <= '9') || c === '.')
   }
 
-  function isDigit (c) {
+  function isDigit(c: string) {
     return ((c >= '0' && c <= '9'))
   }
 
@@ -24,7 +27,7 @@ export default function createParser (options, findUnit) {
     c = text.charAt(index)
   }
 
-  function revert (oldIndex) {
+  function revert(oldIndex: number) {
     index = oldIndex
     c = text.charAt(index)
   }
@@ -93,6 +96,7 @@ export default function createParser (options, findUnit) {
       tentativeNumber += c
       next()
 
+      // @ts-ignore: Typescript does not realize that c has changed
       if (c === '+' || c === '-') {
         tentativeNumber += c
         next()
@@ -139,7 +143,7 @@ export default function createParser (options, findUnit) {
     }
   }
 
-  function parseCharacter (toFind) {
+  function parseCharacter(toFind: string) {
     if (c === toFind) {
       next()
       return toFind
@@ -157,7 +161,7 @@ export default function createParser (options, findUnit) {
    * @param {string} str        A string like "5.2 inch", "4e2 cm/s^2"
    * @return {Object} { value, unitArray }
    */
-  function parse (str) {
+  function parse(str: string): ParsedUnit {
     // console.log(`parse("${str}")`)
 
     text = str
@@ -168,12 +172,13 @@ export default function createParser (options, findUnit) {
       throw new TypeError('Invalid argument in parse, string expected')
     }
 
-    const unit = {}
+    const unit: ParsedUnit = {
+      type: 'Unit',
+      value: null,
+      baseUnits: [],
+      dimension: {}
+    }
 
-    unit.units = []
-
-    // Initialize this unit's dimensions
-    unit.dimension = {}
 
     let powerMultiplierCurrent = 1
     let expectingUnit = false
@@ -252,17 +257,17 @@ export default function createParser (options, findUnit) {
           // No valid number found for the power!
           throw new SyntaxError('In "' + str + '", "^" must be followed by a floating-point number')
         }
-        power *= p
+        power *= +p
       }
 
       // Add the unit to the list
-      unit.units.push({
+      unit.baseUnits.push({
         unit: found.unit,
         prefix: found.prefix,
         power: power
       })
 
-      for (let dim in found.unit.dimension) {
+      for (let dim of Object.keys(found.unit.dimension)) {
         unit.dimension[dim] = (unit.dimension[dim] || 0) + (found.unit.dimension[dim] || 0) * power
       }
 

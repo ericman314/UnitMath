@@ -176,16 +176,6 @@ These are the available options and their defaults:
 
   ```
 
-- `subsystem` -- *Default:* `'auto'` *Not yet implemented.* The subsystem, or technical field, etc., to use when simplifying a `unit`. It can provide additional hints about which units to use when there are multiple options within the same system. Available subsystems are `'mechanics'`, `'chemistry'`, `'electricity_and_magnetism'`, etc. When `subsystem === 'auto'`, UnitMath will try to infer the subsystem from the individual units that make up that `unit`:
-
-  ```js
-  // Proposed, but not yet implemented
-  unit = unit.config({ subsystem: 'auto' })
-
-  unit('240 V').mul('5 A').mul('1 hr').toString()  // "1.2 kWh"
-  unit('4000 kg').mul('9.8 m/s^2').mul('100 m').toString()  // "3.92 MJ"
-  ```
-
 - `definitions`. An object that allows you to add to, modify, or remove the built-in units. See [User-Defined Units](#user-defined-units) for complete details.
 
   ```js
@@ -239,12 +229,12 @@ This object contains the units that are made available by UnitMath. Each key in 
 
 ```js
 units: {
-  minute: '60 seconds',
-  newton: '1 kg m/s^2'
+  minute: { value: '60 seconds' },
+  newton: { value: '1 kg m/s^2' }
 }
 ```
 
-You can also supply an object for additional customization. These are all the options you can specify:
+Here are all the options you can specify:
 
 - `value`: (Required) The value of the unit. It can be a string or an array containing two items:
 
@@ -271,7 +261,7 @@ You can also supply an object for additional customization. These are all the op
     seconds: { quantity: 'TIME', value: 1 }
   }
   ```
-
+  
   Only use `quantity` to define _base units_. Do **not** use `quantity` to define a derived unit:
 
   ```js
@@ -391,7 +381,7 @@ A boolean value indicating whether to skip creation of the built-in units. If `t
 
 #### Querying current unit definitions ####
 
-You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefixes, unit systems, base quantities, and quantities. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
+You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefixes, and unit systems. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
 
 ```js
 unit.definitions()
@@ -722,6 +712,7 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
   unit('34 kg m / s^2').isCompound() // true
   ```
 
+<!---
 - `#getQuantities()`
 
   Returns a string array of all of this unit's matching quantities.
@@ -741,6 +732,7 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
   ```js
   unit('5 m/s^2').hasQuantity('ACCELERATION') // true
   ```
+  -->
 
 - `#equalQuantity(other: unit | string)`
 

@@ -1,12 +1,13 @@
-import createParser from './Parser.js'
-import { normalize } from './utils.js'
-import * as builtIns from './BuiltIns.js'
+import { createParser } from './Parser'
+import { normalize } from './utils'
+import * as builtIns from './BuiltIns'
+import { isUnitPropsWithQuantity } from "./Unit";
+import { Options, ParsedUnit, Definitions, DefinitionsExtended, UnitProps, UnitPropsExtended, UnitStore, UnitSystems } from './types';
 
 /**
  * Creates a new unit store.
- * @param {Object} options
  */
-export default function createUnitStore (options) {
+export function createUnitStore(options: Options): UnitStore {
   /* Units are defined by these objects:
    * defs.prefixes
    * defs.units
@@ -14,37 +15,48 @@ export default function createUnitStore (options) {
 
   // TODO: Should we deep freeze the built-ins to prevent modification of the built-in units?
 
-  // These will contain the built-in units extended with the user's definitions
-  const originalDefinitions = {}
+  const { skipBuiltIns } = options.definitions
 
-  if (options.definitions.skipBuiltIns) {
-    originalDefinitions.prefixes = { ...options.definitions.prefixes }
-    originalDefinitions.units = { ...options.definitions.units }
-    originalDefinitions.systems = { ...options.definitions.systems }
+  // Merge the built-in units with the user's definitions
+
+  let systems: UnitSystems
+
+  if (skipBuiltIns) {
+    systems = { ...options.definitions.systems }
   } else {
-    originalDefinitions.prefixes = { ...builtIns.prefixes, ...options.definitions.prefixes }
-    originalDefinitions.units = { ...builtIns.units, ...options.definitions.units }
-    originalDefinitions.systems = { ...builtIns.systems }
+    systems = { ...builtIns.systems } as any
 
     // Prepend the user's units onto the built-in ones, so that the user's will be chosen first
-    for (let system in options.definitions.systems) {
-      if (originalDefinitions.systems.hasOwnProperty(system)) {
-        originalDefinitions.systems[system] = [...options.definitions.systems[system], ...originalDefinitions.systems[system]]
+    for (let system of Object.keys(options.definitions.systems)) {
+      if (systems.hasOwnProperty(system)) {
+        systems[system] = [...options.definitions.systems[system], ...systems[system]]
       } else {
-        originalDefinitions.systems[system] = [...options.definitions.systems[system]]
+        systems[system] = [...options.definitions.systems[system]]
       }
     }
   }
 
+  const originalDefinitions: Definitions = {
+    systems,
+    prefixes: {
+      ...(skipBuiltIns ? {} : builtIns.prefixes),
+      ...options.definitions.prefixes
+    },
+    units: {
+      ...(skipBuiltIns ? {} : builtIns.units),
+      ...options.definitions.units
+    }
+  }
+
   // These will contain copies we can mutate without affecting the originals
-  const defs = {
+  const defs: DefinitionsExtended = {
     units: {},
     prefixes: { ...originalDefinitions.prefixes },
     systems: {}
   }
-  for (let system in originalDefinitions.systems) {
-    defs.systems[system] = originalDefinitions.systems[system].slice()
-  }
+  // for (let system of Object.keys(originalDefinitions.systems)) {
+  //   defs.systems[system] = originalDefinitions.systems[system].slice()
+  // }
 
   /* All of the prefixes, units, and systems have now been defined.
    *
@@ -89,49 +101,55 @@ export default function createUnitStore (options) {
     let unitsAdded = 0
     let unitsSkipped = []
     let reasonsSkipped = []
-    for (const unitDefKey in originalDefinitions.units) {
+
+    for (const unitDefKey of Object.keys(originalDefinitions.units)) {
       if (defs.units.hasOwnProperty(unitDefKey)) continue
 
       const unitDef = originalDefinitions.units[unitDefKey]
-
       if (!unitDef) continue
 
-      const containsUnknownPrefix = unitDef.prefixes && !defs.prefixes.hasOwnProperty(unitDef.prefixes)
-      if (containsUnknownPrefix) {
-        throw new Error(`Unknown prefixes '${unitDef.prefixes}' for unit '${unitDefKey}'`)
+      const unitDefObj = unitDef
+
+      // uses unknown set of prefixes?
+      if (unitDefObj && unitDefObj.prefixes && !defs.prefixes.hasOwnProperty(unitDefObj.prefixes)) {
+        throw new Error(`Unknown prefixes '${unitDefObj.prefixes}' for unit '${unitDefKey}'`)
       }
 
-      let unitValue
-      let unitDimension
-      let unitQuantity
+      let unitValue: number
+      let unitDimension: { [s: string]: number }
+      let unitQuantity: UnitProps['quantity']
+
       let skipThisUnit = false
-      if (unitDef.quantity) {
+      if (isUnitPropsWithQuantity(unitDefObj)) {
         // Defining the unit based on a quantity.
-        unitValue = unitDef.value
-        unitDimension = { [unitDef.quantity]: 1 }
-        unitQuantity = unitDef.quantity
+        unitValue = unitDefObj.value
+        unitDimension = { [unitDefObj.quantity]: 1 }
+        unitQuantity = unitDefObj.quantity
       } else {
         // Defining the unit based on other units.
-        let parsed
+        let parsed: ParsedUnit
         try {
           if (unitDef.hasOwnProperty('value')) {
-            if (typeof unitDef.value === 'string') {
-              parsed = parser(unitDef.value)
-            } else if (Array.isArray(unitDef.value) && unitDef.value.length === 2) {
-              parsed = parser(unitDef.value[1])
-              parsed.value = options.type.conv(unitDef.value[0])
+            if (unitDefObj && typeof unitDefObj.value === 'string') {
+              parsed = parser(unitDefObj.value)
+            } else if (Array.isArray(unitDefObj.value) && unitDefObj.value.length === 2) {
+              parsed = parser(unitDefObj.value[1])
+              parsed.value = options.type.conv(unitDefObj.value[0])
             } else {
-              throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
+              throw new TypeError(`Unit definition for '${unitDefKey}' must be an object with a value property where the value is a string or a two-element array.`)
             }
           } else if (typeof unitDef === 'string') {
             parsed = parser(unitDef)
           } else {
-            throw new TypeError(`Unit definition for '${unitDefKey}' must be a string, or it must be an object with a value property where the value is a string or a two-element array.`)
+            throw new TypeError(`Unit definition for '${unitDefKey}' must be an object with a value property where the value is a string or a two-element array.`)
           }
-          unitValue = normalize(parsed.units, parsed.value, options.type)
+          if (parsed.value == null) {
+            throw new Error(`Parsing value for '${unitDefKey}' resulted in invalid value: ${parsed.value}`)
+          }
+          unitValue = normalize(parsed.baseUnits, parsed.value, options.type)
           unitDimension = Object.freeze(parsed.dimension)
         } catch (ex) {
-          if (/Unit.*not found/.test(ex.toString())) {
+          if (ex instanceof Error && /Unit.*not found/.test(ex.toString())) {
             unitsSkipped.push(unitDefKey)
             reasonsSkipped.push(ex.toString())
             skipThisUnit = true
@@ -143,7 +161,7 @@ export default function createUnitStore (options) {
 
       if (!skipThisUnit) {
         // Add this units and its aliases (they are all the same except for the name)
-        let unitAndAliases = [unitDefKey].concat(unitDef.aliases || [])
+        let unitAndAliases = [unitDefKey].concat(unitDefObj?.aliases ?? [])
         unitAndAliases.forEach(newUnitName => {
           if (defs.units.hasOwnProperty(newUnitName)) {
             throw new Error(`Alias '${newUnitName}' would override an existing unit`)
@@ -151,17 +169,17 @@ export default function createUnitStore (options) {
           if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(newUnitName) && newUnitName !== '') {
             throw new SyntaxError(`Unit name contains non-alphanumeric characters or begins with a number: '${newUnitName}'`)
           }
-          const newUnit = {
+          const newUnit: UnitPropsExtended = {
             name: newUnitName,
             value: unitValue,
-            offset: unitDef.offset || 0,
+            offset: unitDefObj?.offset ?? 0,
             dimension: unitDimension,
-            prefixes: defs.prefixes[unitDef.prefixes] || { '': 1 },
-            commonPrefixes: unitDef.commonPrefixes // Default should be undefined
+            prefixes: (unitDefObj.prefixes && defs.prefixes[unitDefObj.prefixes]) || { '': 1 },
+            commonPrefixes: unitDefObj?.commonPrefixes // Default should be undefined
             // systems: []
           }
           if (unitQuantity) newUnit.quantity = unitQuantity
-          if (unitDef.basePrefix) newUnit.basePrefix = unitDef.basePrefix
+          if (unitDefObj?.basePrefix) newUnit.basePrefix = unitDefObj.basePrefix
           Object.freeze(newUnit)
           defs.units[newUnitName] = newUnit
           unitsAdded++
@@ -178,21 +196,22 @@ export default function createUnitStore (options) {
 
   // Check to make sure config options has selected a unit system that exists.
   if (options.system !== 'auto') {
-    if (!defs.systems.hasOwnProperty(options.system)) {
-      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(defs.systems).join(', ')} `)
+    if (!originalDefinitions.systems.hasOwnProperty(options.system)) {
+      throw new Error(`Unknown unit system ${options.system}. Available systems are: auto, ${Object.keys(originalDefinitions.systems).join(', ')} `)
     }
   }
 
   // Replace unit system strings with valueless units
-  for (let system in defs.systems) {
-    let sys = defs.systems[system]
+  for (let system of Object.keys(originalDefinitions.systems)) {
+    let sys = originalDefinitions.systems[system]
+    defs.systems[system] = []
     for (let i = 0; i < sys.length; i++) {
       // Important! The unit below is not a real unit, but for now it is-close enough
       let unit = parser(sys[i])
       if (unit) {
         unit.type = 'Unit'
         Object.freeze(unit)
-        sys[i] = unit
+        defs.systems[system][i] = unit
       } else {
         throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
       }
@@ -200,7 +219,7 @@ export default function createUnitStore (options) {
   }
 
   // Final setup for units
-  for (let key in defs.units) {
+  for (let key of Object.keys(defs.units)) {
     const unit = defs.units[key]
     // Check that each commonPrefix is in prefixes
     if (unit.commonPrefixes) {
@@ -217,7 +236,7 @@ export default function createUnitStore (options) {
    * Tests whether the given string exists as a known unit. The unit may have a prefix.
    * @param {string} singleUnitString The name of the unit, with optional prefix.
    */
-  function exists (singleUnitString) {
+  function exists (singleUnitString: string) {
     return findUnit(singleUnitString) !== null
   }
 
@@ -228,7 +247,7 @@ export default function createUnitStore (options) {
    *                                  prefix is returned. Else, null is returned.
    * @private
    */
-  function findUnit (unitString) {
+  function findUnit(unitString: string): { unit: UnitPropsExtended, prefix: string } | null {
     if (typeof unitString !== 'string') {
       throw new TypeError(`parameter must be a string (${unitString} given)`)
     }
@@ -241,19 +260,17 @@ export default function createUnitStore (options) {
       }
     }
 
-    for (const name in defs.units) {
-      if (defs.units.hasOwnProperty(name)) {
-        if (unitString.substring(unitString.length - name.length, unitString.length) === name) {
-          const unit = defs.units[name]
-          const prefixLen = (unitString.length - name.length)
-          const prefix = unitString.substring(0, prefixLen)
-          if (unit.prefixes.hasOwnProperty(prefix)) {
-            // store unit, prefix, and value
-            // console.log(`findUnit(${unitString}): { unit.name: ${unit.name}, prefix: ${prefix} }`)
-            return {
-              unit,
-              prefix
-            }
+    for (const name of Object.keys(defs.units)) {
+      if (unitString.substring(unitString.length - name.length, unitString.length) === name) {
+        const unit = defs.units[name]
+        const prefixLen = (unitString.length - name.length)
+        const prefix = unitString.substring(0, prefixLen)
+        if (unit.prefixes.hasOwnProperty(prefix)) {
+          // store unit, prefix, and value
+          // console.log(`findUnit(${unitString}): { unit.name: ${unit.name}, prefix: ${prefix} }`)
+          return {
+            unit,
+            prefix
           }
         }
       }

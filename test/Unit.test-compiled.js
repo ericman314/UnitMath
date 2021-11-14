@@ -1,4 +1,4 @@
-import unit from '../src/Unit.js'
+import unit from '../es/UnitMath.js'
 import Decimal from 'decimal.js'
 import approx from './approx'
 
@@ -20,8 +20,8 @@ beforeAll(() => {
   const isDec = a => expect(a).toBeInstanceOf(Decimal)
 
   let typeComplete = {
-    conv: a => Decimal(a),
-    clone: a => { isDec(a); return Decimal(a) },
+    conv: a => new Decimal(a),
+    clone: a => { isDec(a); return new Decimal(a) },
     add: (a, b) => {
       isDec(a)
       isDec(b)
@@ -366,13 +366,12 @@ describe('unitmath', () => {
                 value: 1,
                 prefixes: 'LONG',
                 basePrefix: 'kilo'
-              },
-            },
+              }
+            }
           }
         })
         expect(newUnit('5000 widget').toBaseUnits().toString()).toEqual('5 kilowidget')
       })
-
     })
 
     describe('newly returned namespace', () => {
@@ -400,7 +399,6 @@ describe('unitmath', () => {
       expect(defs.units.kelvin.prefixes).toEqual('LONG')
       expect(defs.prefixes.LONG.giga).toEqual(1e9)
       expect(defs.prefixes.SHORT_LONG.giga).toEqual(1e9)
-    
 
       // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
       let defs2 = unit.config({}).definitions()
@@ -410,7 +408,6 @@ describe('unitmath', () => {
       expect(defs2.units.kelvin.prefixes).toEqual('LONG')
       expect(defs2.prefixes.LONG.giga).toEqual(1e9)
       expect(defs2.prefixes.SHORT_LONG.giga).toEqual(1e9)
-
     })
   })
 
@@ -731,18 +728,15 @@ describe('unitmath', () => {
       expect(u3).not.toBe(u4)
       expect(u3).toApproximatelyEqual(u4)
 
-
       const u7 = unit(8.314, 'kg m^2 / s^2 K mol')
       const u8 = u7.clone()
       expect(u7).not.toBe(u8)
       expect(u7).toApproximatelyEqual(u8)
 
-
       const u9 = unit(8.314, 'kg m^2 / s^2 K mol').to()
       const u10 = u9.clone()
       expect(u9).not.toBe(u10)
       expect(u9).toApproximatelyEqual(u10)
-
     })
 
     test('should freeze the returned unit', () => {
@@ -1492,7 +1486,7 @@ describe('unitmath', () => {
     test('should multiply unit\'s values and combine their units', () => {
       expect(unit('2 kg').mul(unit('3 m'))).toEqual(unit('6 kg m'))
       expect(unit('2 m').mul(unit('4 m'))).toEqual(unit('8 m^2'))
-      expect(unit('2 ft').mul(unit('4 ft')),).toEqual(unit('8 ft^2'))
+      expect(unit('2 ft').mul(unit('4 ft'))).toEqual(unit('8 ft^2'))
       expect(unit('65 mi/h').mul(unit('2 h'))).toEqual(unit('130 mi'))
       expect(unit('2 L').mul(unit('1 s^-1'))).toEqual(unit('2 L / s'))
       expect(unit('2 m/s').mul(unit('0.5 s/m'))).toEqual(unit('1'))
@@ -1814,7 +1808,7 @@ describe('unitmath', () => {
       })
 
       test('should work if given the custom type directly', () => {
-        let u = unitDec(Decimal('3.1415926535897932384626433832795'), 'rad')
+        let u = unitDec(new Decimal('3.1415926535897932384626433832795'), 'rad')
         expect(u.toString()).toEqual('3.1415926535897932384626433832795 rad')
         expect(u.value).toBeInstanceOf(Decimal)
       })
@@ -1921,7 +1915,7 @@ describe('unitmath', () => {
       test('should do setValue', () => {
         expect(unitDec('64 m^2/s^2').setValue(10).format()).toEqual('10 m^2 / s^2')
         expect(unitDec('64 m^2/s^2').setValue('1.4142135623730950488016887242097').format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
-        expect(unitDec('64 m^2/s^2').setValue(Decimal('1.4142135623730950488016887242097')).format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
+        expect(unitDec('64 m^2/s^2').setValue(new Decimal('1.4142135623730950488016887242097')).format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
       })
 
       // TODO: Test all other custom functions
