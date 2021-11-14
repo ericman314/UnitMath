@@ -17,7 +17,7 @@ export function normalize<T>(baseUnits: BaseUnit<T>[], value: T, type: TypeArith
 
     for (let i = 0; i < baseUnits.length; i++) {
       unitValue = type.conv(baseUnits[i].unit.value)
-      unitPrefixValue = type.conv(baseUnits[i].unit.prefixes[baseUnits[i].prefix])
+      unitPrefixValue = type.conv(baseUnits[i].unit.prefixSet[baseUnits[i].prefix])
       unitPower = type.conv(baseUnits[i].power)
       result = type.mul(result, type.pow(type.mul(unitValue, unitPrefixValue), unitPower))
     }
@@ -27,7 +27,7 @@ export function normalize<T>(baseUnits: BaseUnit<T>[], value: T, type: TypeArith
     // units is a single unit of power 1, like kg or degC
     unitValue = type.conv(baseUnits[0].unit.value)
     unitOffset = type.conv(baseUnits[0].unit.offset)
-    unitPrefixValue = type.conv(baseUnits[0].unit.prefixes[baseUnits[0].prefix])
+    unitPrefixValue = type.conv(baseUnits[0].unit.prefixSet[baseUnits[0].prefix])
 
     return type.mul(type.add(type.mul(value, unitPrefixValue), unitOffset), unitValue)
     // (value*unitPrefixValue+unitOffset)*unitValue
@@ -52,7 +52,7 @@ export function denormalize<T>(baseUnits: BaseUnit<T>[], value: T, type: TypeAri
 
     for (let i = 0; i < baseUnits.length; i++) {
       unitValue = type.conv(baseUnits[i].unit.value)
-      unitPrefixValue = type.conv(baseUnits[i].unit.prefixes[baseUnits[i].prefix])
+      unitPrefixValue = type.conv(baseUnits[i].unit.prefixSet[baseUnits[i].prefix])
       unitPower = type.conv(baseUnits[i].power)
       result = type.div(result, type.pow(type.mul(unitValue, unitPrefixValue), unitPower))
     }
@@ -62,7 +62,7 @@ export function denormalize<T>(baseUnits: BaseUnit<T>[], value: T, type: TypeAri
     // unit is a single unit of power 1, like kg or degC
 
     unitValue = type.conv(baseUnits[0].unit.value)
-    unitPrefixValue = type.conv(baseUnits[0].unit.prefixes[baseUnits[0].prefix])
+    unitPrefixValue = type.conv(baseUnits[0].unit.prefixSet[baseUnits[0].prefix])
     unitOffset = type.conv(baseUnits[0].unit.offset)
 
     return type.div(type.sub(type.div(value, unitValue), unitOffset), unitPrefixValue)

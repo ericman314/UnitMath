@@ -118,7 +118,7 @@ describe('unitmath', () => {
         prefix: 'auto',
         prefixMin: 0.1,
         prefixMax: 1000,
-        prefixesToChooseFrom: 'common',
+        formatPrefixDefault: 'none',
         simplify: 'auto',
         simplifyThreshold: 2,
         system: 'auto',
@@ -126,7 +126,7 @@ describe('unitmath', () => {
         definitions: {
           skipBuiltIns: false,
           units: {},
-          prefixes: {},
+          prefixSets: {},
           systems: {}
         },
         type: 42
@@ -200,7 +200,7 @@ describe('unitmath', () => {
 
       test('should apply prefixes and offset to custom units', () => {
         const newUnit = configCustomUnits({
-          wiggle: { value: '4 rad^2/s', offset: 1, prefixes: 'LONG', commonPrefixes: ['', 'kilo'] }
+          wiggle: { value: '4 rad^2/s', offset: 1, prefixSet: 'LONG', formatPrefixes: ['', 'kilo'] }
         })
         let unit1 = newUnit('8000 rad^2/s')
         expect(unit1.toString()).toEqual('1.999 kilowiggle')
@@ -264,7 +264,7 @@ describe('unitmath', () => {
         expect(() => configCustomUnits({
           myUnit: {
             value: '45 s',
-            prefixes: 'MADE_UP_PREFIXES'
+            prefixSet: 'MADE_UP_PREFIXES'
           }
         })).toThrow(/Unknown prefixes 'MADE_UP_PREFIXES' for unit 'myUnit'/)
       })
@@ -272,8 +272,8 @@ describe('unitmath', () => {
       test('should create new prefixes', () => {
         // TODO: Mutating individual units in the definitions can have bad side effects!
         let meter = { ...unit.definitions().units.meter as UnitProps }
-        meter.prefixes = 'FUNNY'
-        meter.commonPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
+        meter.prefixSet = 'FUNNY'
+        meter.formatPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
         let newUnit = unit.config({
           prefixMin: 1,
           prefixMax: 2,
@@ -281,7 +281,7 @@ describe('unitmath', () => {
             units: {
               meter
             },
-            prefixes: {
+            prefixSets: {
               FUNNY: { '': 1, 'A': 2, 'B': 4, 'C': 8, 'D': 16, 'E': 32, 'F': 64, 'G': 128 }
             }
           }
@@ -293,7 +293,7 @@ describe('unitmath', () => {
 
       test('should only allow common prefixes that are included in prefixes', () => {
         let meter = { ...unit.definitions().units.meter }
-        meter.commonPrefixes = ['', 'invalidPrefix']
+        meter.formatPrefixes = ['', 'invalidPrefix']
         expect(() => configCustomUnits({
           meter
         })).toThrow(/common prefix.*was not found among the allowable prefixes/)
@@ -306,7 +306,7 @@ describe('unitmath', () => {
               foo: {
                 quantity: 'ESSENCE_OF_FOO',
                 value: 1,
-                prefixes: 'LONG'
+                prefixSet: 'LONG'
               },
               fib: { value: '5 foo/hr' },
               flab: { value: '1 foo^3' }
@@ -342,16 +342,16 @@ describe('unitmath', () => {
               foo: {
                 quantity: 'ESSENCE_OF_FOO',
                 value: 1,
-                prefixes: 'PREFOO',
-                commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF']
+                prefixSet: 'PREFOO',
+                formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF']
               },
-              fib: { value: '5 foo', prefixes: 'PREFOO', commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] },
-              flab: { value: '1 foo^3', prefixes: 'PREFOO', commonPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] }
+              fib: { value: '5 foo', prefixSet: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] },
+              flab: { value: '1 foo^3', prefixSet: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] }
             },
             // systems: {
             //   fooSys: ['foo', 'flab']
             // },
-            prefixes: {
+            prefixSets: {
               PREFOO: {
                 'fff': 0.008,
                 'ff': 0.04,
@@ -375,7 +375,7 @@ describe('unitmath', () => {
               widget: {
                 quantity: 'THINGS_YOU_CAN_MAKE',
                 value: 1,
-                prefixes: 'LONG',
+                prefixSet: 'LONG',
                 basePrefix: 'kilo'
               },
             },
@@ -408,9 +408,9 @@ describe('unitmath', () => {
 
       expect(defs.units.inch.value).toEqual('0.0254 meter')
       expect(defs.units.foot.aliases).toEqual(['ft', 'feet'])
-      expect(defs.units.kelvin.prefixes).toEqual('LONG')
-      expect(defs.prefixes.LONG.giga).toEqual(1e9)
-      expect(defs.prefixes.SHORT_LONG.giga).toEqual(1e9)
+      expect(defs.units.kelvin.prefixSet).toEqual('LONG')
+      expect(defs.prefixSets.LONG.giga).toEqual(1e9)
+      expect(defs.prefixSets.SHORT_LONG.giga).toEqual(1e9)
 
 
       // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
@@ -418,9 +418,9 @@ describe('unitmath', () => {
 
       expect(defs2.units.inch.value).toEqual('0.0254 meter')
       expect(defs2.units.foot.aliases).toEqual(['ft', 'feet'])
-      expect(defs2.units.kelvin.prefixes).toEqual('LONG')
-      expect(defs2.prefixes.LONG.giga).toEqual(1e9)
-      expect(defs2.prefixes.SHORT_LONG.giga).toEqual(1e9)
+      expect(defs2.units.kelvin.prefixSet).toEqual('LONG')
+      expect(defs2.prefixSets.LONG.giga).toEqual(1e9)
+      expect(defs2.prefixSets.SHORT_LONG.giga).toEqual(1e9)
 
     })
   })
@@ -1009,17 +1009,15 @@ describe('unitmath', () => {
       expect(unit('4e-6 newton').format()).toEqual('4 micronewton')
     })
 
-    test('should use the prefixesToChooseFrom option', () => {
-      expect(unit('4 microlumen').format({ prefixesToChooseFrom: 'all' })).toEqual('4 microlumen')
-      expect(unit('4e-6 lumen').format({ prefixesToChooseFrom: 'all' })).toEqual('4 microlumen')
+    test('should use the formatPrefixDefault option', () => {
+      expect(unit('4 microlumen').format({ formatPrefixDefault: 'all' })).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').format({ formatPrefixDefault: 'all' })).toEqual('4 microlumen')
+      expect(unit('4 microlumen').format({ formatPrefixDefault: 'none' })).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').format({ formatPrefixDefault: 'none' })).toEqual('0.000004 lumen')
 
-      expect(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'all' })).toEqual('4 piconewton')
-      expect(unit('4e-2 newton').format({ prefixesToChooseFrom: 'all' })).toEqual('0.4 decinewton')
-      expect(unit('4e+9 newton').format({ prefixesToChooseFrom: 'all' })).toEqual('4 giganewton')
-
-      expect(unit('4e-6 micronewton').format({ prefixesToChooseFrom: 'common' })).toEqual('0.000004 micronewton')
-      expect(unit('4e-2 newton').format({ prefixesToChooseFrom: 'common' })).toEqual('40 millinewton')
-      expect(unit('4e+9 newton').format({ prefixesToChooseFrom: 'common' })).toEqual('4000 meganewton')
+      // Should have no effect if the unit has formatPrefixes defined
+      expect(unit('4e-6 micronewton').format({ formatPrefixDefault: 'all' })).toEqual('0.000004 micronewton')
+      expect(unit('4e-6 micronewton').format({ formatPrefixDefault: 'none' })).toEqual('0.000004 micronewton')
     })
 
     test('should avoid division by zero by not choosing a prefix for very small values', () => {

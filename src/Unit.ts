@@ -356,11 +356,14 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
             }
           }
         }
+
         let ids = Object.keys(identifiedSystems)
-        // TODO: No need to sort this, can just pick the best
-        ids.sort((a, b) => identifiedSystems[a] < identifiedSystems[b] ? 1 : -1)
+        // Pick the best identified system
+        if (ids.length > 0) {
+          systemStr = ids.reduce((a, b) => (identifiedSystems[a] > identifiedSystems[b] ? a : b))
+        }
+
         // console.log(`Identified the following systems when examining unit ${result.clone().to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
-        systemStr = ids[0]
       }
 
       let unitsOfSystem = unitStore.defs.systems[systemStr] || []
@@ -1134,8 +1137,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
         unit.value!, // We checked for null above
         options.type.pow(
           options.type.div(
-            options.type.conv(piece.unit.prefixes[prefix]),
-            options.type.conv(piece.unit.prefixes[piece.prefix])
+            options.type.conv(piece.unit.prefixSet[prefix]),
+            options.type.conv(piece.unit.prefixSet[piece.prefix])
           ),
           options.type.conv(piece.power)
         )
@@ -1178,12 +1181,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     let bestScore = calcScore(bestPrefix)
     // console.log(`The score was ${bestScore}`)
 
-    let prefixes
-    if (formatOptions.prefixesToChooseFrom === 'all') {
-      prefixes = Object.keys(piece.unit.prefixes)
-    } else if (formatOptions.prefixesToChooseFrom === 'common') {
-      prefixes = piece.unit.commonPrefixes
-    }
+    let prefixes = piece.unit.formatPrefixes ?? (formatOptions.formatPrefixDefault === 'all' ? Object.keys(piece.unit.prefixSet) : undefined)
 
     if (!prefixes) {
       // Unit does not have any prefixes for formatting
@@ -1491,15 +1489,13 @@ for (const key of Object.keys(defaults) as (keyof typeof defaults)[]) {
   defaults[key][IS_DEFAULT_FUN] = true
 }
 
-// TODO: setting to say whether to format using only the common prefixes or all prefixes
-
 const defaultOptions: Options<number> = <const>{
   parentheses: false,
   precision: 15,
   prefix: 'auto',
   prefixMin: 0.1,
   prefixMax: 1000,
-  prefixesToChooseFrom: 'common',
+  formatPrefixDefault: 'none',
   simplify: 'auto',
   simplifyThreshold: 2,
   system: 'auto',
@@ -1507,7 +1503,7 @@ const defaultOptions: Options<number> = <const>{
   definitions: {
     skipBuiltIns: false,
     units: {},
-    prefixes: {},
+    prefixSets: {},
     systems: {}
   },
   type: defaults

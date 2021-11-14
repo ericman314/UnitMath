@@ -144,11 +144,11 @@ These are the available options and their defaults:
 
 - `prefixMax` -- *Default:* `1000`. When choosing a prefix, the largest formatted value of a `unit` that is allowed.
 
-- `prefixesToChooseFrom` -- *Default:* `'common'`. When choosing a prefix, whether to consider all allowed prefixes or just the common ones for that unit. Possible values are `'common'` and `'all'`.
+- `formatPrefixDefault` -- *Default:* `none`. Sets the default behavior when formatting units that do not have a `formatPrefixes` property. `'all'` will cause the formatter to use all prefixes in that unit's prefix set, while `'none'` will not use any prefixes to format a unit.
 
 - `simplify` -- *Default:* `'auto'`. Specifies if UnitMath should attempt to simplify the units before formatting as a string. Possible values are `'auto'`, `'always'`, or `'never'`. If `'auto'` or `'always'`, then `u.toString()` essentially becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. When `'auto'` is used, simplification is skipped if the unit is valueless or was constructed using the `to()` method.
 
-- `simplifyThreshold` -- *Default:* `2`. A factor that affects whether the `format` method will output the original unit or a simplified version. The original unit will always be output unless the 'complexity' of the unit is reduced by an amount equal to or greater than the `simplifyThreshold`. A lower value results in more units being simplified, while a higher number results in fewer units being simplified. The complexity of a unit is roughly equal to the number of 'symbols' that are required to write the unit.
+- `simplifyThreshold` -- *Default:* `2`. A setting that affects whether the `format` method will output the original unit or a simplified version. The unit will be simplified only if the complexity is reduced by an amount equal to or greater than the `simplifyThreshold`. The complexity of a unit is roughly equal to the number of 'symbols' that are required to write the unit. A lower value of `simplifyThreshold` results in more units being simplified, while a higher value results in fewer units being simplified. 
 
   ```js
   unit('8 kg m / s^2').format() // 8 N
@@ -278,32 +278,32 @@ Here are all the options you can specify:
   }
   ```
 
-- `prefixes` -- *Default:* `'NONE'`. Specifies which group of prefixes will be allowed when parsing the unit.
+- `prefixSet` -- *Default:* `'NONE'`. Specifies which prefix set will be used when parsing the unit.
 
   ```js
   units: {
     // Will parse 'nanometer', 'micrometer', 'millimeter', 'kilometer', 'megameter', etc.
-    meter: { prefixes: 'LONG', ... },
+    meter: { prefixSet: 'LONG', ... },
 
     // Will parse 'nm', 'um', 'mm', 'km', 'Mm', etc.
-    m: { prefixes: 'SHORT', ... }
+    m: { prefixSet: 'SHORT', ... }
   }
   ```
 
-- `commonPrefixes`: A string array that specifies which of the allowed prefixes will be used when formatting a unit. If this option is omitted, the unit will be formatted using the original prefix, or none at all.
+- `formatPrefixes`: A string array that specifies individual items of the unit's prefix set which will be used when formatting a unit. If this option is omitted, the global option `formatPrefixDefault` determines whether the unit will be formatted using all prefixes in the prefix set, or none at all.
 
   ```js
   units: {
     L: {
-      prefixes: 'SHORT',
-      // Will format only as 'nL', 'uL', 'mL', and 'L'.
-      commonPrefixes: ['n', 'u', 'm', ''],
+      prefixSet: 'SHORT', // Parse any prefix in the 'SHORT' prefix set
+      formatPrefixes: ['n', 'u', 'm', ''], // Format only as 'nL', 'uL', 'mL', and 'L'.
       value: '1e-3 m^3',
     },
     lumen: {
-      prefixes: 'LONG',
+      prefixSet: 'LONG', // Parse any prefix in the 'LONG' prefix set
       value: '1 cd sr'
-      // commonPrefixes not given, so lumen will only be formatted as "lumen", but could be parsed as "millilumen", etc.
+      // formatPrefixes is not given, so lumen will only be formatted as "lumen" if formatPrefixDefault === false,
+      // or formatted using any of the prefixes in the 'LONG' prefix set if formatPrefixDefault === true.
     },
   }
   ```
@@ -314,8 +314,8 @@ Here are all the options you can specify:
   units: {
     g: {
       quantity: 'MASS',
-      prefixes: 'SHORT',
-      commonPrefixes: ['n', 'u', 'm', '', 'k'],
+      prefixSet: 'SHORT',
+      formatPrefixes: ['n', 'u', 'm', '', 'k'],
       value: 0.001,
       basePrefix: 'k' // Treat as if 'kg' is the base unit, not 'g'
     },
@@ -341,12 +341,12 @@ Here are all the options you can specify:
   }
   ```
 
-**definitions.prefixes**
+**definitions.prefixSets**
 
-The `definitions.prefixes` object is used to define strings and associated multipliers that are prefixed to units to change their value. For example, the `'k'` prefix in `km` multiplies the value of the `m` unit by 1000.
+The `definitions.prefixSets` object is used to define strings and associated multipliers that are prefixed to units to change their value. For example, the `'k'` prefix in `km` multiplies the value of the `m` unit by 1000.
 
 ```js
-prefixes: {
+prefixSets: {
   NONE: { '': 1 },
   SHORT: {
     m: 0.001,
@@ -381,7 +381,7 @@ A boolean value indicating whether to skip creation of the built-in units. If `t
 
 #### Querying current unit definitions ####
 
-You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefixes, and unit systems. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
+You can view all the current definitions by calling `unit.definitions()`. This object contains all the built-in units, prefix sets, and unit systems. If you have configured UnitMath with additional definitions, these will also be included in the return value from `unit.definitions()`.
 
 ```js
 unit.definitions()
@@ -395,14 +395,14 @@ Below is an abbreviated sample output from `unit.definitions()`. It can serve as
     '': { quantity: 'UNITLESS', value: 1 },
     meter: {
       quantity: 'LENGTH',
-      prefixes: 'LONG',
-      commonPrefixes: [ 'nano', 'micro', 'milli', 'centi', '', 'kilo' ],
+      prefixSet: 'LONG',
+      formatPrefixes: [ 'nano', 'micro', 'milli', 'centi', '', 'kilo' ],
       value: 1,
       aliases: [ 'meters' ]
     },
     m: {
-      prefixes: 'SHORT',
-      commonPrefixes: [ 'n', 'u', 'm', 'c', '', 'k' ],
+      prefixSet: 'SHORT',
+      formatPrefixes: [ 'n', 'u', 'm', 'c', '', 'k' ],
       value: '1 meter'
     },
     inch: { value: '0.0254 meter', aliases: [ 'inches', 'in' ] },
@@ -410,7 +410,7 @@ Below is an abbreviated sample output from `unit.definitions()`. It can serve as
     yard: { value: '3 foot', aliases: [ 'yd', 'yards' ] },
     mile: { value: '5280 ft', aliases: [ 'mi', 'miles' ] },
     ... },
-  prefixes: {
+  prefixSets: {
     NONE: { '': 1 },
     SHORT: {
       '': 1,
@@ -739,7 +739,7 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
   Returns true if this unit and another unit have equal quantities or dimensions.
 
   ```js
-  unit('5 m/s^2').equalQuantity('4 ft/s^2')) // true
+  unit('5 m/s^2').equalQuantity('4 ft/s^2') // true
   ```
 
 - `#equals(other: unit | string)`

@@ -38,9 +38,9 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
 
   const originalDefinitions: Definitions = {
     systems,
-    prefixes: {
+    prefixSets: {
       ...(skipBuiltIns ? {} : builtIns.prefixes),
-      ...options.definitions.prefixes
+      ...options.definitions.prefixSets
     },
     units: {
       ...(skipBuiltIns ? {} : builtIns.units),
@@ -51,7 +51,7 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
   // These will contain copies we can mutate without affecting the originals
   const defs: DefinitionsExtended<T> = {
     units: {},
-    prefixes: { ...originalDefinitions.prefixes },
+    prefixSets: { ...originalDefinitions.prefixSets },
     systems: {}
   }
   // for (let system of Object.keys(originalDefinitions.systems)) {
@@ -111,8 +111,8 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
       const unitDefObj = unitDef
 
       // uses unknown set of prefixes?
-      if (unitDefObj && unitDefObj.prefixes && !defs.prefixes.hasOwnProperty(unitDefObj.prefixes)) {
-        throw new Error(`Unknown prefixes '${unitDefObj.prefixes}' for unit '${unitDefKey}'`)
+      if (unitDefObj && unitDefObj.prefixSet && !defs.prefixSets.hasOwnProperty(unitDefObj.prefixSet)) {
+        throw new Error(`Unknown prefixes '${unitDefObj.prefixSet}' for unit '${unitDefKey}'`)
       }
 
       let unitValue: T
@@ -174,8 +174,8 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
             value: unitValue,
             offset: options.type.conv(unitDefObj?.offset ?? 0),
             dimension: unitDimension,
-            prefixes: (unitDefObj.prefixes && defs.prefixes[unitDefObj.prefixes]) || { '': 1 },
-            commonPrefixes: unitDefObj?.commonPrefixes // Default should be undefined
+            prefixSet: (unitDefObj.prefixSet && defs.prefixSets[unitDefObj.prefixSet]) || { '': 1 },
+            formatPrefixes: unitDefObj?.formatPrefixes // Default should be undefined
             // systems: []
           }
           if (unitQuantity) newUnit.quantity = unitQuantity
@@ -222,10 +222,10 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
   for (let key of Object.keys(defs.units)) {
     const unit = defs.units[key]
     // Check that each commonPrefix is in prefixes
-    if (unit.commonPrefixes) {
-      for (let i = 0; i < unit.commonPrefixes.length; i++) {
-        let s = unit.commonPrefixes[i]
-        if (!unit.prefixes.hasOwnProperty(s)) {
+    if (unit.formatPrefixes) {
+      for (let i = 0; i < unit.formatPrefixes.length; i++) {
+        let s = unit.formatPrefixes[i]
+        if (!unit.prefixSet.hasOwnProperty(s)) {
           throw new Error(`In unit ${unit.name}, common prefix ${s} was not found among the allowable prefixes`)
         }
       }
@@ -265,7 +265,7 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
         const unit = defs.units[name]
         const prefixLen = (unitString.length - name.length)
         const prefix = unitString.substring(0, prefixLen)
-        if (unit.prefixes.hasOwnProperty(prefix)) {
+        if (unit.prefixSet.hasOwnProperty(prefix)) {
           // store unit, prefix, and value
           // console.log(`findUnit(${unitString}): { unit.name: ${unit.name}, prefix: ${prefix} }`)
           return {
@@ -279,7 +279,7 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
     return null
   }
 
-  Object.freeze(defs.prefixes)
+  Object.freeze(defs.prefixSets)
   Object.freeze(defs.systems)
   Object.freeze(defs.units)
 

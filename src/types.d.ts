@@ -80,11 +80,10 @@ export interface FormatOptions<T> {
   prefixMin: T
   prefixMax: T
   parentheses: boolean
-  prefixesToChooseFrom: 'common' | 'all'
-  system: string // TODO allow custom
+  formatPrefixDefault: 'none' | 'all'
+  system: string
 }
 
-// Is it correct to specify a default type here?
 export interface Options<T>
   extends FormatOptions<T> {
   type: TypeArithmetics<T>
@@ -98,7 +97,7 @@ export interface PartialOptions<T>
 }
 
 
-export interface UnitPrefixes {
+export interface PrefixSets {
   [prefixSet: string]: Record<string, number>
 }
 
@@ -108,9 +107,9 @@ export interface UnitSystems {
 
 
 interface UnitPropsCommons {
-  prefixes?: string
+  prefixSet?: string
   basePrefix?: string
-  commonPrefixes?: string[]
+  formatPrefixes?: string[]
   aliases?: string[]
   offset?: number
 }
@@ -141,15 +140,15 @@ export interface UnitPropsExtended<T> {
   quantity?: string
   value: T
   dimension: Record<string, number>,
-  prefixes: Record<string, number>
+  prefixSet: Record<string, number>
   basePrefix?: string
-  commonPrefixes?: string[]
+  formatPrefixes?: string[]
   aliases?: string[]
   offset: T
 }
 
 export interface Definitions {
-  prefixes: UnitPrefixes,
+  prefixSets: PrefixSets,
   systems: UnitSystems,
   units: Record<string, UnitProps>
 }
@@ -160,7 +159,7 @@ export interface NullableDefinitions
 }
 
 export interface DefinitionsExtended<T> {
-  prefixes: UnitPrefixes,
+  prefixSets: PrefixSets,
   systems: Record<string, ParsedUnit<T>[]>,
   units: Record<string, UnitPropsExtended<T>>
   // quantities?: Record<string, string>

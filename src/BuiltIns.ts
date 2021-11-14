@@ -253,13 +253,13 @@ export const units: Record<string, UnitProps> = {
   // length
   m: {
     quantity: 'LENGTH',
-    prefixes: 'SHORT',
-    commonPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['n', 'u', 'm', 'c', '', 'k'],
     value: 1
   },
   meter: {
-    prefixes: 'LONG',
-    commonPrefixes: ['nano', 'micro', 'milli', 'centi', '', 'kilo'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['nano', 'micro', 'milli', 'centi', '', 'kilo'],
     value: '1 m',
     aliases: ['meters']
   },
@@ -303,8 +303,8 @@ export const units: Record<string, UnitProps> = {
 
   // Area
   m2: {
-    prefixes: 'SQUARED',
-    commonPrefixes: ['m', 'c', '', 'k'],
+    prefixSet: 'SQUARED',
+    formatPrefixes: ['m', 'c', '', 'k'],
     value: '1 m^2'
   },
   sqin: { value: '1 in^2' },
@@ -319,19 +319,19 @@ export const units: Record<string, UnitProps> = {
 
   // Volume
   m3: {
-    prefixes: 'CUBIC',
-    commonPrefixes: ['m', 'c', '', 'k'],
+    prefixSet: 'CUBIC',
+    formatPrefixes: ['m', 'c', '', 'k'],
     value: '1 m^3'
   },
   L: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['n', 'u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['n', 'u', 'm', ''],
     value: '1e-3 m^3',
     aliases: ['l', 'lt']
   }, // litre
   litre: {
-    prefixes: 'LONG',
-    commonPrefixes: ['nano', 'micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['nano', 'micro', 'milli', ''],
     value: '1 L',
     aliases: ['liter', 'liters', 'litres']
   },
@@ -387,14 +387,14 @@ export const units: Record<string, UnitProps> = {
   // Mass
   g: {
     quantity: 'MASS',
-    prefixes: 'SHORT',
-    commonPrefixes: ['n', 'u', 'm', '', 'k'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['n', 'u', 'm', '', 'k'],
     value: 0.001,
     basePrefix: 'k' // Treat as if 'kg' is the base unit, not 'g'
   },
   gram: {
-    prefixes: 'LONG',
-    commonPrefixes: ['nano', 'micro', 'milli', '', 'kilo'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['nano', 'micro', 'milli', '', 'kilo'],
     value: '1 g'
   },
 
@@ -404,12 +404,12 @@ export const units: Record<string, UnitProps> = {
   },
   ton: { value: '2000 lbm' },
   tonne: {
-    prefixes: 'LONG',
-    commonPrefixes: ['', 'kilo', 'mega', 'giga'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['', 'kilo', 'mega', 'giga'],
     value: '1000 kg'
   },
   t: {
-    prefixes: 'SHORT',
+    prefixSet: 'SHORT',
     // kt could be confused with knot (speed),
     value: '1 tonne'
   },
@@ -438,8 +438,8 @@ export const units: Record<string, UnitProps> = {
   // Time
   s: {
     quantity: 'TIME',
-    prefixes: 'SHORT',
-    commonPrefixes: ['f', 'p', 'n', 'u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['f', 'p', 'n', 'u', 'm', ''],
     value: 1,
     aliases: ['sec']
   },
@@ -452,8 +452,8 @@ export const units: Record<string, UnitProps> = {
     aliases: ['hr', 'hrs', 'hour', 'hours']
   },
   second: {
-    prefixes: 'LONG',
-    commonPrefixes: ['femto', 'pico', 'nano', 'micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['femto', 'pico', 'nano', 'micro', 'milli', ''],
     value: '1 s',
     aliases: ['seconds']
   },
@@ -488,38 +488,38 @@ export const units: Record<string, UnitProps> = {
 
   // Frequency
   hertz: {
-    prefixes: 'LONG',
-    commonPrefixes: ['', 'kilo', 'mega', 'giga', 'tera'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['', 'kilo', 'mega', 'giga', 'tera'],
     value: '1/s'
   },
   Hz: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['', 'k', 'M', 'G', 'T'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['', 'k', 'M', 'G', 'T'],
     value: '1 hertz'
   },
 
   // Angle
   rad: {
     quantity: 'ANGLE',
-    prefixes: 'SHORT',
-    commonPrefixes: ['m', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['m', ''],
     value: 1
   },
   radian: {
-    prefixes: 'LONG',
-    commonPrefixes: ['milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['milli', ''],
     value: '1 rad',
     aliases: ['radians']
   },
   sr: {
     quantity: 'SOLID_ANGLE',
-    prefixes: 'SHORT',
-    commonPrefixes: ['u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['u', 'm', ''],
     value: 1
   },
   steradian: {
-    prefixes: 'LONG',
-    commonPrefixes: ['micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['micro', 'milli', ''],
     value: '1 sr',
     aliases: ['steradians']
   },
@@ -528,13 +528,13 @@ export const units: Record<string, UnitProps> = {
     aliases: ['degree', 'degrees']
   },
   grad: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['c'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['c'],
     value: [Math.PI / 200, 'rad']
   },
   gradian: {
-    prefixes: 'LONG',
-    commonPrefixes: ['centi', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['centi', ''],
     value: [Math.PI / 200, 'rad'],
     aliases: ['gradians']
   },
@@ -554,13 +554,13 @@ export const units: Record<string, UnitProps> = {
   // Electric current
   A: {
     quantity: 'CURRENT',
-    prefixes: 'SHORT',
-    commonPrefixes: ['u', 'm', '', 'k'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['u', 'm', '', 'k'],
     value: 1
   },
   ampere: {
-    prefixes: 'LONG',
-    commonPrefixes: ['micro', 'milli', '', 'kilo'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['micro', 'milli', '', 'kilo'],
     value: '1 A',
     aliases: ['amperes']
   },
@@ -571,13 +571,13 @@ export const units: Record<string, UnitProps> = {
   // K(R) = °R / 1.8
   K: {
     quantity: 'TEMPERATURE',
-    prefixes: 'SHORT',
-    commonPrefixes: ['n', 'u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['n', 'u', 'm', ''],
     value: 1
   },
   kelvin: {
-    prefixes: 'LONG',
-    commonPrefixes: ['nano', 'micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['nano', 'micro', 'milli', ''],
     value: '1 K'
   },
   degC: {
@@ -598,13 +598,13 @@ export const units: Record<string, UnitProps> = {
   // amount of substance
   mol: {
     quantity: 'AMOUNT_OF_SUBSTANCE',
-    prefixes: 'SHORT',
-    commonPrefixes: ['', 'k'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['', 'k'],
     value: 1
   },
   mole: {
-    prefixes: 'LONG',
-    commonPrefixes: ['', 'kilo'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['', 'kilo'],
     value: '1 mol',
     aliases: ['moles']
   },
@@ -613,56 +613,56 @@ export const units: Record<string, UnitProps> = {
   cd: {
     quantity: 'LUMINOUS_INTENSITY',
     value: 1,
-    prefixes: 'SHORT',
-    commonPrefixes: ['', 'm']
+    prefixSet: 'SHORT',
+    formatPrefixes: ['', 'm']
   },
   candela: {
     value: '1 cd',
-    prefixes: 'LONG',
-    commonPrefixes: ['', 'milli']
+    prefixSet: 'LONG',
+    formatPrefixes: ['', 'milli']
   },
 
   // luminous flux
   lumen: {
-    prefixes: 'LONG',
+    prefixSet: 'LONG',
     value: '1 cd sr',
     aliases: ['lumens']
   },
   lm: {
-    prefixes: 'SHORT',
+    prefixSet: 'SHORT',
     value: '1 lumen'
   },
 
   // illuminance
   lux: {
-    prefixes: 'LONG',
+    prefixSet: 'LONG',
     value: '1 cd/m^2'
   },
   lx: {
-    prefixes: 'SHORT',
+    prefixSet: 'SHORT',
     value: '1 lux'
   },
 
   // Force
   N: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['u', 'm', '', 'k', 'M'], // These could be debatable
+    prefixSet: 'SHORT',
+    formatPrefixes: ['u', 'm', '', 'k', 'M'], // These could be debatable
     value: '1 kg m/s^2'
   },
   newton: {
-    prefixes: 'LONG',
-    commonPrefixes: ['micro', 'milli', '', 'kilo', 'mega'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['micro', 'milli', '', 'kilo', 'mega'],
     value: '1 N',
     aliases: ['newtons']
   },
   dyn: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['m', 'k', 'M'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['m', 'k', 'M'],
     value: '1 g cm/s^2'
   },
   dyne: {
-    prefixes: 'LONG',
-    commonPrefixes: ['milli', 'kilo', 'mega'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['milli', 'kilo', 'mega'],
     value: '1 dyn'
   },
   lbf: {
@@ -676,13 +676,13 @@ export const units: Record<string, UnitProps> = {
 
   // Energy
   J: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['m', '', 'k', 'M', 'G'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['m', '', 'k', 'M', 'G'],
     value: '1 N m'
   },
   joule: {
-    prefixes: 'LONG',
-    commonPrefixes: ['milli', '', 'kilo', 'mega', 'giga'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['milli', '', 'kilo', 'mega', 'giga'],
     value: '1 J',
     aliases: ['joules']
   },
@@ -690,37 +690,37 @@ export const units: Record<string, UnitProps> = {
     value: '1 dyn cm'
   },
   Wh: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['k', 'M', 'G', 'T'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['k', 'M', 'G', 'T'],
     value: '1 W hr'
   },
   BTU: {
-    prefixes: 'BTU',
-    commonPrefixes: ['', 'MM'],
+    prefixSet: 'BTU',
+    formatPrefixes: ['', 'MM'],
     value: '1055.05585262 J',
     aliases: ['BTUs']
   },
   eV: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['u', 'm', '', 'k', 'M', 'G'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['u', 'm', '', 'k', 'M', 'G'],
     value: '1.602176565e-19 J'
   },
   electronvolt: {
-    prefixes: 'LONG',
-    commonPrefixes: ['micro', 'milli', '', 'kilo', 'mega', 'giga'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['micro', 'milli', '', 'kilo', 'mega', 'giga'],
     value: '1 eV',
     aliases: ['electronvolts']
   },
 
   // Power
   W: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['p', 'n', 'u', 'm', '', 'k', 'M', 'G', 'T', 'P'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['p', 'n', 'u', 'm', '', 'k', 'M', 'G', 'T', 'P'],
     value: '1 J/s'
   },
   watt: {
-    prefixes: 'LONG',
-    commonPrefixes: ['pico', 'nano', 'micro', 'milli', '', 'kilo', 'mega', 'tera', 'peta'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['pico', 'nano', 'micro', 'milli', '', 'kilo', 'mega', 'tera', 'peta'],
     value: '1 W',
     aliases: ['watts']
   },
@@ -728,15 +728,15 @@ export const units: Record<string, UnitProps> = {
 
   // Electrical power units
   VA: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['', 'k'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['', 'k'],
     value: '1 W'
   },
 
   // Pressure
   Pa: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['', 'k', 'M', 'G'], // 'h' is sometimes used but not often
+    prefixSet: 'SHORT',
+    formatPrefixes: ['', 'k', 'M', 'G'], // 'h' is sometimes used but not often
     value: '1 N / m^2'
   },
   psi: {
@@ -745,18 +745,18 @@ export const units: Record<string, UnitProps> = {
   },
   atm: { value: '101325 Pa' },
   bar: {
-    prefixes: 'SHORT_LONG',
-    commonPrefixes: ['m', ''],
+    prefixSet: 'SHORT_LONG',
+    formatPrefixes: ['m', ''],
     value: '1e5 Pa'
   },
   torr: {
-    prefixes: 'LONG',
-    commonPrefixes: ['milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['milli', ''],
     value: '133.32236842105263 Pa'
   },
   Torr: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['m', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['m', ''],
     value: '1 torr'
   },
   mmHg: {
@@ -770,46 +770,46 @@ export const units: Record<string, UnitProps> = {
 
   // Electric charge
   C: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['p', 'n', 'u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['p', 'n', 'u', 'm', ''],
     value: '1 A s'
   },
   coulomb: {
-    prefixes: 'LONG',
-    commonPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
     value: '1 C',
     aliases: ['coulombs']
   },
 
   // Electric potential
   V: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['m', '', 'k', 'M'],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['m', '', 'k', 'M'],
     value: '1 W/A'
   },
   volt: {
-    prefixes: 'LONG',
-    commonPrefixes: ['milli', '', 'kilo', 'mega'],
+    prefixSet: 'LONG',
+    formatPrefixes: ['milli', '', 'kilo', 'mega'],
     value: '1 V',
     aliases: ['volts']
   },
   // Electric capacitance
   F: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['p', 'n', 'u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['p', 'n', 'u', 'm', ''],
     value: '1 C/V'
   },
   farad: {
-    prefixes: 'LONG',
-    commonPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['pico', 'nano', 'micro', 'milli', ''],
     value: '1 F',
     aliases: ['farads']
   },
 
   // Electric resistance
   ohm: {
-    prefixes: 'SHORT_LONG', // Both Mohm and megaohm are acceptable
-    commonPrefixes: ['', 'k', 'M'],
+    prefixSet: 'SHORT_LONG', // Both Mohm and megaohm are acceptable
+    formatPrefixes: ['', 'k', 'M'],
     value: '1 V/A',
     aliases: ['ohms']
   },
@@ -824,48 +824,48 @@ export const units: Record<string, UnitProps> = {
   */
   // Electric inductance
   H: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['u', 'm', ''],
     value: '1 V s / A'
   },
   henry: {
-    prefixes: 'LONG',
-    commonPrefixes: ['micro', 'milli', ''], // Just guessing here
+    prefixSet: 'LONG',
+    formatPrefixes: ['micro', 'milli', ''], // Just guessing here
     value: '1 H',
     aliases: ['henries']
   },
   // Electric conductance
   S: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['u', 'm', ''],
     value: '1 / ohm'
   },
   siemens: {
-    prefixes: 'LONG',
-    commonPrefixes: ['micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['micro', 'milli', ''],
     value: '1 S'
   },
   // Magnetic flux
   Wb: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['n', 'u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['n', 'u', 'm', ''],
     value: '1 V s'
   },
   weber: {
-    prefixes: 'LONG',
-    commonPrefixes: ['nano', 'micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['nano', 'micro', 'milli', ''],
     value: '1 Wb',
     aliases: ['webers']
   },
   // Magnetic flux density
   T: {
-    prefixes: 'SHORT',
-    commonPrefixes: ['n', 'u', 'm', ''],
+    prefixSet: 'SHORT',
+    formatPrefixes: ['n', 'u', 'm', ''],
     value: '1 N s / C m'
   },
   tesla: {
-    prefixes: 'LONG',
-    commonPrefixes: ['nano', 'micro', 'milli', ''],
+    prefixSet: 'LONG',
+    formatPrefixes: ['nano', 'micro', 'milli', ''],
     value: '1 T',
     aliases: ['teslas']
   },
@@ -874,20 +874,20 @@ export const units: Record<string, UnitProps> = {
   // TODO: Figure out how to do SI vs. IEC while formatting
   b: {
     quantity: 'BIT',
-    prefixes: 'BINARY_SHORT',
+    prefixSet: 'BINARY_SHORT',
     value: 1
   },
   bits: {
-    prefixes: 'BINARY_LONG',
+    prefixSet: 'BINARY_LONG',
     value: '1 b',
     aliases: ['bit']
   },
   B: {
-    prefixes: 'BINARY_SHORT',
+    prefixSet: 'BINARY_SHORT',
     value: '8 b'
   },
   bytes: {
-    prefixes: 'BINARY_LONG',
+    prefixSet: 'BINARY_LONG',
     value: '1 B',
     aliases: ['byte']
   }
