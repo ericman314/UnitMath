@@ -1,68 +1,65 @@
-
+import { symIsDefaultFun } from "./Unit"
 export interface TypeArithmetics<T> {
   conv: {
     (a: any): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   clone: {
     (a: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   abs: {
     (a: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   add: {
     (a: T, b: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   sub: {
     (a: T, b: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   mul: {
     (a: T, b: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   div: {
     (a: T, b: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   pow: {
     (a: T, b: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   eq: {
     (a: T, b: T): boolean
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   lt: {
     (a: T, b: T): boolean
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   le: {
     (a: T, b: T): boolean
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   ge: {
     (a: T, b: T): boolean
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   gt: {
     (a: T, b: T): boolean
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
-  format: {
-    (a: T, ...options: any[]): string
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
-  }
+
   round: {
     (a: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
   trunc: {
     (a: T): T
-    _IS_UNITMATH_DEFAULT_FUNCTION?: boolean
+    [symIsDefaultFun]?: boolean
   }
 }
 
@@ -82,6 +79,10 @@ export interface FormatOptions<T> {
   parentheses: boolean
   formatPrefixDefault: 'none' | 'all'
   system: string
+  formatter: {
+    (a: T, ...options: any[]): string
+    [symIsDefaultFun]?: boolean
+  }
 }
 
 export interface Options<T>
@@ -97,8 +98,8 @@ export interface PartialOptions<T>
 }
 
 
-export interface PrefixSets {
-  [prefixSet: string]: Record<string, number>
+export interface PrefixGroups {
+  [prefixGroup: string]: Record<string, number>
 }
 
 export interface UnitSystems {
@@ -107,7 +108,7 @@ export interface UnitSystems {
 
 
 interface UnitPropsCommons {
-  prefixSet?: string
+  prefixGroup?: string
   basePrefix?: string
   formatPrefixes?: string[]
   aliases?: string[]
@@ -140,7 +141,7 @@ export interface UnitPropsExtended<T> {
   quantity?: string
   value: T
   dimension: Record<string, number>,
-  prefixSet: Record<string, number>
+  prefixGroup: Record<string, number>
   basePrefix?: string
   formatPrefixes?: string[]
   aliases?: string[]
@@ -148,7 +149,7 @@ export interface UnitPropsExtended<T> {
 }
 
 export interface Definitions {
-  prefixSets: PrefixSets,
+  prefixGroups: PrefixGroups,
   systems: UnitSystems,
   units: Record<string, UnitProps>
 }
@@ -159,7 +160,7 @@ export interface NullableDefinitions
 }
 
 export interface DefinitionsExtended<T> {
-  prefixSets: PrefixSets,
+  prefixGroups: PrefixGroups,
   systems: Record<string, ParsedUnit<T>[]>,
   units: Record<string, UnitPropsExtended<T>>
   // quantities?: Record<string, string>
@@ -267,6 +268,13 @@ export interface Unit<T> {
   toBaseUnits(): Unit<T>
 
   /**
+    Get the complexity of this unit, or in other words, the number of symbols used to format the unit.
+    @memberof Unit
+    @returns {number} The complexity or number of symbols used to format the unit.
+   */
+  getComplexity(): number
+
+  /**
    * Returns a new unit with the given value.
    * @param {number | string | custom} value
    * @returns A new unit with the given value.
@@ -325,7 +333,7 @@ export interface Unit<T> {
    * @param {Unit} other
    * @return {boolean} true if equal dimensions
    */
-  equalQuantity(other: Unit<T>): boolean
+  equalsQuantity(other: Unit<T>): boolean
 
   /**
    * Returns a string array of all the quantities that match this unit.

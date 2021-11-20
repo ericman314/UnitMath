@@ -1,5 +1,6 @@
 import { FindUnitFn, Options, ParsedUnit } from "./types"
 
+const ignoredCharacters = ' \t()*'
 
 /**
  * Returns a new Parser.
@@ -8,8 +9,8 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
   // private variables and functions for the Unit parser
   let text: string, index: number, c: string
 
-  function skipWhitespace () {
-    while (c === ' ' || c === '\t') {
+  function skipIgnored() {
+    while (c && ignoredCharacters.includes(c)) {
       next()
     }
   }
@@ -198,7 +199,7 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
     //   4erg
 
     next()
-    skipWhitespace()
+    skipIgnored()
 
 
     // Optional number or non-finite string at the start of the string
@@ -208,7 +209,7 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
     if (valueStr) {
       unit.value = options.type.conv(valueStr)
 
-      skipWhitespace() // Whitespace is not required here
+      skipIgnored() // Whitespace is not required here
 
       // handle multiplication or division right after the value, like '1/s'
       if (parseCharacter('*')) {
@@ -220,12 +221,12 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
     }
 
     while (true) {
-      skipWhitespace()
+      skipIgnored()
 
       // Parentheses are not allowed
-      if (c === '(' || c === ')') {
-        throw new SyntaxError(`Unexpected "${c}" in "${text}" at index ${index}`)
-      }
+      // if (c === '(' || c === ')') {
+      //   throw new SyntaxError(`Unexpected "${c}" in "${text}" at index ${index}`)
+      // }
 
       // Is there something here?
       let uStr
@@ -249,9 +250,9 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
 
       let power = powerMultiplierCurrent
       // Is there a "^ number"?
-      skipWhitespace()
+      skipIgnored()
       if (parseCharacter('^')) {
-        skipWhitespace()
+        skipIgnored()
         const p = parseNumber()
         if (p === null) {
           // No valid number found for the power!
@@ -271,7 +272,7 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
         unit.dimension[dim] = (unit.dimension[dim] || 0) + (found.unit.dimension[dim] || 0) * power
       }
 
-      skipWhitespace()
+      skipIgnored()
 
       // "/" means we are expecting something to come next.
       // Is there a forward slash? If so, set powerMultiplierCurrent to -1. All remaining units will be in the denominator.

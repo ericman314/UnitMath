@@ -10,7 +10,7 @@ import { BaseUnit, FormatOptions, Options, ParsedUnit, PartialOptions, TypeArith
 // https://github.com/ericman314/UnitMath/commit/adc4674c6b828912805a4160c48d5f557821c8e7.
 
 // type n = number
-const IS_DEFAULT_FUN = '_IS_UNITMATH_DEFAULT_FUNCTION'
+export const symIsDefaultFun = Symbol('_IS_UNITMATH_DEFAULT_FUNCTION')
 
 
 export function isUnitPropsWithQuantity(unit: UnitProps): unit is UnitPropsWithQuantity {
@@ -44,7 +44,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   let allRequiredTypeFnsPresent = true
   let oneRequiredTypeFnsPresent = false
   for (const fn of requiredTypeFns) {
-    if (options.type?.[fn][IS_DEFAULT_FUN]) {
+    if (options.type?.[fn][symIsDefaultFun]) {
       allRequiredTypeFnsPresent = false
     } else {
       oneRequiredTypeFnsPresent = true
@@ -61,7 +61,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       const prefixRequiredTypeFns = <const> ['lt', 'gt', 'le', 'ge', 'abs']
       let allPrefixRequiredTypeFnsPresent = true
       for (const fn of prefixRequiredTypeFns) {
-        if (options.type?.[fn][IS_DEFAULT_FUN]) {
+        if (options.type?.[fn][symIsDefaultFun]) {
           allPrefixRequiredTypeFnsPresent = false
         }
       }
@@ -294,6 +294,10 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       return unit
     }
 
+    getComplexity() {
+      return _getComplexity(this.baseUnits)
+    }
+
     /**
      * Returns a new unit with the given value.
      * @param {number | string | custom} value
@@ -378,7 +382,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       if (!matchingUnit) {
         let matchingUnitsOfSystem: ParsedUnit<T>[] = []
         for (let unit of unitsOfSystem) {
-          if (this.equalQuantity(unit)) {
+          if (this.equalsQuantity(unit)) {
             matchingUnitsOfSystem.push(unit)
           }
         }
@@ -404,7 +408,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // 2. Search for a matching unit in the current units
       if (!matchingUnit) {
         for (let baseUnit of this.baseUnits) {
-          if (this.equalQuantity(baseUnit.unit.name)) {
+          if (this.equalsQuantity(baseUnit.unit.name)) {
             matchingUnit = new _Unit(baseUnit.unit.name)
             break
           }
@@ -414,7 +418,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // 3. Search for a matching dimension in all units
       if (!matchingUnit) {
         for (let baseUnit of Object.keys(unitStore.defs.units)) {
-          if (this.equalQuantity(baseUnit)) {
+          if (this.equalsQuantity(baseUnit)) {
             matchingUnit = new _Unit(baseUnit)
             break
           }
@@ -509,7 +513,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {Unit} other
      * @return {boolean} true if equal dimensions
      */
-    equalQuantity(other: Unit<T> | ParsedUnit<T> | string | T) {
+    equalsQuantity(other: Unit<T> | ParsedUnit<T> | string | T) {
       other = _convertParamToUnit(other)
       // All dimensions must be the same
       for (let dim of Object.keys({ ...this.dimension, ...other.dimension })) {
@@ -541,7 +545,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @return {boolean} true if both units are equal
      */
     equals(other: Unit<T>) {
-      if (!options.type.conv[IS_DEFAULT_FUN] && options.type.eq[IS_DEFAULT_FUN]) {
+      if (!options.type.conv[symIsDefaultFun] && options.type.eq[symIsDefaultFun]) {
         throw new Error(`When using custom types, equals requires a type.eq function`)
       }
       other = _convertParamToUnit(other)
@@ -550,7 +554,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
         return false
       }
       let { value1, value2 } = _comparePrepare(this, other, false)
-      return this.equalQuantity(other) && options.type.eq(value1, value2)
+      return this.equalsQuantity(other) && options.type.eq(value1, value2)
     }
 
     /**
@@ -559,7 +563,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @return {number} -1 if this unit is less than, 1 if this unit is greater than, and 0 if this unit is equal to the other unit.
      */
     compare(other: Unit<T> | string | T) {
-      if (!options.type.conv[IS_DEFAULT_FUN] && (options.type.gt[IS_DEFAULT_FUN] || options.type.lt[IS_DEFAULT_FUN])) {
+      if (!options.type.conv[symIsDefaultFun] && (options.type.gt[symIsDefaultFun] || options.type.lt[symIsDefaultFun])) {
         throw new Error(`When using custom types, compare requires a type.gt and a type.lt function`)
       }
       other = _convertParamToUnit(other)
@@ -586,7 +590,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @return {boolean} true if this unit is less than the other.
      */
     lessThan(other: Unit<T> | string | T) {
-      if (!options.type.conv[IS_DEFAULT_FUN] && options.type.lt[IS_DEFAULT_FUN]) {
+      if (!options.type.conv[symIsDefaultFun] && options.type.lt[symIsDefaultFun]) {
         throw new Error(`When using custom types, lessThan requires a type.lt function`)
       }
       other = _convertParamToUnit(other)
@@ -600,7 +604,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @return {boolean} true if this unit is less than or equal the other.
      */
     lessThanOrEqual(other: Unit<T> | string | T) {
-      if (!options.type.conv[IS_DEFAULT_FUN] && options.type.le[IS_DEFAULT_FUN]) {
+      if (!options.type.conv[symIsDefaultFun] && options.type.le[symIsDefaultFun]) {
         throw new Error(`When using custom types, lessThanOrEqual requires a type.le function`)
       }
       other = _convertParamToUnit(other)
@@ -614,7 +618,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @return {boolean} true if this unit is greater than the other.
      */
     greaterThan(other: Unit<T> | string | T) {
-      if (!options.type.conv[IS_DEFAULT_FUN] && options.type.gt[IS_DEFAULT_FUN]) {
+      if (!options.type.conv[symIsDefaultFun] && options.type.gt[symIsDefaultFun]) {
         throw new Error(`When using custom types, greaterThan requires a type.gt function`)
       }
       other = _convertParamToUnit(other)
@@ -628,7 +632,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @return {boolean} true if this unit is greater than or equal the other.
      */
     greaterThanOrEqual(other: Unit<T> | string | T) {
-      if (!options.type.conv[IS_DEFAULT_FUN] && options.type.ge[IS_DEFAULT_FUN]) {
+      if (!options.type.conv[symIsDefaultFun] && options.type.ge[symIsDefaultFun]) {
         throw new Error(`When using custom types, greaterThanOrEqual requires a type.ge function`)
       }
       other = _convertParamToUnit(other)
@@ -667,7 +671,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      */
     format(formatOptions?: Partial<FormatOptions<T>>, ...userArgs: any[]) {
       let simp = this.clone()
-
+      debugger
       // A bit of clarification:
       // options is the original options
       // userOpts is a user-supplied argument
@@ -686,37 +690,12 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
         // Determine if the simplified unit is simpler
 
-        let calcComplexity = (unitList: BaseUnit<T>[]) => {
-          // Number of total units, each adds one symbol
-          let comp = unitList.length
 
-          // Number of units in denominator and numerator
-          let nDen = unitList.filter(a => a.power < 1e-14).length
-          let nNum = unitList.length - nDen
-
-          // If there are no units in the numerator, then any units in the denominator will need a ^-1
-
-          // Number of units in the numerator containing powers !== 1, i.e. kg^2, adds two symbols
-          comp += unitList.filter(a => Math.abs(a.power - 1) > 1e-14).length * 2
-
-          // If there is at least one unit in the numerator and denominator, we will invert the denominator units' powers
-          let denPowerInvert = nDen > 0 && nNum > 0 ? -1 : 1
-
-          // Number of units in the denominator containing inverted? powers !== 1
-          comp += unitList.filter(a => a.power < 0 && Math.abs(a.power * denPowerInvert - 1) > 1e-14).length * 2
-
-          // At least one unit in numerator and denominator, adds one symbol: '/'
-          if (nNum > 0 && nDen > 0) {
-            comp += 1
-          }
-
-          return comp
-        }
 
         // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
 
         // Is the proposed unit list "simpler" than the existing one?
-        if (calcComplexity(simp2.baseUnits) <= calcComplexity(simp.baseUnits) - _opts.simplifyThreshold) {
+        if (simp2.getComplexity() <= simp.getComplexity() - _opts.simplifyThreshold) {
           simp = simp2
         }
       }
@@ -726,12 +705,12 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       }
 
       let str = ''
-      if (typeof simp.value === 'number' && options.type.format[IS_DEFAULT_FUN] && _opts.precision > 0) {
+      if (typeof simp.value === 'number' && _opts.formatter[symIsDefaultFun] && _opts.precision > 0) {
         // Use default formatter
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
-        // Use custom type's format method (which defaults to the toString(opts) method)
-        str += options.type.format(simp.value, ...userArgs)
+        // Use custom format method (which defaults to the toString(opts) method)
+        str += _opts.formatter(simp.value, ...userArgs)
       }
       const unitStr = _formatUnits(simp, _opts)
       if (unitStr.length > 0 && str.length > 0) {
@@ -779,6 +758,33 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     } else {
       return unitmath(otherOrValue, unit)
     }
+  }
+
+  function _getComplexity(unitList: BaseUnit<T>[]) {
+    // Number of total units, each adds one symbol
+    let comp = unitList.length
+
+    // Number of units in denominator and numerator
+    let unitsDen = unitList.filter(a => a.power < 1e-14)
+    let unitsNum = unitList.filter(a => a.power > 1e-14)
+
+    // If there are no units in the numerator, then any units in the denominator will need a ^-1
+
+    // Number of units in the numerator containing powers !== 1, i.e. kg^2, adds two symbols
+    comp += unitsNum.filter(a => Math.abs(a.power - 1) > 1e-14).length * 2
+
+    // If there is at least one unit in the numerator and denominator, we will invert the denominator units' powers
+    let denPowerInvert = unitsDen.length > 0 && unitsNum.length > 0 ? -1 : 1
+
+    // Number of units in the denominator containing inverted powers !== 1
+    comp += unitsDen.filter(a => a.power < 0 && Math.abs(a.power * denPowerInvert - 1) > 1e-14).length * 2
+
+    // At least one unit in numerator and denominator, adds one symbol: '/'
+    if (unitsDen.length > 0 && unitsNum.length > 0) {
+      comp += 1
+    }
+
+    return comp
   }
 
   /**
@@ -857,7 +863,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   }
 
   function _comparePrepare(unit1: Unit<T>, unit2: Unit<T>, requireMatchingDimensions: boolean) {
-    if (requireMatchingDimensions && !unit1.equalQuantity(unit2)) {
+    if (requireMatchingDimensions && !unit1.equalsQuantity(unit2)) {
       throw new Error(`Cannot compare units ${unit1} and ${unit2}; dimensions do not match`)
     }
     let value1, value2
@@ -886,7 +892,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1.equalQuantity(unit2)) {
+    if (!unit1.equalsQuantity(unit2)) {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
@@ -904,7 +910,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     if (unit1.value === null || unit1.value === undefined || unit2.value === null || unit2.value === undefined) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: both units must have values`)
     }
-    if (!unit1.equalQuantity(unit2)) {
+    if (!unit1.equalsQuantity(unit2)) {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
@@ -1021,7 +1027,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @returns {Unit[]} An array of units
      */
   function _split(unit: Unit<T>, units: string[]): Unit<T>[] {
-    if (!options.type.conv[IS_DEFAULT_FUN] && (options.type.round[IS_DEFAULT_FUN] || options.type.trunc[IS_DEFAULT_FUN])) {
+    if (!options.type.conv[symIsDefaultFun] && (options.type.round[symIsDefaultFun] || options.type.trunc[symIsDefaultFun])) {
       throw new Error(`When using custom types, split requires a type.round and a type.trunc function`)
     }
     // We use the non-null assertion operator (!) a few times below, because we're pretty sure unit.value is not null
@@ -1086,7 +1092,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   function _to(unit: Unit<T>, valuelessUnit: Unit<T>) {
     let result: Unit<T>
     const value = unit.value === null ? options.type.conv(1) : unit.value
-    if (!unit.equalQuantity(valuelessUnit)) {
+    if (!unit.equalsQuantity(valuelessUnit)) {
       throw new TypeError(`Cannot convert ${unit.toString()} to ${valuelessUnit}: dimensions do not match`)
     }
     if (valuelessUnit.value !== null) {
@@ -1137,8 +1143,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
         unit.value!, // We checked for null above
         options.type.pow(
           options.type.div(
-            options.type.conv(piece.unit.prefixSet[prefix]),
-            options.type.conv(piece.unit.prefixSet[piece.prefix])
+            options.type.conv(piece.unit.prefixGroup[prefix]),
+            options.type.conv(piece.unit.prefixGroup[piece.prefix])
           ),
           options.type.conv(piece.power)
         )
@@ -1181,7 +1187,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     let bestScore = calcScore(bestPrefix)
     // console.log(`The score was ${bestScore}`)
 
-    let prefixes = piece.unit.formatPrefixes ?? (formatOptions.formatPrefixDefault === 'all' ? Object.keys(piece.unit.prefixSet) : undefined)
+    let prefixes = piece.unit.formatPrefixes ?? (formatOptions.formatPrefixDefault === 'all' ? Object.keys(piece.unit.prefixGroup) : undefined)
 
     if (!prefixes) {
       // Unit does not have any prefixes for formatting
@@ -1454,6 +1460,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     return _convertParamToUnit(unit).toBaseUnits()
   }
 
+
   unitmath.exists = unitStore.exists
 
   // TODO: This is used only for testing, could there be another way rather than exposing it on the public namespace?
@@ -1480,13 +1487,12 @@ let defaults: TypeArithmetics<number> = {
   round: (a) => Math.round(a),
   trunc: (a) => Math.trunc(a),
   conv: (a: number | string) => typeof a === 'string' ? parseFloat(a) : a,
-  clone: (a) => a,
-  format: (a) => a.toString()
+  clone: (a) => a
 }
 
 // These are mostly to help warn the user if they forgot to override one or more of the default functions
 for (const key of Object.keys(defaults) as (keyof typeof defaults)[]) {
-  defaults[key][IS_DEFAULT_FUN] = true
+  defaults[key][symIsDefaultFun] = true
 }
 
 const defaultOptions: Options<number> = <const>{
@@ -1499,15 +1505,18 @@ const defaultOptions: Options<number> = <const>{
   simplify: 'auto',
   simplifyThreshold: 2,
   system: 'auto',
+  formatter: (a) => a.toString(),
   // subsystem: 'auto',
   definitions: {
     skipBuiltIns: false,
     units: {},
-    prefixSets: {},
+    prefixGroups: {},
     systems: {}
   },
   type: defaults
 }
+
+defaultOptions.formatter[symIsDefaultFun] = true
 
 const firstUnit = _config<number>(defaultOptions)
 

@@ -15,7 +15,6 @@ let unitDec: UnitFactory<Decimal>
 let typeNoPow: Partial<TypeArithmetics<Decimal>>
 let typeNoGt: Partial<TypeArithmetics<Decimal>>
 let typeNoComp: Partial<TypeArithmetics<Decimal>>
-let typeFunnyFormat: Partial<TypeArithmetics<Decimal>>
 let typeNoRound: Partial<TypeArithmetics<Decimal>>
 
 beforeAll(() => {
@@ -82,7 +81,6 @@ beforeAll(() => {
   delete typeNoComp.gt
   delete typeNoComp.ge
 
-  typeFunnyFormat = { format: (a, b, c) => b + a.toString().split('').reverse().join(c) }
   unitDec = unit.config({ type: typeComplete })
 
   // These will be tested below
@@ -126,13 +124,19 @@ describe('unitmath', () => {
         definitions: {
           skipBuiltIns: false,
           units: {},
-          prefixSets: {},
+          prefixGroups: {},
           systems: {}
         },
-        type: 42
+        type: 42,
+        formatter: 42,
       }
       let actualOptions = unit.config()
-      expect({ ...actualOptions, type: 42 }).toEqual(optionsToCheckEquality)
+      // Ignore type and format
+      expect({
+        ...actualOptions,
+        type: 42,
+        formatter: 42
+      }).toEqual(optionsToCheckEquality)
       // for (let key in optionsToCheckEquality) {
       //   expect(optionsToCheckEquality[key]).toEqual(actualOptions[key])
       // }
@@ -200,7 +204,7 @@ describe('unitmath', () => {
 
       test('should apply prefixes and offset to custom units', () => {
         const newUnit = configCustomUnits({
-          wiggle: { value: '4 rad^2/s', offset: 1, prefixSet: 'LONG', formatPrefixes: ['', 'kilo'] }
+          wiggle: { value: '4 rad^2/s', offset: 1, prefixGroup: 'LONG', formatPrefixes: ['', 'kilo'] }
         })
         let unit1 = newUnit('8000 rad^2/s')
         expect(unit1.toString()).toEqual('1.999 kilowiggle')
@@ -264,7 +268,7 @@ describe('unitmath', () => {
         expect(() => configCustomUnits({
           myUnit: {
             value: '45 s',
-            prefixSet: 'MADE_UP_PREFIXES'
+            prefixGroup: 'MADE_UP_PREFIXES'
           }
         })).toThrow(/Unknown prefixes 'MADE_UP_PREFIXES' for unit 'myUnit'/)
       })
@@ -272,7 +276,7 @@ describe('unitmath', () => {
       test('should create new prefixes', () => {
         // TODO: Mutating individual units in the definitions can have bad side effects!
         let meter = { ...unit.definitions().units.meter as UnitProps }
-        meter.prefixSet = 'FUNNY'
+        meter.prefixGroup = 'FUNNY'
         meter.formatPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
         let newUnit = unit.config({
           prefixMin: 1,
@@ -281,7 +285,7 @@ describe('unitmath', () => {
             units: {
               meter
             },
-            prefixSets: {
+            prefixGroups: {
               FUNNY: { '': 1, 'A': 2, 'B': 4, 'C': 8, 'D': 16, 'E': 32, 'F': 64, 'G': 128 }
             }
           }
@@ -306,7 +310,7 @@ describe('unitmath', () => {
               foo: {
                 quantity: 'ESSENCE_OF_FOO',
                 value: 1,
-                prefixSet: 'LONG'
+                prefixGroup: 'LONG'
               },
               fib: { value: '5 foo/hr' },
               flab: { value: '1 foo^3' }
@@ -342,16 +346,16 @@ describe('unitmath', () => {
               foo: {
                 quantity: 'ESSENCE_OF_FOO',
                 value: 1,
-                prefixSet: 'PREFOO',
+                prefixGroup: 'PREFOO',
                 formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF']
               },
-              fib: { value: '5 foo', prefixSet: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] },
-              flab: { value: '1 foo^3', prefixSet: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] }
+              fib: { value: '5 foo', prefixGroup: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] },
+              flab: { value: '1 foo^3', prefixGroup: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] }
             },
             // systems: {
             //   fooSys: ['foo', 'flab']
             // },
-            prefixSets: {
+            prefixGroups: {
               PREFOO: {
                 'fff': 0.008,
                 'ff': 0.04,
@@ -375,7 +379,7 @@ describe('unitmath', () => {
               widget: {
                 quantity: 'THINGS_YOU_CAN_MAKE',
                 value: 1,
-                prefixSet: 'LONG',
+                prefixGroup: 'LONG',
                 basePrefix: 'kilo'
               },
             },
@@ -408,9 +412,9 @@ describe('unitmath', () => {
 
       expect(defs.units.inch.value).toEqual('0.0254 meter')
       expect(defs.units.foot.aliases).toEqual(['ft', 'feet'])
-      expect(defs.units.kelvin.prefixSet).toEqual('LONG')
-      expect(defs.prefixSets.LONG.giga).toEqual(1e9)
-      expect(defs.prefixSets.SHORT_LONG.giga).toEqual(1e9)
+      expect(defs.units.kelvin.prefixGroup).toEqual('LONG')
+      expect(defs.prefixGroups.LONG.giga).toEqual(1e9)
+      expect(defs.prefixGroups.SHORT_LONG.giga).toEqual(1e9)
 
 
       // TODO: Add custom unit below so that the units get reprocessed (in case we cache unit definitions in the future)
@@ -418,9 +422,9 @@ describe('unitmath', () => {
 
       expect(defs2.units.inch.value).toEqual('0.0254 meter')
       expect(defs2.units.foot.aliases).toEqual(['ft', 'feet'])
-      expect(defs2.units.kelvin.prefixSet).toEqual('LONG')
-      expect(defs2.prefixSets.LONG.giga).toEqual(1e9)
-      expect(defs2.prefixSets.SHORT_LONG.giga).toEqual(1e9)
+      expect(defs2.units.kelvin.prefixGroup).toEqual('LONG')
+      expect(defs2.prefixGroups.LONG.giga).toEqual(1e9)
+      expect(defs2.prefixGroups.SHORT_LONG.giga).toEqual(1e9)
 
     })
   })
@@ -511,12 +515,12 @@ describe('unitmath', () => {
     })
   })
 
-  describe('equalQuantity', () => {
+  describe('equalsQuantity', () => {
     test('should test whether two units are of the same quantity', () => {
-      expect(unit(5, 'cm').equalQuantity(unit(10, 'm'))).toBeTruthy()
-      expect(unit(5, 'cm').equalQuantity(unit(10, 'kg'))).toBeFalsy()
-      expect(unit(5, 'N').equalQuantity(unit(10, 'kg m / s ^ 2'))).toBeTruthy()
-      expect(unit(8.314, 'J / mol K').equalQuantity(unit(0.02366, 'ft^3 psi / mol degF'))).toBeTruthy()
+      expect(unit(5, 'cm').equalsQuantity(unit(10, 'm'))).toBeTruthy()
+      expect(unit(5, 'cm').equalsQuantity(unit(10, 'kg'))).toBeFalsy()
+      expect(unit(5, 'N').equalsQuantity(unit(10, 'kg m / s ^ 2'))).toBeTruthy()
+      expect(unit(8.314, 'J / mol K').equalsQuantity(unit(0.02366, 'ft^3 psi / mol degF'))).toBeTruthy()
     })
   })
 
@@ -593,14 +597,14 @@ describe('unitmath', () => {
       units.sort((a, b) => a.compare(b))
       expect(
         units.map(u => u.toString())).toEqual(
-        [
-          '-Infinity m', '-Infinity m',
-          '1 in', '10 in',
-          '1 ft', '10 ft',
-          'Infinity m', 'Infinity m',
-          'NaN m', 'NaN m'
-        ]
-      )
+          [
+            '-Infinity m', '-Infinity m',
+            '1 in', '10 in',
+            '1 ft', '10 ft',
+            'Infinity m', 'Infinity m',
+            'NaN m', 'NaN m'
+          ]
+        )
     })
   })
 
@@ -895,6 +899,7 @@ describe('unitmath', () => {
       expect(() => { u1.to('kg') }).toThrow(/dimensions do not match/)
       const u2 = unit(5000, 'N s')
       expect(() => { u2.to('kg^5 / s') }).toThrow(/dimensions do not match/)
+
     })
 
     test('should throw an error when converting to a unit having a value', () => {
@@ -1092,6 +1097,18 @@ describe('unitmath', () => {
     })
   })
 
+  describe('getComplexity', () => {
+    test('should get the complexity of a unit', () => {
+      expect(unit('10 N m').getComplexity()).toEqual(2)
+      expect(unit('10 J / m').getComplexity()).toEqual(3)
+      expect(unit('10 m^3 Pa').getComplexity()).toEqual(4)
+      expect(unit('10 s^-1').getComplexity()).toEqual(3)
+      expect(unit('10 m^-2 s^-1').getComplexity()).toEqual(6)
+      expect(unit('10 C/s').getComplexity()).toEqual(3)
+      expect(unit('8 kg m / s^2').getComplexity()).toEqual(6)
+    })
+  })
+
   describe('simplify', () => {
     test('should not simplify units fixed by the to() method', () => {
       const unit1 = unit(10, 'kg m/s^2').to()
@@ -1193,6 +1210,10 @@ describe('unitmath', () => {
       expect(newUnit('10 N m').toString()).toEqual('10 J')
       expect(newUnit('10 J / m').toString()).toEqual('10 N')
       expect(newUnit('10 m^3 Pa').toString()).toEqual('10 J')
+
+      expect(unit('8 kg m / s^2').format({ simplifyThreshold: 5 })).toEqual('8 N')
+      expect(unit('8 kg m / s^2').format({ simplifyThreshold: 6 })).toEqual('8 kg m / s^2')
+
     })
   })
 
@@ -1201,6 +1222,7 @@ describe('unitmath', () => {
       expect(unit.config({ precision: 3 })(2 / 3, 'm').toString()).toEqual('0.667 m')
       expect(unit.config({ precision: 1 })(2 / 3, 'm').toString()).toEqual('0.7 m')
       expect(unit.config({ precision: 10 })(2 / 3, 'm').toString()).toEqual('0.6666666667 m')
+      expect(unit.config({ precision: 0 })(2 / 3, 'm').toString()).toEqual('0.6666666666666666 m')
     })
   })
 
@@ -1364,8 +1386,12 @@ describe('unitmath', () => {
       expect(unit1.baseUnits[0].power).toEqual(1)
     })
 
+    test('should ignore (, ), and *', () => {
+      expect(unit('8.314 J / (mol * K)').toString()).toEqual('8.314 J / mol K')
+    })
+
     test('should throw error when parsing expressions with invalid characters', () => {
-      expect(() => { unit('8.314 J / (mol * K)') }).toThrow(/Unexpected "\("/)
+      // expect(() => { unit('8.314 J / (mol * K)') }).toThrow(/Unexpected "\("/)
       expect(() => { unit('8.314 J / mol / K') }).toThrow(/Unexpected additional "\/"/)
     })
 
@@ -1389,7 +1415,6 @@ describe('unitmath', () => {
       expect(() => { unit('meter.') }).toThrow(/Unexpected "\."/)
       expect(() => { unit('meter/') }).toThrow(/Trailing characters/)
       expect(() => { unit('/meter') }).toThrow(/Unexpected "\/"/)
-      expect(() => { unit('1 */ s') }).toThrow(/Unexpected "\/"/)
       expect(() => { unit('45 kg 34 m') }).toThrow(/Unexpected "3"/)
       expect(() => unit('10 m^')).toThrow(/must be followed by a floating/)
       expect(() => unit('10 m+')).toThrow(/Unexpected "\+"/)
@@ -1958,10 +1983,17 @@ describe('unitmath', () => {
         expect(unitDec('2000 ohm').toString()).toEqual('2 kohm')
       })
 
-      test('should use custom formatter', () => {
-        let unitFunny = unit.config({ type: typeFunnyFormat })
-        expect(unitFunny('3.14159 rad').toString({}, '$', '_')).toEqual('$9_5_1_4_1_._3 rad')
-      })
+
+    })
+  })
+
+  describe('custom formatter', () => {
+    test('should use custom formatter', () => {
+      let funnyFormatFunction = (a: number, b: string, c: string) => b + a.toString().split('').reverse().join(c)
+      let unitFunny = unit.config({ formatter: funnyFormatFunction })
+      expect(unitFunny('3.14159 rad').toString({}, '$', '_')).toEqual('$9_5_1_4_1_._3 rad')
+
+      expect(unit('3.14159 rad').toString({ formatter: funnyFormatFunction }, '$', '_')).toEqual('$9_5_1_4_1_._3 rad')
     })
   })
 
