@@ -4,13 +4,35 @@ UnitMath is a JavaScript library for unit conversion and arithmetic.
 [![Build Status](https://travis-ci.org/ericman314/UnitMath.svg?branch=master)](https://travis-ci.org/ericman314/UnitMath)
 [![codecov](https://codecov.io/gh/ericman314/UnitMath/branch/master/graph/badge.svg)](https://codecov.io/gh/ericman314/UnitMath)
 
+<!-- toc -->
+
+- [Install](#install)
+- [Getting Started](#getting-started)
+- [Creating Units](#creating-units)
+- [Unit Conversion](#unit-conversion)
+- [Arithmetic](#arithmetic)
+- [Formatting](#formatting)
+- [Configuring](#configuring)
+- [Extending UnitMath](#extending-unitmath)
+  * [User-Defined Units](#user-defined-units)
+  * [Querying current unit definitions](#querying-current-unit-definitions)
+  * [Custom Types](#custom-types)
+- [API Reference](#api-reference)
+  * [Constructor](#constructor)
+  * [Member Functions](#member-functions)
+  * [Static Functions](#static-functions)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+  * [Contributors](#contributors)
+- [License](#license)
+
+<!-- tocstop -->
+
 ## Install
 
 ```
 npm install unitmath
 ```
-
-*UnitMath is still in the early stages of development. The following API may be incomplete, or refer to features that are not yet implemented.*
 
 ## Getting Started
 
@@ -124,7 +146,15 @@ The `format` and `toString` methods can accept a configuration object. The follo
 
 - `simplify` -- *Default:* `'auto'`. Specifies if UnitMath should attempt to simplify the units before formatting as a string. Possible values are `'auto'`, `'always'`, or `'never'`. If set to `'auto'` or `'always'`, then `u.toString()` becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. When `'auto'` is used, simplification is skipped if the unit is valueless or was constructed using the `to()` method.
 
-- `simplifyThreshold` -- *Default:* `2`. A setting that affects whether the `format` method will output the original unit or a simplified version. The unit will be simplified only if the complexity is reduced by an amount equal to or greater than the `simplifyThreshold`. The complexity of a unit is equal to the number of symbols that are required to write the unit. A lower value of `simplifyThreshold` results in more units being simplified, while a higher value results in fewer units being simplified. 
+  *Note: You can also use the `.to()` method to prevent UnitMath from simplifying a unit:*
+
+  ```js
+  unit('1.5 kg m / s^2').format() // 1.5 N
+  unit('1.5 kg m / s^2').to().format() // 1.5 kg m / s^2
+  unit('1.5 N').to('kg m / s^2').format() // 1.5 kg m / s^2
+  ```
+
+- `simplifyThreshold` -- *Default:* `2`. A setting that affects whether the `format` method will output the original unit or a simplified version. The unit will be simplified only if the complexity is reduced by an amount equal to or greater than the `simplifyThreshold`. The complexity of a unit is equal to the number of symbols that are required to output the unit. A lower value of `simplifyThreshold` results in more units being simplified, while a higher value results in fewer units being simplified. 
 
   ```js
   unit('8 kg m / s^2').format({ simplifyThreshold: 5 }) // 8 N
@@ -136,8 +166,8 @@ The `format` and `toString` methods can accept a configuration object. The follo
   ```js
   unit = unit.config({ system: 'auto' })
 
-  unit('150 lbf').div('10 in^2').toString()  // "15 psi"
-  unit('400 N').div('10 cm^2').toString()  // "400 kPa"
+  unit('150 lbf').div('10 in^2').toString()  // 15 psi
+  unit('400 N').div('10 cm^2').toString()  // 400 kPa
   ```
 
   Specifying a unit system other than `'auto'` will force UnitMath to use the specified system. Use the `config` function to apply the system everywhere, or use the `format` function to apply to a single statement:
@@ -147,8 +177,8 @@ The `format` and `toString` methods can accept a configuration object. The follo
 
   let a = unit('5 m').div('2 s')
 
-  console.log(a.format()) // 8.202099737532809 ft / s
-  console.log(a.format({ system: 'si'})) // 2.5 m / s
+  a.format() // 8.202099737532809 ft / s
+  a.format({ system: 'si'}) // 2.5 m / s
 
   ```
 
@@ -175,6 +205,7 @@ The `format` and `toString` methods can accept a configuration object. The follo
   })
   unitFunny('3.14159 rad').toString({}, '$', '_') // '$9_5_1_4_1_._3 rad'
   ```
+
 
   
 ## Configuring
@@ -472,8 +503,7 @@ const unit = require('unitmath').config({
     ge: (a, b) => a.gte(b),
     abs: (a) => a.abs(),
     round: (a) => a.round(),
-    trunc: (a) => Decimal.trunc(a),
-    format: a => a.toString()
+    trunc: (a) => Decimal.trunc(a)
   }
 })
 
@@ -499,7 +529,6 @@ Function | Description | Required?
 `eq: (a: T, b: T) => boolean` | Compare two custom types for equality. | For the `equals` function
 `round: (a: T) => T` | Round a custom type to the nearest integer. | For the `split` function
 `trunc: (a: T) => T` | Truncate a custom type to the nearest integer. | For the `split` function
-`format: (a: T) => string` | Format a custom type for display. | Optional
 
 
 The `add`, `sub`, `mul`, `div`, and `pow` functions replace `+`, `-`, `*`, `/`, and `Math.pow`, respectively. The `clone` function should return a clone of your custom type (same value, different object). 
@@ -525,26 +554,13 @@ unit(Fraction(1, 2), 'kg') // Supply the value explicitly
 
 The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always required. Omitting any of these will cause the `config` method to throw an error. The other functions are conditionally required, and you will receive an error if you attempt something that depends on a function you haven't provided.
 
-### Custom Formatter ###
-
-UnitMath will use your custom type's `toString` method when formatting a unit. You can use a different formatter by specifying the `type.format` function. This works even if you are not using custom types. Any arguments you pass to the unit's `format` or `toString` method will also be passed to your custom `format` function:
-
-```js
-let unitFunny = require('../index.js').config({
-  type: {
-    format: (a, b, c) => b + a.toString().split('').reverse().join(c)
-  }
-})
-
-unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
-```
-
 ## API Reference ##
 
+*In the function signatures below, the `T` type is the custom type you have provided, or `number` if you have not provided a custom type.*
 ### Constructor ###
 
-  `unit(value: number, unitString: string) : unit`  
-  `unit(value: number) : unit`  
+- `unit(value: T, unitString: string) : unit`  
+  `unit(value: T) : unit`  
   `unit(valueAndUnitString: string) : unit`  
   `unit() : unit`  
 
@@ -565,9 +581,9 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
   [value][numerator][/denominator]
 
   numerator, denominator:
-  unitPiece [unitPiece ...]
+  atomicUnit [atomicUnit ...]
 
-  unitPiece:
+  atomicUnit:
   [prefix]unit[^power]
 
   value, power:
@@ -577,314 +593,333 @@ unitFunny('3.14159 rad').toString('$', '_') // '$9_5_1_4_1_._3 rad'
 
 ### Member Functions ###
 
-`add(other: unit | string | T) : unit`
+- `add(other: unit | string | T) : unit`
 
-Adds another unit to this unit. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
-  
-```js
-let a = unit('20 kW')
-let b = unit('300 W')
-let sum = a.add(b) // 20.3 kW
-```
+  Adds another unit to this unit. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
+    
+  ```js
+  let a = unit('20 kW')
+  let b = unit('300 W')
+  let sum = a.add(b) // 20.3 kW
+  ```
 
-`sub(other: unit | string | T) : unit`
+- `sub(other: unit | string | T) : unit`
 
-Subtract another unit from this unit. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
+  Subtract another unit from this unit. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
 
-```js
-let a = unit('4 ft')
-let b = unit('1 yd')
-let difference = a.sub(b) // 1 ft
-```
+  ```js
+  let a = unit('4 ft')
+  let b = unit('1 yd')
+  let difference = a.sub(b) // 1 ft
+  ```
 
-`mul(other: unit | string | T) : unit` 
+- `mul(other: unit | string | T) : unit` 
 
-Multiplies this unit by another unit. If a string or number is supplied as an argument, it is converted to a unit.
+  Multiplies this unit by another unit. If a string or number is supplied as an argument, it is converted to a unit.
 
-```js
-let a = unit('8 m')
-let b = unit('200 W')
-let product = a.mul(b) // 16 kJ
-```
+  ```js
+  let a = unit('8 m')
+  let b = unit('200 W')
+  let product = a.mul(b) // 16 kJ
+  ```
 
-`div(other: unit | string | T) : unit`
+- `div(other: unit | string | T) : unit`
 
-Divides this unit by another unit. If a string or number is supplied as an argument, it is converted to a unit.
+  Divides this unit by another unit. If a string or number is supplied as an argument, it is converted to a unit.
 
-```js
-let a = unit('64 kJ')
-let b = unit('16 s')
-let quotient = a.mul(b) // 4 kW
-```
+  ```js
+  let a = unit('64 kJ')
+  let b = unit('16 s')
+  let quotient = a.mul(b) // 4 kW
+  ```
 
+- `pow(p: number)`
 
-`pow(p: number)`
+  Raises this unit to the power `p` and returns a new unit.
 
-Raises this unit to the power `p` and returns a new unit.
+  ```js
+  let result = unit('10 m').pow(3) // 1000 m^3
+  ```
 
-```js
-let result = unit('10 m').pow(3) // 1000 m^3
-```
+- `sqrt()`
 
-`sqrt()`
+  Returns the square root of this unit.
 
-Returns the square root of this unit.
+  ```js
+  unit('1 hectare').sqrt() // 100 m
+  ```
 
-```js
-unit('1 hectare').sqrt() // 100 m
-```
+- `abs()`
 
-`abs()`
+  Returns the absolute value of this unit. If this unit has an offset, such as `degC`, this is applied before taking the absolute value.
 
-Returns the absolute value of this unit. If this unit has an offset, such as `degC`, this is applied before taking the absolute value.
+  ```js
+  unit('-5 m / s').abs() // 5 m / s
+  unit('300 degC').abs() // -246.3 degC
+  ```
 
-```js
-unit('-5 m / s').abs() // 5 m / s
-unit('300 degC').abs() // -246.3 degC
-```
+- `clone()`
 
-`clone()`
+  Clones this unit.
 
-Clones this unit.
+  ```js
+  let unit = require('unitmath')
 
-```js
-let unit = require('unitmath')
+  let a = unit('40 m/s') // 40 m / s
+  let b = a.clone() // 40 m / s
+  ```
 
-let a = unit('40 m/s') // 40 m / s
-let b = a.clone() // 40 m / s
-```
+- `to(target: unit | string)`  
 
-`to(target: unit | string)`  
+  Converts this unit to the specified target unit or string. The returned unit will be "fixed", so it will not be auto-simplified or auto-prefixed in `format()`. 
 
-Converts this unit to the specified target unit or string. The returned unit will be "fixed", so it will not be auto-simplified or auto-prefixed in `format()`. 
+  ```js
+  let r = unit('10 kg / m^2 s^3 A^2')
+  r.format() // 10 ohm
+  r.to('kohm').format() // 0.01 kohm
+  ```
 
-```js
-let r = unit('10 kg / m^2 s^3 A^2')
-r.format() // 10 ohm
-r.to('kohm').format() // 0.01 kohm
-```
+- `to()`
 
-`to()`
+  Fixes this unit and prevents it from being automatically simplified.
 
-Fixes this unit and prevents it from being automatically simplified.
+  ```js
+  let r = unit('10 kg / m^2 s^3 A^2')
+  r.format() // 10 ohm
+  r.to().format() // 10 kg m^2 / s^3 A^2
+  ```
 
-```js
-let r = unit('10 kg / m^2 s^3 A^2')
-r.format() // 10 ohm
-r.to().format() // 10 kg m^2 / s^3 A^2
-```
+- `toBaseUnits()`
 
-`toBaseUnits()`
+  Returns a new unit in the base representation.
 
-Returns a new unit in the base representation.
+  ```js
+  unit('10 ft/s').toBaseUnits() // 3.048 m / s
+  ```
 
-```js
-unit('10 ft/s').toBaseUnits() // 3.048 m / s
-```
+- `getValue()`
 
-`getValue()`
+  Returns the value of this unit, or `null` if the unit is valueless.
 
-Returns the value of this unit, or `null` if the unit is valueless.
+  ```js
+  unit('70 mile/hour').getValue() // 70
+  unit('km / hour').getValue() // null
+  ```
 
-```js
-unit('70 mile/hour').getValue() // 70
-unit('km / hour').getValue() // null
-```
+- `setValue(x: number | string | custom)`
 
+  Returns a copy of this unit but with its value replaced with the given value. Useful if you would like to perform your own operations on a unit's value. If supplied with no arguments, or `null`, will remove the value from the unit.
 
-`setValue(x: number | string | custom)`
+  ```js
+  unit('10 m').setValue(20) // 20 m
+  unit('m').setValue(20) // 20 m
+  unit('10 ft').setValue(20) // 20 ft
+  unit('10 ft').setValue() // ft
+  ```
 
-Returns a copy of this unit but with its value replaced with the given value. Useful if you would like to perform your own operations on a unit's value. If supplied with no arguments, or `null`, will remove the value from the unit.
+- `getNormalizedValue()`
 
-```js
-unit('10 m').setValue(20) // 20 m
-unit('m').setValue(20) // 20 m
-unit('10 ft').setValue(20) // 20 ft
-unit('10 ft').setValue() // ft
-```
+  Returns the value of this unit if it were to be converted to SI base units (or whatever base units that are defined). Returns `null` if the unit is valueless.
 
-`getNormalizedValue()`
+  ```js
+  unit('10 ft/s').getNormalizedValue() // 3.048
+  ```
 
-Returns the value of this unit if it were to be converted to SI base units (or whatever base units that are defined). Returns `null` if the unit is valueless.
+- `setNormalizedValue()`
 
-```js
-unit('10 ft/s').getNormalizedValue() // 3.048
-```
+  Returns a copy of this unit but with its value replaced with the given normalized value.
 
-`setNormalizedValue()`
+  ```js
+  unit('ft / s').setNormalizedValue(3.048) // 10 ft / s
+  ```
 
-Returns a copy of this unit but with its value replaced with the given normalized value.
+- `simplify()`
 
-```js
-unit('ft / s').setNormalizedValue(3.048) // 10 ft / s
-```
+  Attempts to simplify this unit, and returns the simplified unit (or a clone of the original if unsuccessful). `simplify()` is called when a unit is being formatted as a string whenever the config option `simplify` is `'auto'` or `'always'`.
 
-`simplify()`
+  ```js
+  unit('10 N m').simplify() // 10 J
+  ```
 
-Attempts to simplify this unit, and returns the simplified unit (or a clone of the original if unsuccessful). `simplify()` is called when a unit is being formatted as a string whenever the config option `simplify` is `'auto'` or `'always'`.
+- `split(Array(string | unit))`
 
-```js
-unit('10 N m').simplify() // 10 J
-```
+  Returns an array of units that result from splitting this unit into the given units. The sum of the resulting units is equal to this unit, and each of the returned units is the result of truncating this unit to an integer, and then passing the remainder to the next unit, until the final unit, which takes up all the remainder.
 
-`split(Array(string | unit))`
+  ```js
+  unit('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]) // [ 51 deg, 29 arcmin, 36.24 arcsec ]
+  ```
 
-Returns an array of units that result from splitting this unit into the given units. The sum of the resulting units is equal to this unit, and each of the returned units is the result of truncating this unit to an integer, and then passing the remainder to the next unit, until the final unit, which takes up all the remainder.
+- `getUnits()`
 
-```js
-unit('51.4934 deg').split([ 'deg', 'arcmin', 'arcsec' ]) // [ 51 deg, 29 arcmin, 36.24 arcsec ]
-```
+  Returns a clone of this unit with the value removed. Equivalent to `unit.setValue(null)`.
 
-`getUnits()`
+  ```js
+  unit('8.314 J / mol K').getUnits() // J / mol K
+  ```
 
-Returns a clone of this unit with the value removed. Equivalent to `unit.setValue(null)`.
+- `isCompound()`
 
-```js
-unit('8.314 J / mol K').getUnits() // J / mol K
-```
+  Returns true if this unit's unit list contains two or more units, or one unit with a power not equal to 1.
 
-`isCompound()`
+  ```js
+  unit('34 kg').isCompound() // false
+  unit('34 kg/s').isCompound() // true
+  unit('34 kg^2').isCompound() // true
+  unit('34 N').isCompound() // false
+  unit('34 kg m / s^2').isCompound() // true
+  ```
 
-Returns true if this unit's unit list contains two or more units, or one unit with a power not equal to 1.
+- `equalsQuantity(other: unit | string)`
 
-```js
-unit('34 kg').isCompound() // false
-unit('34 kg/s').isCompound() // true
-unit('34 kg^2').isCompound() // true
-unit('34 N').isCompound() // false
-unit('34 kg m / s^2').isCompound() // true
-```
+  Returns true if this unit and another unit have equal quantities or dimensions.
 
-`equalsQuantity(other: unit | string)`
+  ```js
+  unit('5 m/s^2').equalsQuantity('4 ft/s^2') // true
+  ```
 
-Returns true if this unit and another unit have equal quantities or dimensions.
+- `equals(other: unit | string)`
 
-```js
-unit('5 m/s^2').equalsQuantity('4 ft/s^2') // true
-```
+  Returns true if the two units represent the same values.
 
-`equals(other: unit | string)`
+  ```js
+  unit('3 ft').equals('1 yard') // true
+  ```
 
-Returns true if the two units represent the same values.
+- `compare(other: unit | string)`
 
-```js
-unit('3 ft').equals('1 yard') // true
-```
+  Returns a value indicating whether this unit is less than (-1), greater than (1), or equal to (0), another unit.
 
-`compare(other: unit | string)`
+  ```js
+  unit('30 min').compare('1 hour') // -1
+  unit('60 min').compare('1 hour') // 0
+  unit('90 min').compare('1 hour') // 1
+  ```
 
-Returns a value indicating whether this unit is less than (-1), greater than (1), or equal to (0), another unit.
+- `lessThan(other: unit | string)`
 
-```js
-unit('30 min').compare('1 hour') // -1
-unit('60 min').compare('1 hour') // 0
-unit('90 min').compare('1 hour') // 1
-```
+  Compares this and another unit and returns true if this unit is less than the other.
 
-`lessThan(other: unit | string)`
+  ```js
+  unit('80 cm').lessThan('1 m') // true
+  unit('100 cm').lessThan('1 m') // false
+  unit('120 cm').lessThan('1 m') // false
+  ```
 
-Compares this and another unit and returns true if this unit is less than the other.
+- `lessThanOrEqual(other: unit | string)`
 
-`lessThanOrEqual(other: unit | string)`
+  Compares this and another unit and returns true if this unit is less than or equal to the other.
 
-Compares this and another unit and returns true if this unit is less than or equal to the other.
+  ```js
+  unit('80 cm').lessThanOrEqual('1 m') // true
+  unit('100 cm').lessThanOrEqual('1 m') // true
+  unit('120 cm').lessThanOrEqual('1 m') // false
+  ```
 
-`greaterThan(other: unit | string)`
+- `greaterThan(other: unit | string)`
 
-Compares this and another unit and returns true if this unit is greater than the other.
+  Compares this and another unit and returns true if this unit is greater than the other.
 
-`greaterThanOrEqual(other: unit | string)`
+  ```js
+  unit('80 cm').greaterThan('1 m') // false
+  unit('100 cm').greaterThan('1 m') // false
+  unit('120 cm').greaterThan('1 m') // true
+  ```
 
-Compares this and another unit and returns true if this unit is greater than or equal to the other.
+- `greaterThanOrEqual(other: unit | string)`
 
-`format(options)`  
+  Compares this and another unit and returns true if this unit is greater than or equal to the other.
 
-Formats this unit as a string. Formatting options can be supplied which will override the configured options. See [Formatting](#formatting) for a list of all options and their effects.
+  ```js
+  unit('80 cm').greaterThanOrEqual('1 m') // false
+  unit('100 cm').greaterThanOrEqual('1 m') // true
+  unit('120 cm').greaterThanOrEqual('1 m') // true
+  ```
 
-If the `prefix` or `simplify` options are set to `'auto'` or `'always`', the `toString` and `format` methods will try to simplify the unit before outputting. This can be prevented by calling `.to()` on a unit with no parameters, which will return a new unit that will *not* be simplified automatically.
+- `format(options)`  
 
-`toString(options)`
+  Formats this unit as a string. Formatting options can be supplied which will override the configured options. See [Formatting](#formatting) for a list of all options and their effects.
+
+- `toString(options)`
 
   Alias for `format(options)`
 
 ### Static Functions ###
 
-`add(a: unit | string | T, b: unit | string | T) : unit`
+- `add(a: unit | string | T, b: unit | string | T) : unit`
 
-Adds two units. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
-
-```js
-let sum = unit.add('20 kW', '300 W') // 20.3 kW
-```
-
-`sub(a: unit | string | T, b: unit | string | T) : unit`
-
-Subtract two units. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
-
-```js
-let difference = unit.sub('4 ft', '1 yd') // 1 ft
-```
-
-`mul(a: unit | string | T, b: unit | string | T) : unit`
-
-Multiplies two units. If a string or number is supplied as an argument, it is converted to a unit.
-
-```js
-let product = unit.mul('8 m', '200 W') // 4 kW
-```
-
-`div(a: unit | string | T, b: unit | string | T) : unit`
-
-Divides two units. If a string or number is supplied as an argument, it is converted to a unit.
-
-```js
-let quotient = unit.div('64 kJ', '16 s') // 4 kW
-```
-
-`pow(a: unit | string | T, p: number) : unit`
-
-Raises a unit to the power `p` and returns a new unit.
-
-```js
-let result = unit.pow('10 m', 3) // 1000 m^3
-```
-
-`sqrt(a: unit | string | T) : unit`
-
-Returns the square root of a unit.
-
-```js
-unit.sqrt('1 hectare') // 100 m
-```
-
-`abs(a: unit | string | T) : unit`
-
-Returns the absolute value of a unit. If the unit has an offset, such as `degC`, this is applied before taking the absolute value.
-
-```js
-unit.abs('-5 m / s') // 5 m / s
-unit.abs('300 degC') // -246.3 degC
-```
-
-`to(a: unit | string | number, b: unit | string)`
-
-Converts a unit to the specified target unit or string. The returned unit will be "fixed", so it will not be auto-simplified or auto-prefixed in `format()`. 
-
-```js
-unit.to('10 kg / m^2 s^3 A^2', 'kohm') // 0.01 kohm
-```
-
-
-`config()`
-
-  Returns the current configuration.
+  Adds two units. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
 
   ```js
-  const unit = require('unitmath')
-  unit.config()
+  let sum = unit.add('20 kW', '300 W') // 20.3 kW
   ```
 
-`config(options:object)`
+- `sub(a: unit | string | T, b: unit | string | T) : unit`
+
+  Subtract two units. If a string or number is supplied as an argument, it is converted to a unit. Both units must have values and have matching dimensions.
+
+  ```js
+  let difference = unit.sub('4 ft', '1 yd') // 1 ft
+  ```
+
+- `mul(a: unit | string | T, b: unit | string | T) : unit`
+
+  Multiplies two units. If a string or number is supplied as an argument, it is converted to a unit.
+
+  ```js
+  let product = unit.mul('8 m', '200 W') // 4 kW
+  ```
+
+- `div(a: unit | string | T, b: unit | string | T) : unit`
+
+  Divides two units. If a string or number is supplied as an argument, it is converted to a unit.
+
+  ```js
+  let quotient = unit.div('64 kJ', '16 s') // 4 kW
+  ```
+
+- `pow(a: unit | string | T, p: number) : unit`
+
+  Raises a unit to the power `p` and returns a new unit.
+
+  ```js
+  let result = unit.pow('10 m', 3) // 1000 m^3
+  ```
+
+- `sqrt(a: unit | string | T) : unit`
+
+  Returns the square root of a unit.
+
+  ```js
+  unit.sqrt('1 hectare') // 100 m
+  ```
+
+- `abs(a: unit | string | T) : unit`
+
+  Returns the absolute value of a unit. If the unit has an offset, such as `degC`, this is applied before taking the absolute value.
+
+  ```js
+  unit.abs('-5 m / s') // 5 m / s
+  unit.abs('300 degC') // -246.3 degC
+  ```
+
+- `to(a: unit | string | number, b: unit | string)`
+
+  Converts a unit to the specified target unit or string. The returned unit will be "fixed", so it will not be auto-simplified or auto-prefixed in `format()`. 
+
+  ```js
+  unit.to('10 kg / m^2 s^3 A^2', 'kohm') // 0.01 kohm
+  ```
+
+- `config()`
+
+    Returns the current configuration.
+
+    ```js
+    const unit = require('unitmath')
+    unit.config()
+    ```
+
+- `config(options:object)`
 
   Configure a new unit namespace with the given options (see [Configuring](#configuring))
 
@@ -892,7 +927,7 @@ unit.to('10 kg / m^2 s^3 A^2', 'kohm') // 0.01 kohm
   const unit = require('unitmath').config({ option1, option2, ... })
   ```
 
-`exists(singleUnitString:string)`
+- `exists(singleUnitString:string)`
 
   Tests if the given unit, optionally with a prefix, exists.
 
@@ -901,7 +936,7 @@ unit.to('10 kg / m^2 s^3 A^2', 'kohm') // 0.01 kohm
   unit.exists('km') // true
   ```
 
-`definitions()`
+- `definitions()`
 
   Return the current unit definitions in effect. (User's own definitions can be queried through `unit.config().definitions`.)
 

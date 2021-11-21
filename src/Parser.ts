@@ -176,7 +176,7 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
     const unit: ParsedUnit<T> = {
       type: 'Unit',
       value: null,
-      baseUnits: [],
+      unitList: [],
       dimension: {}
     }
 
@@ -212,9 +212,7 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
       skipIgnored() // Whitespace is not required here
 
       // handle multiplication or division right after the value, like '1/s'
-      if (parseCharacter('*')) {
-        // Ignore
-      } else if (parseCharacter('/')) {
+      if (parseCharacter('/')) {
         powerMultiplierCurrent = -1
         expectingUnit = true
       }
@@ -262,7 +260,7 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
       }
 
       // Add the unit to the list
-      unit.baseUnits.push({
+      unit.unitList.push({
         unit: found.unit,
         prefix: found.prefix,
         power: power
@@ -278,9 +276,7 @@ export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
       // Is there a forward slash? If so, set powerMultiplierCurrent to -1. All remaining units will be in the denominator.
       expectingUnit = false
 
-      if (parseCharacter('*')) {
-        // Ignore
-      } else if (parseCharacter('/')) {
+      if (parseCharacter('/')) {
         if (powerMultiplierCurrent === -1) {
           throw new SyntaxError(`Unexpected additional "/" in "${text}" at index ${index}`)
         }

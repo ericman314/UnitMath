@@ -1,21 +1,10 @@
 import { createUnitStore } from './UnitStore'
 import { normalize, denormalize, isCompound as _isCompound } from './utils'
-import { BaseUnit, FormatOptions, Options, ParsedUnit, PartialOptions, TypeArithmetics, Unit, UnitFactory, UnitProps, UnitPropsWithQuantity } from './types'
+import { AtomicUnit, FormatOptions, Options, ParsedUnit, PartialOptions, TypeArithmetics, Unit, UnitFactory } from './types'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
-// Note to self: We've had to remove a lot a functionality to get this to work. 
-// - custom types
-// For reference, see:
-// https://github.com/ericman314/UnitMath/commit/adc4674c6b828912805a4160c48d5f557821c8e7.
-
-// type n = number
 export const symIsDefaultFun = Symbol('_IS_UNITMATH_DEFAULT_FUNCTION')
-
-
-export function isUnitPropsWithQuantity(unit: UnitProps): unit is UnitPropsWithQuantity {
-  return unit && unit.quantity !== undefined
-}
 
 /**
  * Create a clone of the this unit factory function, but with the specified options.
@@ -40,7 +29,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   // options.system will be checked in createUnitStore
 
   // Check to see if all required options.type functions have been set
-  const requiredTypeFns = <const> ['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
+  const requiredTypeFns = <const>['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
   let allRequiredTypeFnsPresent = true
   let oneRequiredTypeFnsPresent = false
   for (const fn of requiredTypeFns) {
@@ -58,7 +47,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
     // Check type functions required for _choosePrefix
     if (options.prefix !== 'never') {
-      const prefixRequiredTypeFns = <const> ['lt', 'gt', 'le', 'ge', 'abs']
+      const prefixRequiredTypeFns = <const>['lt', 'gt', 'le', 'ge', 'abs']
       let allPrefixRequiredTypeFnsPresent = true
       for (const fn of prefixRequiredTypeFns) {
         if (options.type?.[fn][symIsDefaultFun]) {
@@ -100,7 +89,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     readonly type = 'Unit'
 
     public value: T | null
-    public baseUnits: BaseUnit<T>[]
+    public unitList: AtomicUnit<T>[]
     public dimension: Record<string, number>
 
     /** whether the prefix and the units are fixed */
@@ -137,8 +126,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // console.log(require('util').inspect(parseResult, false, 4, true))
 
       this.dimension = _removeZeroDimensions(parseResult.dimension)
-      this.baseUnits = _combineDuplicateUnits(parseResult.baseUnits)
-      this.value = (parseResult.value === undefined || parseResult.value === null) ? null : denormalize(this.baseUnits, normalize(parseResult.baseUnits, parseResult.value, options.type), options.type)
+      this.unitList = _combineDuplicateUnits(parseResult.unitList)
+      this.value = (parseResult.value === undefined || parseResult.value === null) ? null : denormalize(this.unitList, normalize(parseResult.unitList, parseResult.value, options.type), options.type)
       this.fixed = false
     }
 
@@ -149,7 +138,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @memberof Unit
      * @return {Unit} Returns a cloned version of the unit
      */
-    clone () {
+    clone() {
       let unit = _clone(this)
       Object.freeze(unit)
       return unit
@@ -295,7 +284,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     }
 
     getComplexity() {
-      return _getComplexity(this.baseUnits)
+      return _getComplexity(this.unitList)
     }
 
     /**
@@ -322,7 +311,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @returns The notmalized value of the unit.
      */
     getNormalizedValue() {
-      return this.value === null ? null : normalize(this.baseUnits, this.value, options.type)
+      return this.value === null ? null : normalize(this.unitList, this.value, options.type)
     }
 
     /**
@@ -331,7 +320,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @returns A new unit with the given normalized value.
      */
     setNormalizedValue(normalizedValue: T) {
-      let unit = _setValue(this, denormalize(this.baseUnits, normalizedValue, options.type))
+      let unit = _setValue(this, denormalize(this.unitList, normalizedValue, options.type))
       Object.freeze(unit)
       return unit
     }
@@ -349,12 +338,12 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       if (systemStr === 'auto') {
         // If unit system is 'auto', then examine the existing units to infer which system is preferred.
         let identifiedSystems: Record<string, number> = {}
-        for (let unit of this.baseUnits) {
+        for (let unit of this.unitList) {
           for (let system of Object.keys(unitStore.defs.systems)) {
             for (let systemUnit of unitStore.defs.systems[system]) {
-              let systemUnitString = `${systemUnit.baseUnits[0].prefix}${systemUnit.baseUnits[0].unit.name}`
+              let systemUnitString = `${systemUnit.unitList[0].prefix}${systemUnit.unitList[0].unit.name}`
               let unitString = `${unit.prefix}${unit.unit.name}`
-              if (systemUnit.baseUnits.length === 1 && systemUnitString === unitString) {
+              if (systemUnit.unitList.length === 1 && systemUnitString === unitString) {
                 identifiedSystems[system] = (identifiedSystems[system] || 0) + 1
               }
             }
@@ -372,42 +361,40 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
       let unitsOfSystem = unitStore.defs.systems[systemStr] || []
 
-      const proposedUnitList: BaseUnit<T>[] = []
+      const proposedUnitList: AtomicUnit<T>[] = []
 
       let matchingUnit: Unit<T> | ParsedUnit<T> | undefined
 
       // Several methods to decide on the best unit for simplifying
 
       // 1. Search for a matching dimension in the given unit system
-      if (!matchingUnit) {
-        let matchingUnitsOfSystem: ParsedUnit<T>[] = []
-        for (let unit of unitsOfSystem) {
-          if (this.equalsQuantity(unit)) {
-            matchingUnitsOfSystem.push(unit)
-          }
+      let matchingUnitsOfSystem: ParsedUnit<T>[] = []
+      for (let unit of unitsOfSystem) {
+        if (this.equalsQuantity(unit)) {
+          matchingUnitsOfSystem.push(unit)
         }
+      }
 
-        // Default to the first matching unit of the system
-        if (matchingUnitsOfSystem.length > 0) {
-          matchingUnit = matchingUnitsOfSystem[0]
-        }
+      // Default to the first matching unit of the system
+      if (matchingUnitsOfSystem.length > 0) {
+        matchingUnit = matchingUnitsOfSystem[0]
+      }
 
-        // If one of our current units matches one in the system, use that instead
-        for (let baseUnit of this.baseUnits) {
-          for (let systemUnit of matchingUnitsOfSystem) {
-            let systemUnitString = `${systemUnit.baseUnits[0].prefix}${systemUnit.baseUnits[0].unit.name}`
-            let unitString = `${baseUnit.prefix}${baseUnit.unit.name}`
-            if (systemUnit.baseUnits.length === 1 && systemUnitString === unitString) {
-              matchingUnit = systemUnit
-              break
-            }
+      // If one of our current units matches one in the system, use that instead
+      for (let baseUnit of this.unitList) {
+        for (let systemUnit of matchingUnitsOfSystem) {
+          let systemUnitString = `${systemUnit.unitList[0].prefix}${systemUnit.unitList[0].unit.name}`
+          let unitString = `${baseUnit.prefix}${baseUnit.unit.name}`
+          if (systemUnit.unitList.length === 1 && systemUnitString === unitString) {
+            matchingUnit = systemUnit
+            break
           }
         }
       }
 
       // 2. Search for a matching unit in the current units
       if (!matchingUnit) {
-        for (let baseUnit of this.baseUnits) {
+        for (let baseUnit of this.unitList) {
           if (this.equalsQuantity(baseUnit.unit.name)) {
             matchingUnit = new _Unit(baseUnit.unit.name)
             break
@@ -428,7 +415,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       let ok = true
       if (matchingUnit) {
         // console.log(matchingUnit)
-        proposedUnitList.push(...matchingUnit.baseUnits)
+        proposedUnitList.push(...matchingUnit.unitList)
       } else {
         // Did not find a matching unit in the system
         // 4. Build a representation from the base units of all defined units
@@ -454,9 +441,9 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
       if (ok) {
         // Replace this baseUnit list with the proposed list
-        result.baseUnits = proposedUnitList
+        result.unitList = proposedUnitList
         if (this.value !== null) {
-          result.value = denormalize(result.baseUnits, normalize(this.baseUnits, this.value, options.type), options.type)
+          result.value = denormalize(result.unitList, normalize(this.unitList, this.value, options.type), options.type)
         } else {
           result.value = null
         }
@@ -471,7 +458,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @memberof Unit
      * @returns {Unit} A new unit formed by removing the value from this unit.
      */
-    getUnits () {
+    getUnits() {
       let result = _clone(this)
       result.value = null
       Object.freeze(result)
@@ -483,8 +470,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @memberof Unit
      * @returns True if the unit is compound
      */
-    isCompound () {
-      return _isCompound(this.baseUnits)
+    isCompound() {
+      return _isCompound(this.unitList)
     }
 
     /**
@@ -653,7 +640,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     /**
      * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
      */
-    valueOf () {
+    valueOf() {
       return this.format({
         precision: 0, // 0 means do not round
         simplify: 'never',
@@ -671,7 +658,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      */
     format(formatOptions?: Partial<FormatOptions<T>>, ...userArgs: any[]) {
       let simp = this.clone()
-      debugger
+
       // A bit of clarification:
       // options is the original options
       // userOpts is a user-supplied argument
@@ -737,11 +724,13 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   // function _convertParamToUnit<V extends T|n> (a?: any, b?: any): Unit {
 
   function _isUnit(a: any): a is Unit<T> {
-    return a?.type === 'Unit' && a.hasOwnProperty('clone')
+    debugger
+    return a?.type === 'Unit' && a.clone
   }
 
   function _isParsedUnit(a: any): a is ParsedUnit<T> {
-    return a?.type === 'Unit' && !a.hasOwnProperty('clone')
+    debugger
+    return a?.type === 'Unit' && !a.clone
   }
 
   function _convertParamToUnit(other: Unit<T> | ParsedUnit<T> | string | T): Unit<T>
@@ -760,7 +749,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     }
   }
 
-  function _getComplexity(unitList: BaseUnit<T>[]) {
+  function _getComplexity(unitList: AtomicUnit<T>[]) {
     // Number of total units, each adds one symbol
     let comp = unitList.length
 
@@ -798,10 +787,10 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     if (unit.fixed) {
       result.fixed = unit.fixed
     }
-    result.baseUnits = []
-    for (let i = 0; i < unit.baseUnits.length; i++) {
-      result.baseUnits[i] = {} as any
-      result.baseUnits[i] = { ...unit.baseUnits[i] }
+    result.unitList = []
+    for (let i = 0; i < unit.unitList.length; i++) {
+      result.unitList[i] = {} as any
+      result.unitList[i] = { ...unit.unitList[i] }
     }
 
     return result as Unit<T>
@@ -809,42 +798,42 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
   /**
    * Private function _combineDuplicateUnits returns a new array of unit pieces where the duplicate units have been combined together. Units with zero power are also removed.
-   * @param {BaseUnit[]} baseUnits Array of base units
+   * @param {AtomicUnit[]} unitList Array of atomic units
    *
-   * @returns {BaseUnit[]} A new array of unit pieces where the duplicates have been combined together and units with zero power have been removed.
+   * @returns {AtomicUnit[]} A new array of unit pieces where the duplicates have been combined together and units with zero power have been removed.
    */
-  function _combineDuplicateUnits(baseUnits: BaseUnit<T>[]): BaseUnit<T>[] {
+  function _combineDuplicateUnits(unitList: AtomicUnit<T>[]): AtomicUnit<T>[] {
     // Two-level deep copy of units
-    let combinedBaseUnits = baseUnits.map(u => Object.assign({}, u))
+    let combinedUnitList = unitList.map(u => Object.assign({}, u))
 
-    if (combinedBaseUnits.length >= 2) {
+    if (combinedUnitList.length >= 2) {
       // Combine duplicate units
-      let foundUnits: Record<string, BaseUnit<T>> = {}
-      for (let i = 0; i < combinedBaseUnits.length; i++) {
-        if (foundUnits.hasOwnProperty(combinedBaseUnits[i].unit.name)) {
+      let foundUnits: Record<string, AtomicUnit<T>> = {}
+      for (let i = 0; i < combinedUnitList.length; i++) {
+        if (foundUnits.hasOwnProperty(combinedUnitList[i].unit.name)) {
           // Combine this unit with the other
-          let firstUnit = foundUnits[combinedBaseUnits[i].unit.name]
+          let firstUnit = foundUnits[combinedUnitList[i].unit.name]
           // console.log(`Found duplicate unit: ${result[i].unit.name}`)
           // console.log(firstUnit.power)
           // console.log(result[i].power)
-          firstUnit.power += combinedBaseUnits[i].power
-          combinedBaseUnits.splice(i, 1)
+          firstUnit.power += combinedUnitList[i].power
+          combinedUnitList.splice(i, 1)
           i--
         } else {
-          foundUnits[combinedBaseUnits[i].unit.name] = combinedBaseUnits[i]
+          foundUnits[combinedUnitList[i].unit.name] = combinedUnitList[i]
         }
       }
 
       // Remove units that have zero power
-      for (let i = 0; i < combinedBaseUnits.length; i++) {
-        if (Math.abs(combinedBaseUnits[i].power) < 1e-15) {
-          combinedBaseUnits.splice(i, 1)
+      for (let i = 0; i < combinedUnitList.length; i++) {
+        if (Math.abs(combinedUnitList[i].power) < 1e-15) {
+          combinedUnitList.splice(i, 1)
           i--
         }
       }
     }
 
-    return combinedBaseUnits
+    return combinedUnitList
   }
 
   /**
@@ -852,7 +841,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @param {object} dimensions The dimensions to process
    * @returns {object} A new object with the zero dimensions removed
    */
-  function _removeZeroDimensions (dimensions: Record<string, number>): Record<string, number> {
+  function _removeZeroDimensions(dimensions: Record<string, number>): Record<string, number> {
     let result = { ...dimensions }
     for (let dim of Object.keys(result)) {
       if (Math.abs(result[dim]) < 1e-15) {
@@ -869,12 +858,12 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     let value1, value2
     if (unit1.value === null && unit2.value === null) {
       // If both units are valueless, get the normalized value of 1 to compare only the unit lists
-      value1 = normalize(unit1.baseUnits, options.type.conv(1), options.type)
-      value2 = normalize(unit2.baseUnits, options.type.conv(1), options.type)
+      value1 = normalize(unit1.unitList, options.type.conv(1), options.type)
+      value2 = normalize(unit2.unitList, options.type.conv(1), options.type)
     } else if (unit1.value !== null && unit2.value !== null) {
       // Both units have values
-      value1 = normalize(unit1.baseUnits, unit1.value, options.type)
-      value2 = normalize(unit2.baseUnits, unit2.value, options.type)
+      value1 = normalize(unit1.unitList, unit1.value, options.type)
+      value2 = normalize(unit2.unitList, unit2.value, options.type)
     } else {
       // One has a value and one does not. Not allowed.
       throw new Error(`Cannot compare units ${unit1} and ${unit2}; one has a value and the other does not`)
@@ -896,7 +885,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       throw new Error(`Cannot add ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = denormalize(unit1.baseUnits, options.type.add(normalize(unit1.baseUnits, unit1.value, options.type), normalize(unit2.baseUnits, unit2.value, options.type)), options.type)
+    result.value = denormalize(unit1.unitList, options.type.add(normalize(unit1.unitList, unit1.value, options.type), normalize(unit2.unitList, unit2.value, options.type)), options.type)
     return result
   }
 
@@ -914,7 +903,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       throw new Error(`Cannot subtract ${unit1.toString()} and ${unit2.toString()}: dimensions do not match`)
     }
     const result = _clone(unit1)
-    result.value = denormalize(unit1.baseUnits, options.type.sub(normalize(unit1.baseUnits, unit1.value, options.type), normalize(unit2.baseUnits, unit2.value, options.type)), options.type)
+    result.value = denormalize(unit1.unitList, options.type.sub(normalize(unit1.unitList, unit1.value, options.type), normalize(unit2.unitList, unit2.value, options.type)), options.type)
     return result
   }
 
@@ -933,21 +922,21 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     }
 
     // Append other's units list onto result
-    for (let i = 0; i < unit2.baseUnits.length; i++) {
+    for (let i = 0; i < unit2.unitList.length; i++) {
       // Make a deep copy
-      const inverted = { ...unit2.baseUnits[i] }
-      result.baseUnits.push(inverted)
+      const inverted = { ...unit2.unitList[i] }
+      result.unitList.push(inverted)
     }
 
-    result.baseUnits = _combineDuplicateUnits(result.baseUnits)
+    result.unitList = _combineDuplicateUnits(result.unitList)
     result.dimension = _removeZeroDimensions(result.dimension)
 
     // If at least one operand has a value, then the result should also have a value
     if (unit1.value !== null || unit2.value !== null) {
       let one = options.type.conv(1)
-      const val1 = unit1.value === null ? normalize(unit1.baseUnits, one, options.type) : normalize(unit1.baseUnits, unit1.value, options.type)
-      const val2 = unit2.value === null ? normalize(unit2.baseUnits, one, options.type) : normalize(unit2.baseUnits, unit2.value, options.type)
-      result.value = denormalize(result.baseUnits, options.type.mul(val1, val2), options.type)
+      const val1 = unit1.value === null ? normalize(unit1.unitList, one, options.type) : normalize(unit1.unitList, unit1.value, options.type)
+      const val2 = unit2.value === null ? normalize(unit2.unitList, one, options.type) : normalize(unit2.unitList, unit2.value, options.type)
+      result.value = denormalize(result.unitList, options.type.mul(val1, val2), options.type)
     } else {
       result.value = null
     }
@@ -968,22 +957,22 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     }
 
     // Invert and append other's units list onto result
-    for (let i = 0; i < unit2.baseUnits.length; i++) {
+    for (let i = 0; i < unit2.unitList.length; i++) {
       // Make a deep copy
-      const inverted = { ...unit2.baseUnits[i] }
+      const inverted = { ...unit2.unitList[i] }
       inverted.power = -inverted.power
-      result.baseUnits.push(inverted)
+      result.unitList.push(inverted)
     }
 
-    result.baseUnits = _combineDuplicateUnits(result.baseUnits)
+    result.unitList = _combineDuplicateUnits(result.unitList)
     result.dimension = _removeZeroDimensions(result.dimension)
 
     // If at least one operand has a value, the result should have a value
     if (unit1.value !== null || unit2.value !== null) {
       let one = options.type.conv(1)
-      const val1 = unit1.value === null ? normalize(unit1.baseUnits, one, options.type) : normalize(unit1.baseUnits, unit1.value, options.type)
-      const val2 = unit2.value === null ? normalize(unit2.baseUnits, one, options.type) : normalize(unit2.baseUnits, unit2.value, options.type)
-      result.value = denormalize(result.baseUnits, options.type.div(val1, val2), options.type)
+      const val1 = unit1.value === null ? normalize(unit1.unitList, one, options.type) : normalize(unit1.unitList, unit1.value, options.type)
+      const val2 = unit2.value === null ? normalize(unit2.unitList, one, options.type) : normalize(unit2.unitList, unit2.value, options.type)
+      result.value = denormalize(result.unitList, options.type.div(val1, val2), options.type)
     } else {
       result.value = null
     }
@@ -1004,8 +993,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     }
 
     // Adjust the power of each unit in the list
-    for (let i = 0; i < result.baseUnits.length; i++) {
-      result.baseUnits[i].power = result.baseUnits[i].power * p
+    for (let i = 0; i < result.unitList.length; i++) {
+      result.unitList[i].power = result.unitList[i].power * p
     }
 
     if (result.value !== null) {
@@ -1065,9 +1054,9 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     // we set the remainder to 0.
     let testSum = options.type.conv(0)
     for (let i = 0; i < result.length; i++) {
-      testSum = options.type.add(testSum, normalize(result[i].baseUnits, result[i].value!, options.type))
+      testSum = options.type.add(testSum, normalize(result[i].unitList, result[i].value!, options.type))
     }
-    if (options.type.eq(testSum, normalize(unit.baseUnits, unit.value, options.type))) {
+    if (options.type.eq(testSum, normalize(unit.unitList, unit.value, options.type))) {
       x.value = options.type.conv(0)
     }
 
@@ -1079,7 +1068,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   function _abs(unit: Unit<T>) {
     const result = _clone(unit)
     if (result.value !== null) {
-      result.value = denormalize(result.baseUnits, options.type.abs(normalize(result.baseUnits, result.value, options.type)), options.type)
+      result.value = denormalize(result.unitList, options.type.abs(normalize(result.unitList, result.value, options.type)), options.type)
     }
     return result
   }
@@ -1099,7 +1088,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       throw new Error(`Cannot convert ${unit.toString()}: target unit must be valueless`)
     }
     result = _clone(valuelessUnit)
-    result.value = denormalize(result.baseUnits, normalize(unit.baseUnits, value, options.type), options.type)
+    result.value = denormalize(result.unitList, normalize(unit.unitList, value, options.type), options.type)
     result.fixed = true // Don't auto simplify
     return result
   }
@@ -1111,9 +1100,9 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    */
   function _choosePrefix(unit: Unit<T>, formatOptions: FormatOptions<T>) {
     let result = _clone(unit)
-    let piece = result.baseUnits[0] // TODO: Someday this might choose the most "dominant" unit, or something, to prefix, rather than the first unit
+    let piece = result.unitList[0] // TODO: Someday this might choose the most "dominant" unit, or something, to prefix, rather than the first unit
 
-    if (unit.baseUnits.length !== 1) {
+    if (unit.unitList.length !== 1) {
       // TODO: Support for compound units
       return unit
     }
@@ -1207,7 +1196,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     }
 
     piece.prefix = bestPrefix
-    result.value = denormalize(result.baseUnits, normalize(unit.baseUnits, unit.value, options.type), options.type)
+    result.value = denormalize(result.unitList, normalize(unit.unitList, unit.value, options.type), options.type)
 
     Object.freeze(result)
     return result
@@ -1258,8 +1247,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     // }
 
     // Replace this unit list with the proposed list
-    result.baseUnits = proposedUnitList
-    if (unit.value !== null) { result.value = denormalize(result.baseUnits, normalize(unit.baseUnits, unit.value, options.type), options.type) }
+    result.unitList = proposedUnitList
+    if (unit.value !== null) { result.value = denormalize(result.unitList, normalize(unit.unitList, unit.value, options.type), options.type) }
     result.fixed = true // Don't auto simplify
     return result
   }
@@ -1289,29 +1278,29 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     let nNum = 0
     let nDen = 0
 
-    for (let i = 0; i < unit.baseUnits.length; i++) {
-      if (unit.baseUnits[i].power > 0) {
+    for (let i = 0; i < unit.unitList.length; i++) {
+      if (unit.unitList[i].power > 0) {
         nNum++
-        strNum += ' ' + unit.baseUnits[i].prefix + unit.baseUnits[i].unit.name
-        if (Math.abs(unit.baseUnits[i].power - 1.0) > 1e-15) {
-          strNum += '^' + unit.baseUnits[i].power
+        strNum += ' ' + unit.unitList[i].prefix + unit.unitList[i].unit.name
+        if (Math.abs(unit.unitList[i].power - 1.0) > 1e-15) {
+          strNum += '^' + unit.unitList[i].power
         }
-      } else if (unit.baseUnits[i].power < 0) {
+      } else if (unit.unitList[i].power < 0) {
         nDen++
       }
     }
 
     if (nDen > 0) {
-      for (let i = 0; i < unit.baseUnits.length; i++) {
-        if (unit.baseUnits[i].power < 0) {
+      for (let i = 0; i < unit.unitList.length; i++) {
+        if (unit.unitList[i].power < 0) {
           if (nNum > 0) {
-            strDen += ' ' + unit.baseUnits[i].prefix + unit.baseUnits[i].unit.name
-            if (Math.abs(unit.baseUnits[i].power + 1.0) > 1e-15) {
-              strDen += '^' + (-unit.baseUnits[i].power)
+            strDen += ' ' + unit.unitList[i].prefix + unit.unitList[i].unit.name
+            if (Math.abs(unit.unitList[i].power + 1.0) > 1e-15) {
+              strDen += '^' + (-unit.unitList[i].power)
             }
           } else {
-            strDen += ' ' + unit.baseUnits[i].prefix + unit.baseUnits[i].unit.name
-            strDen += '^' + (unit.baseUnits[i].power)
+            strDen += ' ' + unit.unitList[i].prefix + unit.unitList[i].unit.name
+            strDen += '^' + (unit.unitList[i].power)
           }
         }
       }
@@ -1343,7 +1332,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   let unitStore = createUnitStore(options)
 
   // Public functions available on the unitmath namespace
-  
+
 
   /**
    * Create a clone of the this unit factory function, but with the specified options.
@@ -1368,7 +1357,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
   unitmath.config = configFunction
 
-  unitmath.definitions = function definitions () {
+  unitmath.definitions = function definitions() {
     return unitStore.originalDefinitions
   }
 

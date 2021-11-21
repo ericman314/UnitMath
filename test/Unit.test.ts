@@ -1,4 +1,4 @@
-import { NullableDefinitions, PartialOptions, TypeArithmetics, Unit, UnitFactory, UnitProps } from '../src/types'
+import { NullableDefinitions, PartialOptions, TypeArithmetics, Unit, UnitFactory } from '../src/types'
 import unit from '../src/Unit'
 import Decimal from 'decimal.js'
 import './approx'
@@ -275,7 +275,7 @@ describe('unitmath', () => {
 
       test('should create new prefixes', () => {
         // TODO: Mutating individual units in the definitions can have bad side effects!
-        let meter = { ...unit.definitions().units.meter as UnitProps }
+        let meter = { ...unit.definitions().units.meter }
         meter.prefixGroup = 'FUNNY'
         meter.formatPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
         let newUnit = unit.config({
@@ -323,18 +323,26 @@ describe('unitmath', () => {
         expect(newUnit('3 foo').pow(3).toString()).toEqual('27 flab')
       })
 
-      // test('should prepend, but not replace, individual unit systems', () => {
-      //   let newUnit = unit.config({
-      //     definitions: {
-      //       units: { mph: '1 mi/hr' },
-      //       systems: {
-      //         us: ['mph', 'mi']
-      //       }
-      //     }
-      //   })
-      //   expect(newUnit('70 mi').div('60 min').toString()).toEqual('70 mph')
-      //   expect(newUnit.definitions().systems.us.includes('lbm')).toBeTruthy()
-      // })
+      test('should prepend, but not replace, individual unit systems', () => {
+        let newUnit = unit.config({
+          definitions: {
+            units: {
+              mph: { value: '1 mi/hr' },
+              fox: { value: 1, quantity: 'ESSENCE_OF_FOX' },
+              hole: { value: 1, quantity: 'ESSENCE_OF_HOLE' },
+              farmer: { value: '1 fox hole' }
+            },
+            systems: {
+              us: ['mph', 'mi'],
+              eco: ['fox', 'hole', 'farmer']
+            }
+          }
+        })
+        expect(newUnit('70 mi').div('60 min').toString()).toEqual('70 mph')
+        expect(newUnit.definitions().systems.us.includes('lbm')).toBeTruthy()
+
+        expect(newUnit('3 fox').mul('1 hole').toString({ simplify: 'always' })).toEqual('3 farmer')
+      })
 
       test('should skip builtins if so desired', () => {
         let newUnit = unit.config({
@@ -352,9 +360,9 @@ describe('unitmath', () => {
               fib: { value: '5 foo', prefixGroup: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] },
               flab: { value: '1 foo^3', prefixGroup: 'PREFOO', formatPrefixes: ['fff', 'ff', 'f', '', 'F', 'FF', 'FFF'] }
             },
-            // systems: {
-            //   fooSys: ['foo', 'flab']
-            // },
+            systems: {
+              fooSys: ['foo', 'flab']
+            },
             prefixGroups: {
               PREFOO: {
                 'fff': 0.008,
@@ -386,6 +394,18 @@ describe('unitmath', () => {
           }
         })
         expect(newUnit('5000 widget').toBaseUnits().toString()).toEqual('5 kilowidget')
+      })
+
+      test('should throw if unit could not be parsed', () => {
+        expect(() => configCustomUnits({
+          foo: { value: 'bar' }
+        })).toThrow(/Parsing value for 'foo' resulted in invalid value: null/)
+      })
+
+      test('should throw on invalid system', () => {
+        expect(() => {
+          unit.config({ system: 'foo' })
+        }).toThrow(/Unknown unit system foo. Available systems are:/)
       })
 
     })
@@ -448,41 +468,51 @@ describe('unitmath', () => {
     test('should create unit correctly', () => {
       let unit1 = unit()
       expect(unit1.value).toEqual(null)
-      expect(unit1.baseUnits.length).toEqual(0)
+      expect(unit1.unitList.length).toEqual(0)
 
       unit1 = unit(5000, 'cm')
       expect(unit1.value).toEqual(5000)
-      expect(unit1.baseUnits[0].unit.name).toEqual('m')
+      expect(unit1.unitList[0].unit.name).toEqual('m')
 
       unit1 = unit(5, 'kg')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
 
       unit1 = unit('kg')
       expect(unit1.value).toEqual(null)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
 
       unit1 = unit('10 Hz')
       expect(unit1.value).toEqual(10)
-      expect(unit1.baseUnits[0].unit.name).toEqual('Hz')
+      expect(unit1.unitList[0].unit.name).toEqual('Hz')
 
       unit1 = unit(9.81, 'kg m/s^2')
       expect(unit1.value).toEqual(9.81)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[1].unit.name).toEqual('m')
-      expect(unit1.baseUnits[2].unit.name).toEqual('s')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('m')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
 
       unit1 = unit('9.81 kg m/s^2')
       expect(unit1.value).toEqual(9.81)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[1].unit.name).toEqual('m')
-      expect(unit1.baseUnits[2].unit.name).toEqual('s')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('m')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
 
       unit1 = unit('9.81', 'kg m/s^2')
       expect(unit1.value).toEqual(9.81)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[1].unit.name).toEqual('m')
-      expect(unit1.baseUnits[2].unit.name).toEqual('s')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('m')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
+
+      unit1 = unit(null, 'kg m/s^2')
+      expect(unit1.value).toEqual(null)
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('m')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
+
+      unit1 = unit(null)
+      expect(unit1.value).toEqual(null)
+      expect(unit1.unitList.length).toEqual(0)
     })
 
     test('should combine duplicate units', () => {
@@ -770,123 +800,123 @@ describe('unitmath', () => {
     test('should convert a unit using a target unit string', () => {
       const u1 = unit(5000, 'in')
       expect(u1.value).toEqual(5000)
-      expect(u1.baseUnits[0].unit.name).toEqual('in')
-      expect(u1.baseUnits[0].prefix).toEqual('')
+      expect(u1.unitList[0].unit.name).toEqual('in')
+      expect(u1.unitList[0].prefix).toEqual('')
 
       const u2 = u1.to('cm')
       expect(u1).not.toBe(u2) // u2 must be a clone
       expect(u2.value).toEqual(12700)
-      expect(u2.baseUnits[0].unit.name).toEqual('m')
-      expect(u2.baseUnits[0].prefix).toEqual('c')
+      expect(u2.unitList[0].unit.name).toEqual('m')
+      expect(u2.unitList[0].prefix).toEqual('c')
 
       const u3 = unit(299792.458, 'km/s')
       expect(u3.value).toEqual(299792.458)
-      expect(u3.baseUnits[0].unit.name).toEqual('m')
-      expect(u3.baseUnits[1].unit.name).toEqual('s')
-      expect(u3.baseUnits[0].prefix).toEqual('k')
+      expect(u3.unitList[0].unit.name).toEqual('m')
+      expect(u3.unitList[1].unit.name).toEqual('s')
+      expect(u3.unitList[0].prefix).toEqual('k')
 
       const u4 = u3.to('m/s')
       expect(u3).not.toBe(u4) // u2 must be a clone
       expect(u4.value).toEqual(299792458)
-      expect(u4.baseUnits[0].unit.name).toEqual('m')
-      expect(u4.baseUnits[1].unit.name).toEqual('s')
-      expect(u4.baseUnits[0].prefix).toEqual('')
+      expect(u4.unitList[0].unit.name).toEqual('m')
+      expect(u4.unitList[1].unit.name).toEqual('s')
+      expect(u4.unitList[0].prefix).toEqual('')
     })
 
     test('should convert a unit using a target unit', () => {
       const u1 = unit(5000, 'in')
       expect(u1.value).toEqual(5000)
-      expect(u1.baseUnits[0].unit.name).toEqual('in')
-      expect(u1.baseUnits[0].prefix).toEqual('')
+      expect(u1.unitList[0].unit.name).toEqual('in')
+      expect(u1.unitList[0].prefix).toEqual('')
 
       const u2 = u1.to(unit('cm'))
       expect(u1).not.toBe(u2) // u2 must be a clone
       expect(u2.value).toEqual(12700)
-      expect(u2.baseUnits[0].unit.name).toEqual('m')
-      expect(u2.baseUnits[0].prefix).toEqual('c')
+      expect(u2.unitList[0].unit.name).toEqual('m')
+      expect(u2.unitList[0].prefix).toEqual('c')
 
       const u3 = unit(299792.458, 'km/s')
       expect(u3.value).toEqual(299792.458)
-      expect(u3.baseUnits[0].unit.name).toEqual('m')
-      expect(u3.baseUnits[1].unit.name).toEqual('s')
-      expect(u3.baseUnits[0].prefix).toEqual('k')
+      expect(u3.unitList[0].unit.name).toEqual('m')
+      expect(u3.unitList[1].unit.name).toEqual('s')
+      expect(u3.unitList[0].prefix).toEqual('k')
 
       const u4 = u3.to(unit('m/s'))
       expect(u3).not.toBe(u4) // u2 must be a clone
       expect(u4.value).toEqual(299792458)
-      expect(u4.baseUnits[0].unit.name).toEqual('m')
-      expect(u4.baseUnits[1].unit.name).toEqual('s')
-      expect(u4.baseUnits[0].prefix).toEqual('')
+      expect(u4.unitList[0].unit.name).toEqual('m')
+      expect(u4.unitList[1].unit.name).toEqual('s')
+      expect(u4.unitList[0].prefix).toEqual('')
     })
 
     test('should convert a valueless unit', () => {
       const u1 = unit(null, 'm')
       expect(u1.value).toEqual(null)
-      expect(u1.baseUnits[0].unit.name).toEqual('m')
-      expect(u1.baseUnits[0].prefix).toEqual('')
+      expect(u1.unitList[0].unit.name).toEqual('m')
+      expect(u1.unitList[0].prefix).toEqual('')
 
       const u2 = u1.to(unit(null, 'cm'))
       expect(u1).not.toBe(u2) // u2 must be a clone
       expect(u2.value).toEqual(100) // u2 must have a value
-      expect(u2.baseUnits[0].unit.name).toEqual('m')
-      expect(u2.baseUnits[0].prefix).toEqual('c')
+      expect(u2.unitList[0].unit.name).toEqual('m')
+      expect(u2.unitList[0].prefix).toEqual('c')
 
       const u3 = unit(null, 'm/s')
       expect(u3.value).toEqual(null)
-      expect(u3.baseUnits[0].unit.name).toEqual('m')
-      expect(u3.baseUnits[1].unit.name).toEqual('s')
-      expect(u3.baseUnits[0].prefix).toEqual('')
+      expect(u3.unitList[0].unit.name).toEqual('m')
+      expect(u3.unitList[1].unit.name).toEqual('s')
+      expect(u3.unitList[0].prefix).toEqual('')
 
       const u4 = u3.to(unit(null, 'cm/s'))
       expect(u3).not.toBe(u4) // u2 must be a clone
       expect(u4.value).toEqual(100) // u4 must have a value
-      expect(u4.baseUnits[0].unit.name).toEqual('m')
-      expect(u4.baseUnits[1].unit.name).toEqual('s')
-      expect(u4.baseUnits[0].prefix).toEqual('c')
+      expect(u4.unitList[0].unit.name).toEqual('m')
+      expect(u4.unitList[1].unit.name).toEqual('s')
+      expect(u4.unitList[0].prefix).toEqual('c')
 
       const u5 = unit(null, 'km').to('cm')
       expect(u5.value).toEqual(100000)
-      expect(u5.baseUnits[0].unit.name).toEqual('m')
-      expect(u5.baseUnits[0].prefix).toEqual('c')
+      expect(u5.unitList[0].unit.name).toEqual('m')
+      expect(u5.unitList[0].prefix).toEqual('c')
     })
 
     test('should convert a binary prefixes (1)', () => {
       const u1 = unit(1, 'Kib')
       expect(u1.value).toEqual(1)
-      expect(u1.baseUnits[0].unit.name).toEqual('b')
-      expect(u1.baseUnits[0].prefix).toEqual('Ki')
+      expect(u1.unitList[0].unit.name).toEqual('b')
+      expect(u1.unitList[0].prefix).toEqual('Ki')
 
       const u2 = u1.to(unit(null, 'b'))
       expect(u1).not.toBe(u2) // u2 must be a clone
       expect(u2.value).toEqual(1024) // u2 must have a value
-      expect(u2.baseUnits[0].unit.name).toEqual('b')
-      expect(u2.baseUnits[0].prefix).toEqual('')
+      expect(u2.unitList[0].unit.name).toEqual('b')
+      expect(u2.unitList[0].prefix).toEqual('')
 
       const u3 = unit(1, 'Kib/s')
       expect(u3.value).toEqual(1)
-      expect(u3.baseUnits[0].unit.name).toEqual('b')
-      expect(u3.baseUnits[1].unit.name).toEqual('s')
-      expect(u3.baseUnits[0].prefix).toEqual('Ki')
+      expect(u3.unitList[0].unit.name).toEqual('b')
+      expect(u3.unitList[1].unit.name).toEqual('s')
+      expect(u3.unitList[0].prefix).toEqual('Ki')
 
       const u4 = u3.to(unit(null, 'b/s'))
       expect(u3).not.toBe(u4) // u2 must be a clone
       expect(u4.value).toEqual(1024) // u4 must have a value
-      expect(u4.baseUnits[0].unit.name).toEqual('b')
-      expect(u4.baseUnits[1].unit.name).toEqual('s')
-      expect(u4.baseUnits[0].prefix).toEqual('')
+      expect(u4.unitList[0].unit.name).toEqual('b')
+      expect(u4.unitList[1].unit.name).toEqual('s')
+      expect(u4.unitList[0].prefix).toEqual('')
     })
 
     test('should convert a binary prefixes (2)', () => {
       const u1 = unit(1, 'kb')
       expect(u1.value).toEqual(1)
-      expect(u1.baseUnits[0].unit.name).toEqual('b')
-      expect(u1.baseUnits[0].prefix).toEqual('k')
+      expect(u1.unitList[0].unit.name).toEqual('b')
+      expect(u1.unitList[0].prefix).toEqual('k')
 
       const u2 = u1.to(unit(null, 'b'))
       expect(u1).not.toBe(u2) // u2 must be a clone
       expect(u2.value).toEqual(1000) // u2 must have a value
-      expect(u2.baseUnits[0].unit.name).toEqual('b')
-      expect(u2.baseUnits[0].prefix).toEqual('')
+      expect(u2.unitList[0].unit.name).toEqual('b')
+      expect(u2.unitList[0].prefix).toEqual('')
     })
 
     test('the alternate api syntax should also work', () => {
@@ -1112,9 +1142,9 @@ describe('unitmath', () => {
   describe('simplify', () => {
     test('should not simplify units fixed by the to() method', () => {
       const unit1 = unit(10, 'kg m/s^2').to()
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[1].unit.name).toEqual('m')
-      expect(unit1.baseUnits[2].unit.name).toEqual('s')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('m')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
       expect(unit1.toString()).toEqual('10 kg m / s^2')
     })
 
@@ -1135,47 +1165,47 @@ describe('unitmath', () => {
       expect(nounit2.toString()).toEqual('2')
     })
 
-    // test('should simplify units according to chosen unit system', () => {
-    //   // Simplify explicitly
-    //   let unit1 = unit.config({ system: 'us' })('10 N')
-    //   expect(unit1.simplify().toString()).toEqual('2.2480894309971 lbf')
+    test('should simplify units according to chosen unit system', () => {
+      // Simplify explicitly
+      let unit1 = unit.config({ system: 'us' })('10 N')
+      expect(unit1.simplify().toString()).toEqual('2.2480894309971 lbf')
 
-    //   let unit2 = unit.config({ system: 'cgs' })('10 N')
-    //   expect(unit2.simplify().toString()).toEqual('1000 kdyn')
+      let unit2 = unit.config({ system: 'cgs' })('10 N')
+      expect(unit2.simplify().toString()).toEqual('1000 kdyn')
 
-    //   // Reduce threshold to 0
-    //   let newUnit = unit.config({ simplifyThreshold: 0 })
+      // Reduce threshold to 0
+      let newUnit = unit.config({ simplifyThreshold: 0 })
 
-    //   let unit3 = newUnit.config({ system: 'us' })('10 N')
-    //   expect(unit3.toString()).toEqual('2.2480894309971 lbf')
+      let unit3 = newUnit.config({ system: 'us' })('10 N')
+      expect(unit3.toString()).toEqual('2.2480894309971 lbf')
 
-    //   let unit4 = newUnit.config({ system: 'cgs' })('10 N')
-    //   expect(unit4.toString()).toEqual('1000 kdyn')
-    // })
+      let unit4 = newUnit.config({ system: 'cgs' })('10 N')
+      expect(unit4.toString()).toEqual('1000 kdyn')
+    })
 
-    // test('should correctly simplify units when unit system is "auto"', () => {
-    //   const unit1 = unit(5, 'lbf min / s')
-    //   expect(unit1.simplify().toString()).toEqual('300 lbf')
-    //   expect(unit('150 lbf').div('10 in^2').toString()).toEqual('15 psi')
-    //   expect(unit('400 N').div('10 cm^2').toString()).toEqual('400 kPa')
-    // })
+    test('should correctly simplify units when unit system is "auto"', () => {
+      const unit1 = unit(5, 'lbf min / s')
+      expect(unit1.simplify().toString()).toEqual('300 lbf')
+      expect(unit('150 lbf').div('10 in^2').toString()).toEqual('15 psi')
+      expect(unit('400 N').div('10 cm^2').toString()).toEqual('400 kPa')
+    })
 
-    // test('should infer the unit system when using non-preferred units which are members of that system', () => {
-    //   // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
-    //   let unit1 = unit('10 mile').mul('10 kip')
-    //   expect(unit1.toString({ simplifyThreshold: 0 })).toEqual('0.678515620705073 MMBTU')
-    // })
+    test('should infer the unit system when using non-preferred units which are members of that system', () => {
+      // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
+      let unit1 = unit('10 mile').mul('10 kip')
+      expect(unit1.toString({ simplifyThreshold: 0 })).toEqual('0.678515620705073 MMBTU')
+    })
 
-    // test('it should correctly differentiate between si and cgs units when unit system is "auto"', () => {
-    //   let unit1Cgs = unit('5 cm')
-    //   let unit2Cgs = unit('10 g')
-    //   let unit1Si = unit('5 m')
-    //   let unit2Si = unit('10 kg')
-    //   let unit3 = unit('2 s')
+    test('it should correctly differentiate between si and cgs units when unit system is "auto"', () => {
+      let unit1Cgs = unit('5 cm')
+      let unit2Cgs = unit('10 g')
+      let unit1Si = unit('5 m')
+      let unit2Si = unit('10 kg')
+      let unit3 = unit('2 s')
 
-    //   expect(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString()).toEqual('12.5 dyn')
-    //   expect(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString()).toEqual('12.5 N')
-    // })
+      expect(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString()).toEqual('12.5 dyn')
+      expect(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString()).toEqual('12.5 N')
+    })
 
     test('should try to use preexisting units in the simplified expression', () => {
       let unit1 = unit('10 ft hour / minute')
@@ -1265,125 +1295,125 @@ describe('unitmath', () => {
 
       unit1 = unit('5kg')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('5 kg')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit(' 5 kg ')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('5e-3kg')
       expect(unit1.value).toEqual(0.005)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('5e+3kg')
       expect(unit1.value).toEqual(5000)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('5e3kg')
       expect(unit1.value).toEqual(5000)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('-5kg')
       expect(unit1.value).toEqual(-5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('+5kg')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('.5kg')
       expect(unit1.value).toEqual(0.5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('-5mg')
       expect(unit1.value).toEqual(-5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('m')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('m')
 
       unit1 = unit('5.2mg')
       expect(unit1.value).toEqual(5.2)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[0].prefix).toEqual('m')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[0].prefix).toEqual('m')
 
       unit1 = unit('300 kg/minute')
       expect(unit1.value).toEqual(300)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[1].unit.name).toEqual('minute')
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('minute')
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('981 cm/s^2')
       expect(unit1.value).toEqual(981)
-      expect(unit1.baseUnits[0].unit.name).toEqual('m')
-      expect(unit1.baseUnits[1].unit.name).toEqual('s')
-      expect(unit1.baseUnits[1].power).toEqual(-2)
-      expect(unit1.baseUnits[0].prefix).toEqual('c')
+      expect(unit1.unitList[0].unit.name).toEqual('m')
+      expect(unit1.unitList[1].unit.name).toEqual('s')
+      expect(unit1.unitList[1].power).toEqual(-2)
+      expect(unit1.unitList[0].prefix).toEqual('c')
 
       unit1 = unit('981 cm*s^-2')
       expect(unit1.value).toEqual(981)
-      expect(unit1.baseUnits[0].unit.name).toEqual('m')
-      expect(unit1.baseUnits[1].unit.name).toEqual('s')
-      expect(unit1.baseUnits[1].power).toEqual(-2)
-      expect(unit1.baseUnits[0].prefix).toEqual('c')
+      expect(unit1.unitList[0].unit.name).toEqual('m')
+      expect(unit1.unitList[1].unit.name).toEqual('s')
+      expect(unit1.unitList[1].power).toEqual(-2)
+      expect(unit1.unitList[0].prefix).toEqual('c')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
       expect(unit1.value).toEqual(8.314)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[1].unit.name).toEqual('m')
-      expect(unit1.baseUnits[2].unit.name).toEqual('s')
-      expect(unit1.baseUnits[3].unit.name).toEqual('K')
-      expect(unit1.baseUnits[4].unit.name).toEqual('mol')
-      expect(unit1.baseUnits[0].power).toEqual(1)
-      expect(unit1.baseUnits[1].power).toEqual(2)
-      expect(unit1.baseUnits[2].power).toEqual(-2)
-      expect(unit1.baseUnits[3].power).toEqual(-1)
-      expect(unit1.baseUnits[4].power).toEqual(-1)
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('m')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
+      expect(unit1.unitList[3].unit.name).toEqual('K')
+      expect(unit1.unitList[4].unit.name).toEqual('mol')
+      expect(unit1.unitList[0].power).toEqual(1)
+      expect(unit1.unitList[1].power).toEqual(2)
+      expect(unit1.unitList[2].power).toEqual(-2)
+      expect(unit1.unitList[3].power).toEqual(-1)
+      expect(unit1.unitList[4].power).toEqual(-1)
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('8.314 kg m^2 / s^2 K mol')
       expect(unit1.value).toEqual(8.314)
-      expect(unit1.baseUnits[0].unit.name).toEqual('g')
-      expect(unit1.baseUnits[1].unit.name).toEqual('m')
-      expect(unit1.baseUnits[2].unit.name).toEqual('s')
-      expect(unit1.baseUnits[3].unit.name).toEqual('K')
-      expect(unit1.baseUnits[4].unit.name).toEqual('mol')
-      expect(unit1.baseUnits[0].power).toEqual(1)
-      expect(unit1.baseUnits[1].power).toEqual(2)
-      expect(unit1.baseUnits[2].power).toEqual(-2)
-      expect(unit1.baseUnits[3].power).toEqual(-1)
-      expect(unit1.baseUnits[4].power).toEqual(-1)
-      expect(unit1.baseUnits[0].prefix).toEqual('k')
+      expect(unit1.unitList[0].unit.name).toEqual('g')
+      expect(unit1.unitList[1].unit.name).toEqual('m')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
+      expect(unit1.unitList[3].unit.name).toEqual('K')
+      expect(unit1.unitList[4].unit.name).toEqual('mol')
+      expect(unit1.unitList[0].power).toEqual(1)
+      expect(unit1.unitList[1].power).toEqual(2)
+      expect(unit1.unitList[2].power).toEqual(-2)
+      expect(unit1.unitList[3].power).toEqual(-1)
+      expect(unit1.unitList[4].power).toEqual(-1)
+      expect(unit1.unitList[0].prefix).toEqual('k')
 
       unit1 = unit('5exabytes')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('bytes')
+      expect(unit1.unitList[0].unit.name).toEqual('bytes')
 
       unit1 = unit('1 / s')
       expect(unit1.value).toEqual(1)
-      expect(unit1.baseUnits[0].unit.name).toEqual('s')
-      expect(unit1.baseUnits[0].power).toEqual(-1)
+      expect(unit1.unitList[0].unit.name).toEqual('s')
+      expect(unit1.unitList[0].power).toEqual(-1)
 
       unit1 = unit('1/s')
       expect(unit1.value).toEqual(1)
-      expect(unit1.baseUnits[0].unit.name).toEqual('s')
-      expect(unit1.baseUnits[0].power).toEqual(-1)
+      expect(unit1.unitList[0].unit.name).toEqual('s')
+      expect(unit1.unitList[0].power).toEqual(-1)
 
       unit1 = unit('1 * s')
       expect(unit1.value).toEqual(1)
-      expect(unit1.baseUnits[0].unit.name).toEqual('s')
-      expect(unit1.baseUnits[0].power).toEqual(1)
+      expect(unit1.unitList[0].unit.name).toEqual('s')
+      expect(unit1.unitList[0].power).toEqual(1)
     })
 
     test('should ignore (, ), and *', () => {
@@ -1398,13 +1428,13 @@ describe('unitmath', () => {
     test('should parse units with correct precedence', () => {
       const unit1 = unit('1  m^3 / kg s^2') // implicit multiplication
 
-      expect(unit1.baseUnits[0].unit.name).toEqual('m')
-      expect(unit1.baseUnits[1].unit.name).toEqual('g')
-      expect(unit1.baseUnits[2].unit.name).toEqual('s')
-      expect(unit1.baseUnits[0].power).toEqual(3)
-      expect(unit1.baseUnits[1].power).toEqual(-1)
-      expect(unit1.baseUnits[2].power).toEqual(-2)
-      expect(unit1.baseUnits[0].prefix).toEqual('')
+      expect(unit1.unitList[0].unit.name).toEqual('m')
+      expect(unit1.unitList[1].unit.name).toEqual('g')
+      expect(unit1.unitList[2].unit.name).toEqual('s')
+      expect(unit1.unitList[0].power).toEqual(3)
+      expect(unit1.unitList[1].power).toEqual(-1)
+      expect(unit1.unitList[2].power).toEqual(-2)
+      expect(unit1.unitList[0].prefix).toEqual('')
     })
 
     test('should throw an exception when parsing an invalid unit', () => {
@@ -1422,12 +1452,30 @@ describe('unitmath', () => {
 
     test('should parse empty strings and only numbers', () => {
       expect(unit(123).value).toEqual(123)
-      expect(unit(123).baseUnits.length).toEqual(0)
+      expect(unit(123).unitList.length).toEqual(0)
       expect(unit('').value).toEqual(null)
-      expect(unit('').baseUnits.length).toEqual(0)
+      expect(unit('').unitList.length).toEqual(0)
       expect(unit().value).toEqual(null)
-      expect(unit().baseUnits.length).toEqual(0)
+      expect(unit().unitList.length).toEqual(0)
     })
+
+
+    it('should parse NaN and +/- Infinity', () => {
+      expect(unit('NaN').value).toBeNaN()
+      expect(unit('NaN kg').value).toBeNaN()
+      expect(unit('NaN kg').unitList[0].unit.name).toEqual('g')
+      expect(unit('NaNkg').value).toBeNaN()
+      expect(unit('NaNkg').unitList[0].unit.name).toEqual('g')
+
+      expect(unit('Infinity').value).toEqual(Infinity)
+      expect(unit('Infinity kg').value).toEqual(Infinity)
+      expect(unit('Infinity kg').unitList[0].unit.name).toEqual('g')
+
+      expect(unit('-Infinity').value).toEqual(-Infinity)
+      expect(unit('-Infinity kg').value).toEqual(-Infinity)
+      expect(unit('-Infinity kg').unitList[0].unit.name).toEqual('g')
+    })
+
 
     test('should throw if parser() receives other than a string', () => {
       // @ts-ignore: Intentionally passing an invalid type
@@ -1644,6 +1692,10 @@ describe('unitmath', () => {
       expect(unit.abs(-5).format()).toEqual('5')
       expect(unit.abs('-283.15 degC').format()).toEqual('-263.15 degC')
     })
+
+    test('should return valueless units unchanged', () => {
+      expect(unit('kg').abs().equals(unit('kg'))).toBeTruthy()
+    })
   })
 
   describe('mul, div, and pow', () => {
@@ -1651,22 +1703,22 @@ describe('unitmath', () => {
       const unit1 = unit(10, 'N/s')
       const unit2 = unit(10, 'h')
       const unitM = unit1.mul(unit2)
-      expect(unitM.baseUnits[0].unit.name).toEqual('N')
-      expect(unitM.baseUnits[1].unit.name).toEqual('s')
-      expect(unitM.baseUnits[2].unit.name).toEqual('h')
+      expect(unitM.unitList[0].unit.name).toEqual('N')
+      expect(unitM.unitList[1].unit.name).toEqual('s')
+      expect(unitM.unitList[2].unit.name).toEqual('h')
 
       const unit3 = unit(14.7, 'lbf')
       const unit4 = unit(1, 'in in')
       const unitD = unit3.div(unit4)
-      expect(unitD.baseUnits[0].unit.name).toEqual('lbf')
-      expect(unitD.baseUnits[1].unit.name).toEqual('in')
-      expect(unitD.baseUnits[1].power).toEqual(-2)
+      expect(unitD.unitList[0].unit.name).toEqual('lbf')
+      expect(unitD.unitList[1].unit.name).toEqual('in')
+      expect(unitD.unitList[1].power).toEqual(-2)
 
       const unit5 = unit(1, 'N h/s')
       const unitP = unit5.pow(-3.5)
-      expect(unitP.baseUnits[0].unit.name).toEqual('N')
-      expect(unitP.baseUnits[1].unit.name).toEqual('h')
-      expect(unitP.baseUnits[2].unit.name).toEqual('s')
+      expect(unitP.unitList[0].unit.name).toEqual('N')
+      expect(unitP.unitList[1].unit.name).toEqual('h')
+      expect(unitP.unitList[2].unit.name).toEqual('s')
     })
   })
 
@@ -1674,23 +1726,23 @@ describe('unitmath', () => {
     test('should support plurals', () => {
       const unit1 = unit(5, 'meters')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('meters')
-      expect(unit1.baseUnits[0].prefix).toEqual('')
+      expect(unit1.unitList[0].unit.name).toEqual('meters')
+      expect(unit1.unitList[0].prefix).toEqual('')
 
       const unit2 = unit(5, 'kilometers')
       expect(unit2.value).toEqual(5)
-      expect(unit2.baseUnits[0].unit.name).toEqual('meters')
-      expect(unit2.baseUnits[0].prefix).toEqual('kilo')
+      expect(unit2.unitList[0].unit.name).toEqual('meters')
+      expect(unit2.unitList[0].prefix).toEqual('kilo')
 
       const unit3 = unit(5, 'inches')
       expect(unit3.value).toEqual(5)
-      expect(unit3.baseUnits[0].unit.name).toEqual('inches')
-      expect(unit3.baseUnits[0].prefix).toEqual('')
+      expect(unit3.unitList[0].unit.name).toEqual('inches')
+      expect(unit3.unitList[0].prefix).toEqual('')
 
       const unit4 = unit(9.81, 'meters/second^2')
       expect(unit4.value).toEqual(9.81)
-      expect(unit4.baseUnits[0].unit.name).toEqual('meters')
-      expect(unit4.baseUnits[0].prefix).toEqual('')
+      expect(unit4.unitList[0].unit.name).toEqual('meters')
+      expect(unit4.unitList[0].prefix).toEqual('')
     })
   })
 
@@ -1698,13 +1750,13 @@ describe('unitmath', () => {
     test('should support aliases', () => {
       const unit1 = unit(5, 'lt')
       expect(unit1.value).toEqual(5)
-      expect(unit1.baseUnits[0].unit.name).toEqual('lt')
-      expect(unit1.baseUnits[0].prefix).toEqual('')
+      expect(unit1.unitList[0].unit.name).toEqual('lt')
+      expect(unit1.unitList[0].prefix).toEqual('')
 
       const unit2 = unit(1, 'lb')
       expect(unit2.value).toEqual(1)
-      expect(unit2.baseUnits[0].unit.name).toEqual('lb')
-      expect(unit2.baseUnits[0].prefix).toEqual('')
+      expect(unit2.unitList[0].unit.name).toEqual('lb')
+      expect(unit2.unitList[0].prefix).toEqual('')
     })
   })
 
@@ -1785,6 +1837,10 @@ describe('unitmath', () => {
       expect((unit(48, 'in')).split(['ft', 'in']).join(',')).toEqual('4 ft,0 in')
       expect((unit(60, 'in')).split(['ft', 'in']).join(',')).toEqual('5 ft,0 in')
       expect((unit(36000, 'in')).split(['ft', 'in']).join(',')).toEqual('3000 ft,0 in')
+    })
+
+    test('should throw if unit has no value', () => {
+      expect(() => unit('m').split(['ft', 'in'])).toThrow()
     })
   })
 

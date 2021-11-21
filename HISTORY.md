@@ -1,5 +1,13 @@
 # History
 
+## 2020-11-20, v1.0.0-rc.1
+- Convert to TypeScript
+- Removed concept of "quantities" and "base quantities"
+- Simplified how systems are defined and used in formatting
+- Simpler way to define units
+- Renamed many variables and API functions to make their meaning less ambiguous
+- Updated README.md
+
 ## 2020-07-13, v0.8.6
 - Standardized on US customary fluid volumes
 - Corrected values for `teaspoon` and `fluidounce`

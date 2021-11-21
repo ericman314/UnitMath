@@ -1,8 +1,7 @@
 import { createParser } from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
-import { isUnitPropsWithQuantity } from "./Unit";
-import { Options, ParsedUnit, Definitions, DefinitionsExtended, UnitProps, UnitPropsExtended, UnitStore, UnitSystems } from './types';
+import { Options, ParsedUnit, Definitions, DefinitionsExtended, UnitProps, UnitPropsExtended, UnitStore, UnitSystems, UnitPropsWithQuantity } from './types';
 
 /**
  * Creates a new unit store.
@@ -108,45 +107,43 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
       const unitDef = originalDefinitions.units[unitDefKey]
       if (!unitDef) continue
 
-      const unitDefObj = unitDef
+      // const unitDef = unitDef
 
       // uses unknown set of prefixes?
-      if (unitDefObj && unitDefObj.prefixGroup && !defs.prefixGroups.hasOwnProperty(unitDefObj.prefixGroup)) {
-        throw new Error(`Unknown prefixes '${unitDefObj.prefixGroup}' for unit '${unitDefKey}'`)
+      if (typeof unitDef !== 'string' && unitDef.prefixGroup && !defs.prefixGroups.hasOwnProperty(unitDef.prefixGroup)) {
+        throw new Error(`Unknown prefixes '${unitDef.prefixGroup}' for unit '${unitDefKey}'`)
       }
 
       let unitValue: T
       let unitDimension: { [s: string]: number }
-      let unitQuantity: UnitProps['quantity']
+      let unitQuantity: UnitPropsWithQuantity['quantity'] | undefined
 
       let skipThisUnit = false
-      if (isUnitPropsWithQuantity(unitDefObj)) {
+      if (isUnitPropsWithQuantity(unitDef)) {
         // Defining the unit based on a quantity.
-        unitValue = options.type.conv(unitDefObj.value)
-        unitDimension = { [unitDefObj.quantity]: 1 }
-        unitQuantity = unitDefObj.quantity
+        unitValue = options.type.conv(unitDef.value)
+        unitDimension = { [unitDef.quantity]: 1 }
+        unitQuantity = unitDef.quantity
       } else {
         // Defining the unit based on other units.
         let parsed: ParsedUnit<T>
         try {
           if (unitDef.hasOwnProperty('value')) {
-            if (unitDefObj && typeof unitDefObj.value === 'string') {
-              parsed = parser(unitDefObj.value)
-            } else if (Array.isArray(unitDefObj.value) && unitDefObj.value.length === 2) {
-              parsed = parser(unitDefObj.value[1])
-              parsed.value = options.type.conv(unitDefObj.value[0])
+            if (unitDef && typeof unitDef.value === 'string') {
+              parsed = parser(unitDef.value)
+            } else if (Array.isArray(unitDef.value) && unitDef.value.length === 2) {
+              parsed = parser(unitDef.value[1])
+              parsed.value = options.type.conv(unitDef.value[0])
             } else {
               throw new TypeError(`Unit definition for '${unitDefKey}' must be an object with a value property where the value is a string or a two-element array.`)
             }
-          } else if (typeof unitDef === 'string') {
-            parsed = parser(unitDef)
           } else {
             throw new TypeError(`Unit definition for '${unitDefKey}' must be an object with a value property where the value is a string or a two-element array.`)
           }
           if (parsed.value == null) {
             throw new Error(`Parsing value for '${unitDefKey}' resulted in invalid value: ${parsed.value}`)
           }
-          unitValue = normalize(parsed.baseUnits, parsed.value, options.type)
+          unitValue = normalize(parsed.unitList, parsed.value, options.type)
           unitDimension = Object.freeze(parsed.dimension)
         } catch (ex) {
           if (ex instanceof Error && /Unit.*not found/.test(ex.toString())) {
@@ -161,7 +158,10 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
 
       if (!skipThisUnit) {
         // Add this units and its aliases (they are all the same except for the name)
-        let unitAndAliases = [unitDefKey].concat(unitDefObj?.aliases ?? [])
+        let unitAndAliases = [unitDefKey]
+        if (unitDef.aliases) {
+          unitAndAliases.push(...unitDef.aliases)
+        }
         unitAndAliases.forEach(newUnitName => {
           if (defs.units.hasOwnProperty(newUnitName)) {
             throw new Error(`Alias '${newUnitName}' would override an existing unit`)
@@ -172,14 +172,14 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
           const newUnit: UnitPropsExtended<T> = {
             name: newUnitName,
             value: unitValue,
-            offset: options.type.conv(unitDefObj?.offset ?? 0),
+            offset: options.type.conv(unitDef.offset ? unitDef.offset : 0),
             dimension: unitDimension,
-            prefixGroup: (unitDefObj.prefixGroup && defs.prefixGroups[unitDefObj.prefixGroup]) || { '': 1 },
-            formatPrefixes: unitDefObj?.formatPrefixes // Default should be undefined
+            prefixGroup: (unitDef.prefixGroup && defs.prefixGroups[unitDef.prefixGroup]) || { '': 1 },
+            formatPrefixes: unitDef.formatPrefixes,
+            basePrefix: unitDef.basePrefix
             // systems: []
           }
           if (unitQuantity) newUnit.quantity = unitQuantity
-          if (unitDefObj?.basePrefix) newUnit.basePrefix = unitDefObj.basePrefix
           Object.freeze(newUnit)
           defs.units[newUnitName] = newUnit
           unitsAdded++
@@ -208,13 +208,9 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
     for (let i = 0; i < sys.length; i++) {
       // Important! The unit below is not a real unit, but for now it is-close enough
       let unit = parser(sys[i])
-      if (unit) {
-        unit.type = 'Unit'
-        Object.freeze(unit)
-        defs.systems[system][i] = unit
-      } else {
-        throw new Error(`Unparsable unit '${sys[i]}' in unit system '${system}'`)
-      }
+      unit.type = 'Unit'
+      Object.freeze(unit)
+      defs.systems[system][i] = unit
     }
   }
 
@@ -236,7 +232,7 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
    * Tests whether the given string exists as a known unit. The unit may have a prefix.
    * @param {string} singleUnitString The name of the unit, with optional prefix.
    */
-  function exists (singleUnitString: string) {
+  function exists(singleUnitString: string) {
     return findUnit(singleUnitString) !== null
   }
 
@@ -284,4 +280,10 @@ export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
   Object.freeze(defs.units)
 
   return { originalDefinitions, defs, exists, findUnit, parser }
+
 }
+
+function isUnitPropsWithQuantity(unit: UnitProps): unit is UnitPropsWithQuantity {
+  return typeof unit !== 'string' && unit.quantity !== undefined
+}
+

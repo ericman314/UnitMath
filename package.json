@@ -1,6 +1,6 @@
 {
   "name": "unitmath",
-  "version": "0.8.6",
+  "version": "1.0.0-rc.1",
   "description": "JavaScript library for unit conversion and arithmetic",
   "main": "index.js",
   "module": "src/Unit.js",
@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "build": "rollup -c",
-    "prepublishOnly": "npm test && npm run test:bundle",
+    "toc": "markdown-toc -i README.md",
+    "prepublishOnly": "npm test",
     "test": "npm run lint && npm run test:src",
     "test:src": "jest --watch",
     "test:bundle": "npm run build && jest --testMatch '**/test/**/*.test-bundle.js'",
@@ -50,6 +51,7 @@
     "decimal.js": "^10.2.0",
     "esm": "^3.2.25",
     "jest": "^26.0.1",
+    "markdown-toc": "^1.2.0",
     "rollup": "^1.32.1",
     "rollup-plugin-babel": "4.3.2",
     "rollup-plugin-commonjs": "9.3.4",

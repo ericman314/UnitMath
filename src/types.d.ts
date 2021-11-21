@@ -63,7 +63,7 @@ export interface TypeArithmetics<T> {
   }
 }
 
-export interface BaseUnit<T> {
+export interface AtomicUnit<T> {
   unit: UnitPropsExtended<T>,
   prefix: string,
   power: number
@@ -168,12 +168,12 @@ export interface DefinitionsExtended<T> {
 }
 
 
-// Rename so Unit the type does not conflict with Unit the class? Is this interface even necessary? I don't know
+// TODO: Rename so Unit the type does not conflict with Unit the class? Is this interface even necessary? I don't know
 export interface Unit<T> {
   readonly type: 'Unit'
 
   value: T | null
-  baseUnits: BaseUnit<T>[]
+  unitList: AtomicUnit<T>[]
   dimension: Record<string, number>
 
   /** whether the prefix and the units are fixed */
@@ -435,7 +435,7 @@ export interface UnitStore<T> {
 // A stripped down version of a Unit
 export interface ParsedUnit<T> {
   type: 'Unit'
-  baseUnits: BaseUnit<T>[]
+  unitList: AtomicUnit<T>[]
   dimension: Record<string, number>, // TODO: Should this be T or number?
   value: T | null
 }
