@@ -10,7 +10,7 @@ UnitMath is a JavaScript library for unit conversion and arithmetic.
 npm install unitmath
 ```
 
-*This is the documentation for v0.8.6. For documentation on v1.0.0-rc, [click here](https://github.com/ericman314/UnitMath/tree/v1#readme).*
+*This is the documentation for v0.8.6. For documentation on v1.0.0-rc, click one: [NPM](https://www.npmjs.com/package/unitmath/v/next); [GitHub](https://github.com/ericman314/UnitMath/tree/v1#readme).*
 
 ## Use
 
