@@ -130,7 +130,7 @@ describe('unitmath', () => {
         type: 42,
         formatter: 42,
       }
-      let actualOptions = unit.config()
+      let actualOptions = unit.getConfig()
       // Ignore type and format
       expect({
         ...actualOptions,
@@ -145,26 +145,26 @@ describe('unitmath', () => {
 
   describe('config', () => {
     test('should return current config when called with no arguments', () => {
-      expect(typeof unit.config()).toEqual('object')
+      expect(typeof unit.getConfig()).toEqual('object')
     })
 
     test('should clone the options argument', () => {
-      let options: PartialOptions<number> = { prefix: 'always' }
+      let options: Options<number> = { prefix: 'always' }
       let newUnit = unit.config(options)
-      expect(options).not.toBe(newUnit.config())
+      expect(options).not.toBe(newUnit.getConfig())
     })
 
     test('should freeze the options', () => {
       let newUnit = unit.config({})
-      let options = newUnit.config()
+      let options = newUnit.getConfig()
       expect(() => { options.prefix = 'always' }).toThrow()
     })
 
     test('should set new config options', () => {
       let newUnit = unit.config({ prefix: 'always' })
-      expect(unit.config().prefix).toEqual('auto')
-      expect(newUnit.config().prefix).toEqual('always')
-      expect(newUnit.config().simplify).toEqual('auto')
+      expect(unit.getConfig().prefix).toEqual('auto')
+      expect(newUnit.getConfig().prefix).toEqual('always')
+      expect(newUnit.getConfig().simplify).toEqual('auto')
     })
 
     test('should throw on invalid options', () => {
@@ -421,7 +421,7 @@ describe('unitmath', () => {
       })
       test('should have a clone of the config options from the first namespace', () => {
         let newUnit = unit.config({})
-        expect(unit.config()).not.toBe(newUnit.config())
+        expect(unit.getConfig()).not.toBe(newUnit.getConfig())
       })
     })
   })

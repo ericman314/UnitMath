@@ -1402,15 +1402,9 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @param {Object} options Configuration options, in addition to those existing, to set on the new instance.
    * @returns {Function} A new instance of the unit factory function with the specified options
    */
-  function configFunction(): Options<T>
-  function configFunction(newOptions: PartialOptions<T>): UnitFactory<T>
-  function configFunction(newOptions?: PartialOptions<T>) {
-    if (typeof (newOptions) === 'undefined') {
-      return options
-    }
-
+  function configFunction<newT>(newOptions: Options<newT>) {
     // Shallow copy existing config
-    let retOptions = Object.assign({}, options, newOptions)
+    let retOptions = Object.assign({}, options, newOptions) as unknown as RequiredOptions<newT>
 
     // Shallow copy unit and type
     retOptions.definitions = Object.assign({}, options.definitions, newOptions.definitions)
@@ -1419,6 +1413,14 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   }
 
   unitmath.config = configFunction
+
+  /**
+   * Get the current configuration options for this unit factory function.
+   * @returns The current configuration options
+   */
+  unitmath.getConfig = function getConfig() {
+    return options
+  }
 
   unitmath.definitions = function definitions() {
     return unitStore.originalDefinitions

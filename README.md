@@ -241,8 +241,6 @@ Available options are:
 - `type`. An object that allows UnitMath to work with custom numeric types. See [Custom Types](#custom-types) for complete details and examples.
 
 
-To query the current configuration, call `unit.config()` with no arguments.
-
 Because `unit.config(options)` returns a new instance of UnitMath, is is technically possible to perform operations between units created from different instances. The resulting behavior is undefined, however, so it is probably best to avoid doing this.
 
 **Important:** `unit.config(options)` returns a *new* instance of the factory function, so you must assign the return value of `unit.config(options)` to some variable, otherwise the new options won't take effect:
@@ -254,6 +252,10 @@ unit.config(options) // Incorrect, has no effect
 
 unit = unit.config(options) // Correct
 ```
+
+### Querying the current configuration
+
+Call `unit.getConfig()` to return the current configuration.
 
 ## Extending UnitMath
 
@@ -967,15 +969,6 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   unit.to('10 kg / m^2 s^3 A^2', 'kohm') // 0.01 kohm
   ```
 
-- `config()`
-
-    Returns the current configuration.
-
-    ```js
-    const unit = require('unitmath')
-    unit.config()
-    ```
-
 - `config(options:object)`
 
   Configure a new unit namespace with the given options (see [Configuring](#configuring))
@@ -984,6 +977,15 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   const unit = require('unitmath').config({ option1, option2, ... })
   ```
 
+- `getConfig()`
+
+    Returns the current configuration.
+
+    ```js
+    const unit = require('unitmath')
+    unit.getConfig()
+    ```
+    
 - `exists(singleUnitString:string)`
 
   Tests if the given unit, optionally with a prefix, exists.
