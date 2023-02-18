@@ -40,8 +40,8 @@ npm install unitmath
 const unit = require('unitmath')
 
 let a = unit('5 m').div('2 s')   // 2.5 m / s
-let b = unit('40 km').to('mile')  // 62.1371192237334 mile
-b.format({ precision: 4 })          // "62.14 mile"
+let b = unit('40 km').to('mile')  // 24.8548476894934 mile
+b.format({ precision: 4 })          // "24.85 mile"
 ```
 
 ## Creating Units
@@ -77,7 +77,7 @@ The string portion of a unit must not contain more than one `"/"`. Units appeari
 The `to` method converts from one unit to another. The two units must have the same dimension.
 
 ```js
-unit('40 mile').to('km') // 64.37376 km
+unit('40 km').to('mile') // 24.8548476894934 mile
 unit('kg').to('lbm') // 2.20462262184878 lbm
 unit(5000, 'kg').to('N s') // Cannot convert 5000 kg to N s: dimensions do not match
 ```
@@ -115,7 +115,7 @@ unit('3 ft').add('6 in').mul(2)   // 7 ft
 All of the operators are also available on the top-level `unit` object:
 
 ```js
-unit.mul(unit.add('3 ft', '6 in'), 2)
+unit.mul(unit.add('3 ft', '6 in'), 2)   // 7 ft
 ```
 
 Units are immutable, so every operation on a unit creates a new unit.
@@ -136,7 +136,7 @@ The `format` and `toString` methods can accept a configuration object. The follo
   unit('180 deg').to('rad').format({ precision: 6 }) // 3.14159 rad
   ```
 
-- `prefix` -- *Default:* `'auto'`. When formatting a unit, this option will specify whether the `toString` and `format` methods are allowed to choose an appropriately sized prefix in case of very small or very large quantities. Possible values are `'auto'`, `'always'`, or `'never'`. If `'auto'` is chosen, then a prefix is always chosen unless the `unit` was constructed using the `to()` method.
+- `prefix` -- *Default:* `'auto'`. When formatting a unit, this option will specify whether the `toString` and `format` methods are allowed to choose an appropriately sized prefix in case of very small or very large quantities. Possible values are `'auto'`, `'always'`, or `'never'`. If `'auto'` is chosen, then a prefix is always chosen unless the `unit` was constructed using the `to()` or `fixUnits()` methods.
 
 - `prefixMin` -- *Default:* `0.1`. When choosing a prefix, the smallest formatted value of a `unit` that is allowed.
 
@@ -144,13 +144,13 @@ The `format` and `toString` methods can accept a configuration object. The follo
 
 - `formatPrefixDefault` -- *Default:* `none`. Sets the default behavior for units without a `formatPrefixes` property. `'all'` will cause the formatter to use all prefixes in that unit's prefix group, while `'none'` will not use any prefixes to format the unit.
 
-- `simplify` -- *Default:* `'auto'`. Specifies if UnitMath should attempt to simplify the units before formatting as a string. Possible values are `'auto'`, `'always'`, or `'never'`. If set to `'auto'` or `'always'`, then `u.toString()` becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. When `'auto'` is used, simplification is skipped if the unit is valueless or was constructed using the `to()` method.
+- `simplify` -- *Default:* `'auto'`. Specifies if UnitMath should attempt to simplify the units before formatting as a string. Possible values are `'auto'`, `'always'`, or `'never'`. If set to `'auto'` or `'always'`, then `u.toString()` becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. When `'auto'` is used, simplification is skipped if the unit is valueless or was constructed using the `to()` or `fixUnits()` methods.
 
-  *Note: You can also use the `.to()` method to prevent UnitMath from simplifying a unit:*
+  *Note: You can also use the `.to()` or `.fixUnits()` methods to prevent UnitMath from simplifying a unit:*
 
   ```js
   unit('1.5 kg m / s^2').format() // 1.5 N
-  unit('1.5 kg m / s^2').to().format() // 1.5 kg m / s^2
+  unit('1.5 kg m / s^2').fixUnits().format() // 1.5 kg m / s^2
   unit('1.5 N').to('kg m / s^2').format() // 1.5 kg m / s^2
   ```
 
@@ -188,22 +188,25 @@ The `format` and `toString` methods can accept a configuration object. The follo
   unit('45 W / m K').format({ parentheses: true }) // 45 W / (m K)
   ```
 
-- `formatter`. Define a custom formatter for the numeric portion of the unit. The formatter will be passed the numeric value of the unit, as well as any arguments passed to the unit's `format` or `toString` (except the configuration object). For example:
+- `formatter`. Define a custom formatter for the numeric portion of the unit. The formatter will be passed the numeric value of the unit. For example:
 
   ```js
   let unit = require('unitmath')
 
   // Custom formatter
-  let funnyFormatter = (a, b, c) => b + a.toString().split('').reverse().join(c)
+  let formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  });
 
   // Specify formatter in argument to toString
-  unit('3.14159 rad').toString({ formatter: funnyFormatter }, '$', '_') // '$9_5_1_4_1_._3 rad'
+  unit('25000 / ton').toString({ formatter: formatter.format }) // '$25,000.00 ton^-1'
 
   // Specify formatter in config
-  let unitFunny = unit.config({
-    formatter: funnyFormatter
+  let unitMoney = unit.config({
+    formatter: formatter.format
   })
-  unitFunny('3.14159 rad').toString({}, '$', '_') // '$9_5_1_4_1_._3 rad'
+  unitMoney('25000 / ton').toString() // '$25,000.00 ton^-1'
   ```
 
 
@@ -226,13 +229,13 @@ Available options are:
   unit = unit.config({
     definitions: {
       units: {
-        furlong: '220 yards',
-        fortnight: '2 weeks'
+        furlong: { value: '220 yards' },
+        fortnight: { value: '2 weeks' }
       }
     }
   })
 
-  unit('6 furlongs/fortnight').to('m/s') // 0.000997857142857143 m / s
+  unit('6 furlong/fortnight').to('m/s') // 0.000997857142857143 m / s
   ```
 
 - `type`. An object that allows UnitMath to work with custom numeric types. See [Custom Types](#custom-types) for complete details and examples.
@@ -267,7 +270,7 @@ To create a user-defined unit, pass a `definitions` object to `unit.config()`:
     }
   })
 
-  unit('1 lightyear').to('mile') // 5878625373183.608 mile
+  unit('1 lightyear').to('mile') // 5878625373183.61 mile
   ```
 
 The `definitions` object contains four properties which allow additional customization of the unit system: `units`, `prefixGroups`, `systems`, and `skipBuiltIns`.
@@ -316,14 +319,14 @@ Here are all the options you can specify:
   ```js
   // Incorrect
   units: {
-    meter: { quantity: 'LENGTH', value: 1 }
-    square_meter: { quantity: 'LENGTH^2', value: 1 }
+    meter: { quantity: 'LENGTH', value: 1 },
+    squareMeter: { quantity: 'LENGTH^2', value: 1 }
   }
 
   // Correct
   units: {
-    meter: { quantity: 'LENGTH', value: 1 }
-    square_meter: { value: '1 meter^2' }  
+    meter: { quantity: 'LENGTH', value: 1 },
+    squareMeter: { value: '1 meter^2' }  
   }
   ```
 
@@ -346,14 +349,14 @@ Here are all the options you can specify:
     L: {
       prefixGroup: 'SHORT', // Parse any prefix in the 'SHORT' prefix group
       formatPrefixes: ['n', 'u', 'm', ''], // Format only as 'nL', 'uL', 'mL', and 'L'.
-      value: '1e-3 m^3',
+      value: '1e-3 m^3'
     },
     lumen: {
       prefixGroup: 'LONG', // Parse any prefix in the 'LONG' prefix group
       value: '1 cd sr'
       // formatPrefixes is not given, so lumen will be formatted only as "lumen" if formatPrefixDefault === false,
       // or formatted using any of the prefixes in the 'LONG' prefix group if formatPrefixDefault === true.
-    },
+    }
   }
   ```
 
@@ -367,7 +370,7 @@ Here are all the options you can specify:
       formatPrefixes: ['n', 'u', 'm', '', 'k'],
       value: 0.001,
       basePrefix: 'k' // Treat as if 'kg' is the base unit, not 'g'
-    },
+    }
   }
   ```
 
@@ -414,7 +417,7 @@ prefixGroups: {
 
 **definitions.systems**
 
-This object assigns one or more units to a number of systems. Each key in `definitions.systems` becomes a system. For each system, list all the units that should be associated with that system in an array. The units may include prefixes.
+This object assigns one or more units to a number of systems. Each key in `definitions.systems` becomes a system. For each system, list all the units that should be associated with that system in an array. The units may be single or compound (`m` or `m/s`) and may include prefixes.
 
 Example:
 
@@ -462,7 +465,8 @@ Below is an abbreviated sample output from `unit.definitions()`. It can serve as
     foot: { value: '12 inch', aliases: [ 'ft', 'feet' ] },
     yard: { value: '3 foot', aliases: [ 'yd', 'yards' ] },
     mile: { value: '5280 ft', aliases: [ 'mi', 'miles' ] },
-    ... },
+    ...
+  },
   prefixGroups: {
     NONE: { '': 1 },
     SHORT: {
@@ -474,9 +478,15 @@ Below is an abbreviated sample output from `unit.definitions()`. It can serve as
       d: 0.1,
       c: 0.01,
       m: 0.001,
-      ... },
-    ... },
+      ... 
+    },
+  },
+  systems: {
+    si: ['m', 'meter', 's', 'A', 'kg', ...],
+    cgs: ['cm', 's', 'A', 'g', 'K', ...],
+    us: ['ft', 's', 'A', 'lbm', 'degF', ...]
   }
+}
 ```
 
 ### Custom Types ###
@@ -487,10 +497,10 @@ Example using Decimal.js as the custom type:
 
 ```js
 const Decimal = require('decimal.js')
-const unit = require('unitmath').config({
+const unit = unit.config({
   type: {
-    clone: Decimal,
-    conv: Decimal,
+    clone: (x) => new Decimal(x),
+    conv: (x) => new Decimal(x),
     add: (a, b) => a.add(b),
     sub: (a, b) => a.sub(b),
     mul: (a, b) => a.mul(b),
@@ -507,7 +517,7 @@ const unit = require('unitmath').config({
   }
 })
 
-let u = unit('2.74518864784926316174649567946 m')
+let u = unit2('2.74518864784926316174649567946 m')
 ```
 
 Below is a table of functions and when they are required:
@@ -619,8 +629,8 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
 
   ```js
   let a = unit('8 m')
-  let b = unit('200 W')
-  let product = a.mul(b) // 16 kJ
+  let b = unit('200 N')
+  let product = a.mul(b).simplify() // 1.6 kJ
   ```
 
 - `div(other: unit | string | T) : unit`
@@ -679,14 +689,25 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   r.to('kohm').format() // 0.01 kohm
   ```
 
-- `to()`
+- `fixUnits()`
 
-  Fixes this unit and prevents it from being automatically simplified.
+  Returns a new unit with the units and prefix "fixed", so that it will not be automatically simplified.
 
   ```js
   let r = unit('10 kg / m^2 s^3 A^2')
   r.format() // 10 ohm
-  r.to().format() // 10 kg m^2 / s^3 A^2
+  r.fixUnits().format() // 10 kg m^2 / s^3 A^2
+  ```
+
+  Using `fixUnits()` is faster than calling `to()` with the original units:
+
+  ```js
+  let r = unit('10 kg / m^2 s^3 A^2')
+  
+  // These are equivalent, but fixUnits() is shorter and faster:
+  r.fixUnits().format() // 10 kg m^2 / s^3 A^2
+  r.to(r.getUnits()).format() // 10 kg m^2 / s^3 A^2
+
   ```
 
 - `toBaseUnits()`
@@ -767,6 +788,42 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   unit('34 kg^2').isCompound() // true
   unit('34 N').isCompound() // false
   unit('34 kg m / s^2').isCompound() // true
+  ```
+
+- `isBase()`
+
+  Returns true if this unit's unit list contains exactly one unit with a power equal to 1, and which is the of same dimension as one of the base dimensions length, time, mass, etc., or a user-defined base dimension.
+
+  ```js
+
+  unit = unit.config({ 
+     definitions: {
+      units: {
+        myUnit: { quantity: 'MY_NEW_BASE', value: 1 },
+        anotherUnit: { value: '4 myUnit' }
+      }
+    }
+  })
+
+  unit('34 kg').isBase() // true
+  unit('34 kg/s').isBase() // false
+  unit('34 kg^2').isBase() // false
+  unit('34 N').isBase() // false
+  unit('34 myUnit').isBase() // true
+  unit('34 anotherUnit').isBase() // true
+  ```
+
+- `getInferredSystem()`
+
+  Examines this unit's unitList to determine the most likely system this unit is expressed in.
+
+  ```js
+  unit('10 N m').getInferredSystem() // 'si'
+  unit('10 J / m').getInferredSystem() // 'si'
+  unit('10 m^3 Pa').getInferredSystem() // 'si'
+  unit('10 dyne/cm').getInferredSystem() // 'cgs'
+  unit('10 ft/s').getInferredSystem() // 'us'
+  unit('10').getInferredSystem() // null
   ```
 
 - `equalsQuantity(other: unit | string)`

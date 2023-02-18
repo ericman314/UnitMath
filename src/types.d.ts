@@ -255,15 +255,22 @@ export interface Unit<T> {
   /**
    * Convert the unit to a specific unit.
    * @memberof Unit
-   * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm". If omitted, a new unit is returned which is fixed (will not be auto-simplified)
-   * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+   * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm".
+   * @returns {Unit} Returns a clone of the unit converted to the specified unit.
    */
   to(valuelessUnit?: string | Unit<T>): Unit<T>
 
   /**
-   * Convert the unit to SI units.
+   * Fix the units and prevent them from being automatically simplified.
    * @memberof Unit
    * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+   */
+  fixUnits(): Unit<T>
+
+  /**
+   * Convert the unit to base units.
+   * @memberof Unit
+   * @returns {Unit} Returns a clone of the unit in the base units.
    */
   toBaseUnits(): Unit<T>
 
@@ -315,11 +322,25 @@ export interface Unit<T> {
   getUnits(): Unit<T>
 
   /**
+   * Examines this unit's unitList to determine the most likely system this unit is currently expressed in.
+   * @returns {string | null} The system this unit is most likely expressed in, or null if no likely system was recognized.
+   */
+  getInferredSystem(): string | null
+
+  /**
    * Returns whether the unit is compound (like m/s, cm^2) or not (kg, N, hogshead)
    * @memberof Unit
    * @returns True if the unit is compound
    */
   isCompound(): boolean
+
+
+  /**
+   * Return whether the given array of unit pieces is a base unit with single dimension such as kg or feet, but not m/s or N or J.
+   * @param unitList Array of unit pieces
+   * @returns True if the unit is base
+   */
+  isBase(): boolean
 
   /**
    * check if this unit matches the given quantity

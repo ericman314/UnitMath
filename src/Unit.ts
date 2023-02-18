@@ -1,5 +1,5 @@
 import { createUnitStore } from './UnitStore'
-import { normalize, denormalize, isCompound as _isCompound } from './utils'
+import { normalize, denormalize, isCompound as _isCompound, isBase as _isBase, isBase } from './utils'
 import { AtomicUnit, FormatOptions, Options, ParsedUnit, PartialOptions, TypeArithmetics, Unit, UnitFactory } from './types'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
@@ -250,17 +250,13 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     /**
      * Convert the unit to a specific unit.
      * @memberof Unit
-     * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm". If omitted, a new unit is returned which is fixed (will not be auto-simplified)
-     * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+     * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm".
+     * @returns {Unit} Returns a clone of the unit converted to the specified unit.
      */
-    to(valuelessUnit?: string | Unit<T>): Unit<T> {
+    to(valuelessUnit: string | Unit<T>): Unit<T> {
       let unit: Unit<T>
-      if (typeof valuelessUnit === 'undefined') {
-        // Special case. Just clone the unit and set as fixed.
-        unit = _clone(this)
-        unit.fixed = true
-        Object.freeze(unit)
-        return unit
+      if (valuelessUnit == null) {
+        throw new Error('to() requires a unit as a parameter')
       } else {
         if (typeof valuelessUnit !== 'string' && valuelessUnit.type !== 'Unit') {
           throw new TypeError('Parameter must be a Unit or a string.')
@@ -270,6 +266,18 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
         Object.freeze(unit)
         return unit
       }
+    }
+
+    /**
+     * Fix the unit and prevents it from being automatically simplified.
+     * @memberof Unit
+     * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
+     */
+    fixUnits(): Unit<T> {
+      const unit = _clone(this)
+      unit.fixed = true
+      Object.freeze(unit)
+      return unit
     }
 
     /**
@@ -326,6 +334,49 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     }
 
     /**
+     * Examines this unit's unitList to determine the most likely system this unit is currently expressed in.
+     * @returns {string | null} The system this unit is most likely expressed in, or null if no likely system was recognized.
+     */
+    getInferredSystem() {
+      // If unit system is 'auto', then examine the existing units to infer which system is preferred.
+      let systemStr: string | null = null
+      let identifiedSystems: Record<string, number> = {}
+      for (let unit of this.unitList) {
+        for (let system of Object.keys(unitStore.defs.systems)) {
+          for (let systemUnit of unitStore.defs.systems[system]) {
+            if (!isBase(systemUnit.unitList)) {
+              continue
+            }
+            let systemUnitString = `${systemUnit.unitList[0].prefix}${systemUnit.unitList[0].unit.name}`
+            let unitString = `${unit.prefix}${unit.unit.name}`
+            if (systemUnitString === unitString) {
+              identifiedSystems[system] = (identifiedSystems[system] || 0) + 1
+            } else if (unit.unit.name === systemUnit.unitList[0].unit.name) {
+              // Half credit if the prefixes don't match
+              identifiedSystems[system] = (identifiedSystems[system] || 0) + 0.5
+            }
+          }
+        }
+      }
+
+      let ids = Object.keys(identifiedSystems)
+      // Pick the best identified ddsystem
+      if (ids.length > 0) {
+        let bestId = ids[0]
+        let bestScore = identifiedSystems[ids[0]]
+        for (let i = 1; i < ids.length; i++) {
+          if (identifiedSystems[ids[i]] > bestScore) {
+            bestId = ids[i]
+            bestScore = identifiedSystems[ids[i]]
+          }
+        }
+        systemStr = bestId
+      }
+
+      return systemStr
+    }
+
+    /**
      * Simplify this Unit's unit list and return a new Unit with the simplified list.
      * The returned Unit will contain a list of the "best" units for formatting.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
@@ -336,26 +387,10 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
 
       let systemStr: string = system ?? options.system
       if (systemStr === 'auto') {
-        // If unit system is 'auto', then examine the existing units to infer which system is preferred.
-        let identifiedSystems: Record<string, number> = {}
-        for (let unit of this.unitList) {
-          for (let system of Object.keys(unitStore.defs.systems)) {
-            for (let systemUnit of unitStore.defs.systems[system]) {
-              let systemUnitString = `${systemUnit.unitList[0].prefix}${systemUnit.unitList[0].unit.name}`
-              let unitString = `${unit.prefix}${unit.unit.name}`
-              if (systemUnit.unitList.length === 1 && systemUnitString === unitString) {
-                identifiedSystems[system] = (identifiedSystems[system] || 0) + 1
-              }
-            }
-          }
+        let inferredSystemStr = this.getInferredSystem()
+        if (inferredSystemStr) {
+          systemStr = inferredSystemStr
         }
-
-        let ids = Object.keys(identifiedSystems)
-        // Pick the best identified system
-        if (ids.length > 0) {
-          systemStr = ids.reduce((a, b) => (identifiedSystems[a] > identifiedSystems[b] ? a : b))
-        }
-
         // console.log(`Identified the following systems when examining unit ${result.clone().to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
       }
 
@@ -368,6 +403,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // Several methods to decide on the best unit for simplifying
 
       // 1. Search for a matching dimension in the given unit system
+      // TODO: This doesn't seem to be working?
       let matchingUnitsOfSystem: ParsedUnit<T>[] = []
       for (let unit of unitsOfSystem) {
         if (this.equalsQuantity(unit)) {
@@ -418,20 +454,36 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
         proposedUnitList.push(...matchingUnit.unitList)
       } else {
         // Did not find a matching unit in the system
-        // 4. Build a representation from the base units of all defined units
+
+        // 4, 5. Build a representation from the base units of all defined units
         for (let dim of Object.keys(result.dimension)) {
           if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
             let found = false
-            for (const unit of Object.values(unitStore.defs.units)) {
-              if (unit.quantity === dim) {
-                // TODO: Try to use a matching unit from the specified system, instead of the base unit that was just found
+            // 4. Look for a base unit in the system
+            for (let unit of unitsOfSystem) {
+              if (isBase(unit.unitList) && unit.dimension[dim] === 1) {
                 proposedUnitList.push({
-                  unit,
-                  prefix: unit.basePrefix || '',
+                  unit: unit.unitList[0].unit,
+                  prefix: unit.unitList[0].prefix,
                   power: result.dimension[dim]
                 })
                 found = true
                 break
+              }
+            }
+            if (!found) {
+              // 5. Look for a base unit in all units
+              for (const unit of Object.values(unitStore.defs.units)) {
+                if (unit.quantity === dim) {
+                  // TODO: Try to use a matching unit from the specified system, instead of the base unit that was just found
+                  proposedUnitList.push({
+                    unit,
+                    prefix: unit.basePrefix || '',
+                    power: result.dimension[dim]
+                  })
+                  found = true
+                  break
+                }
               }
             }
             if (!found) ok = false
@@ -472,6 +524,16 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      */
     isCompound() {
       return _isCompound(this.unitList)
+    }
+
+
+    /**
+     * Return whether the given array of unit pieces is a base unit with single dimension such as kg or feet, but not m/s or N or J.
+     * @param unitList Array of unit pieces
+     * @returns True if the unit is base
+     */
+    isBase() {
+      return _isBase(this.unitList)
     }
 
     /**
@@ -669,17 +731,20 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
         _opts = Object.assign(_opts, formatOptions)
       }
 
+      // Always simplify if the options system is not 'auto' and the inferred system is different
+      let inferredSystem = this.getInferredSystem()
+      let simplifyDueToDifferentSystem = _opts.system !== 'auto' && _opts.system !== inferredSystem
+      if (_opts.system === 'auto' && inferredSystem) {
+        _opts.system = inferredSystem
+      }
 
-      if (_opts.simplify === 'always') {
+      if (_opts.simplify === 'always' || simplifyDueToDifferentSystem) {
+        // Must simplify because _opts.simplify is 'always' or the system is different
         simp = simp.simplify(_opts.system)
       } else if (_opts.simplify === 'auto' && !this.fixed && this.value !== null) {
         let simp2 = simp.simplify(_opts.system)
 
         // Determine if the simplified unit is simpler
-
-
-
-        // TODO: Decide when to simplify in case that the system is different, as in, unit.config({ system: 'us' })('10 N')).toString()
 
         // Is the proposed unit list "simpler" than the existing one?
         if (simp2.getComplexity() <= simp.getComplexity() - _opts.simplifyThreshold) {
@@ -724,12 +789,10 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
   // function _convertParamToUnit<V extends T|n> (a?: any, b?: any): Unit {
 
   function _isUnit(a: any): a is Unit<T> {
-    debugger
     return a?.type === 'Unit' && a.clone
   }
 
   function _isParsedUnit(a: any): a is ParsedUnit<T> {
-    debugger
     return a?.type === 'Unit' && !a.clone
   }
 

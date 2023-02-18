@@ -82,3 +82,15 @@ export function isCompound<T>(unitList: AtomicUnit<T>[]): boolean {
   }
   return unitList.length > 1 || Math.abs(unitList[0].power - 1.0) > 1e-15
 }
+
+/**
+ * Return whether the given array of unit pieces is a base unit with single dimension such as kg or feet, but not m/s or N or J.
+ * @param unitList Array of unit pieces
+ * @returns True if the unit is base
+ */
+export function isBase<T>(unitList: AtomicUnit<T>[]): boolean {
+  return unitList.length === 1
+    && Math.abs(unitList[0].power - 1.0) < 1e-15
+    && Object.keys(unitList[0].unit.dimension).length === 1
+    && unitList[0].unit.dimension[Object.keys(unitList[0].unit.dimension)[0]] === 1
+}
