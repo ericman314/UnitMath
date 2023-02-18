@@ -273,12 +273,12 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
      * @memberof Unit
      * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
      */
-    fixUnits(): Unit<T> {
-      const unit = _clone(this)
-      unit.fixed = true
-      Object.freeze(unit)
-      return unit
-    }
+    // fixUnits(): Unit<T> {
+    //   const unit = _clone(this)
+    //   unit.fixed = true
+    //   Object.freeze(unit)
+    //   return unit
+    // }
 
     /**
      * Convert the unit to SI units.
@@ -702,14 +702,14 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     /**
      * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
      */
-    valueOf() {
-      return this.format({
-        precision: 0, // 0 means do not round
-        simplify: 'never',
-        prefix: 'never',
-        parentheses: false
-      })
-    }
+    // valueOf() {
+    //   return this.format({
+    //     precision: 0, // 0 means do not round
+    //     simplify: 'never',
+    //     prefix: 'never',
+    //     parentheses: false
+    //   })
+    // }
 
     /**
      * Get a string representation of the Unit, with optional formatting options.
@@ -731,29 +731,29 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
       }
 
       // Always simplify if the options system is not 'auto' and the inferred system is different
-      let inferredSystem = this.getInferredSystem()
-      let simplifyDueToDifferentSystem = _opts.system !== 'auto' && _opts.system !== inferredSystem
-      if (_opts.system === 'auto' && inferredSystem) {
-        _opts.system = inferredSystem
-      }
+      // let inferredSystem = this.getInferredSystem()
+      // let simplifyDueToDifferentSystem = _opts.system !== 'auto' && _opts.system !== inferredSystem
+      // if (_opts.system === 'auto' && inferredSystem) {
+      //   _opts.system = inferredSystem
+      // }
 
-      if (_opts.simplify === 'always' || simplifyDueToDifferentSystem) {
-        // Must simplify because _opts.simplify is 'always' or the system is different
-        simp = simp.simplify(_opts.system)
-      } else if (_opts.simplify === 'auto' && !this.fixed && this.value !== null) {
-        let simp2 = simp.simplify(_opts.system)
+      // if (_opts.simplify === 'always' || simplifyDueToDifferentSystem) {
+      //   // Must simplify because _opts.simplify is 'always' or the system is different
+      //   simp = simp.simplify(_opts.system)
+      // } else if (_opts.simplify === 'auto' && !this.fixed && this.value !== null) {
+      //   let simp2 = simp.simplify(_opts.system)
 
-        // Determine if the simplified unit is simpler
+      //   // Determine if the simplified unit is simpler
 
-        // Is the proposed unit list "simpler" than the existing one?
-        if (simp2.getComplexity() <= simp.getComplexity() - _opts.simplifyThreshold) {
-          simp = simp2
-        }
-      }
+      //   // Is the proposed unit list "simpler" than the existing one?
+      //   if (simp2.getComplexity() <= simp.getComplexity() - _opts.simplifyThreshold) {
+      //     simp = simp2
+      //   }
+      // }
 
-      if (_opts.prefix === 'always' || (_opts.prefix === 'auto' && !this.fixed)) {
-        simp = _choosePrefix(simp, _opts)
-      }
+      // if (_opts.prefix === 'always' || (_opts.prefix === 'auto' && !this.fixed)) {
+      //   simp = _choosePrefix(simp, _opts)
+      // }
 
       let str = ''
       if (typeof simp.value === 'number' && _opts.formatter[symIsDefaultFun] && _opts.precision > 0) {
@@ -761,7 +761,7 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
         str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
         // Use custom format method (which defaults to the toString(opts) method)
-        str += _opts.formatter(simp.value, ...userArgs)
+        str += _opts.formatter(simp.value)
       }
       const unitStr = _formatUnits(simp, _opts)
       if (unitStr.length > 0 && str.length > 0) {
@@ -846,9 +846,9 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     const result = new _Unit()
     result.value = unit.value === null ? null : options.type.clone(unit.value)
     result.dimension = { ...unit.dimension }
-    if (unit.fixed) {
-      result.fixed = unit.fixed
-    }
+    // if (unit.fixed) {
+    //   result.fixed = unit.fixed
+    // }
     result.unitList = []
     for (let i = 0; i < unit.unitList.length; i++) {
       result.unitList[i] = {} as any
@@ -1151,7 +1151,6 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     }
     result = _clone(valuelessUnit)
     result.value = denormalize(result.unitList, normalize(unit.unitList, value, options.type), options.type)
-    result.fixed = true // Don't auto simplify
     return result
   }
 
@@ -1311,7 +1310,7 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     // Replace this unit list with the proposed list
     result.unitList = proposedUnitList
     if (unit.value !== null) { result.value = denormalize(result.unitList, normalize(unit.unitList, unit.value, options.type), options.type) }
-    result.fixed = true // Don't auto simplify
+    // result.fixed = true // Don't auto simplify
     return result
   }
 

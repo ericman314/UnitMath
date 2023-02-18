@@ -189,7 +189,7 @@ export interface Unit<T> {
   dimension: Record<string, number>
 
   /** whether the prefix and the units are fixed */
-  fixed: boolean
+  // fixed: boolean
 
   // new (): Unit
   // new (str: string): Unit
@@ -277,7 +277,7 @@ export interface Unit<T> {
    * @memberof Unit
    * @returns {Unit} Returns a clone of the unit with a fixed prefix and unit.
    */
-  fixUnits(): Unit<T>
+  // fixUnits(): Unit<T>
 
   /**
    * Convert the unit to base units.
@@ -428,7 +428,7 @@ export interface Unit<T> {
   /**
    * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
    */
-  valueOf(): string
+  // valueOf(): string
 
   /**
    * Get a string representation of the Unit, with optional formatting options.
