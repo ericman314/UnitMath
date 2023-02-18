@@ -1,6 +1,6 @@
 import { createUnitStore } from './UnitStore'
 import { normalize, denormalize, isCompound as _isCompound, isBase as _isBase, isBase } from './utils'
-import { AtomicUnit, FormatOptions, Options, ParsedUnit, PartialOptions, TypeArithmetics, Unit, UnitFactory } from './types'
+import { AtomicUnit, FormatOptions, RequiredOptions, ParsedUnit, PrefixOptions, TypeArithmetics, Unit, Options, UnitFactory } from './types'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
@@ -11,7 +11,7 @@ export const symIsDefaultFun = Symbol('_IS_UNITMATH_DEFAULT_FUNCTION')
  * @param {Object} options Configuration options to set on the new instance.
  * @returns {Function} A new instance of the unit factory function with the specified options.
  */
-let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
+let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFactory<T> {
   options = { ...options }
 
   // Check to make sure options are valid
@@ -695,8 +695,8 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
      * @param {Object} [opts]  Formatting options.
      * @return {string}
      */
-    toString(formatOptions?: Partial<FormatOptions<T>>, ...userArgs: any[]) {
-      return this.format(formatOptions, ...userArgs)
+    toString(formatOptions?: FormatOptions<T>) {
+      return this.format(formatOptions)
     }
 
     /**
@@ -714,11 +714,10 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     /**
      * Get a string representation of the Unit, with optional formatting options.
      * @memberof Unit
-     * @param {FormatOptions} formatOptions  Formatting options.
-     * @param {any[]} userArgs Arguments to pass to a user-defined format function. Ignored if no format function has been configured
-     * @return {string}
+     * @param formatOptions Formatting options.
+     * @return The formatted string.
      */
-    format(formatOptions?: Partial<FormatOptions<T>>, ...userArgs: any[]) {
+    format(formatOptions?: FormatOptions<T>) {
       let simp = this.clone()
 
       // A bit of clarification:
@@ -726,7 +725,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // userOpts is a user-supplied argument
       // _opts is the original options, extended with opts if opts is an object
 
-      let _opts = Object.assign({}, options)
+      let _opts: Required<FormatOptions<T>> = Object.assign({}, options)
       if (typeof formatOptions === 'object') {
         _opts = Object.assign(_opts, formatOptions)
       }
@@ -1161,7 +1160,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
    * @param {Unit} unit The unit to choose the best prefix for.
    * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
    */
-  function _choosePrefix(unit: Unit<T>, formatOptions: FormatOptions<T>) {
+  function _choosePrefix(unit: Unit<T>, prefixOptions: Required<PrefixOptions<T>>) {
     let result = _clone(unit)
     let piece = result.unitList[0] // TODO: Someday this might choose the most "dominant" unit, or something, to prefix, rather than the first unit
 
@@ -1185,7 +1184,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
       // Unit is too small for the prefix to matter
       return unit
     }
-    if (options.type.le(options.type.abs(unit.value), formatOptions.prefixMax) && options.type.ge(options.type.abs(unit.value), formatOptions.prefixMin)) {
+    if (options.type.le(options.type.abs(unit.value), prefixOptions.prefixMax) && options.type.ge(options.type.abs(unit.value), prefixOptions.prefixMin)) {
       // Unit's value is already acceptable
       return unit
     }
@@ -1209,15 +1208,15 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     function calcScore(prefix: string) {
       let thisValue = options.type.abs(calcValue(prefix))
       // console.log(`Calculating score for ${prefix}; thisValue = ${thisValue}`)
-      if (options.type.lt(thisValue, formatOptions.prefixMin)) {
+      if (options.type.lt(thisValue, prefixOptions.prefixMin)) {
         // prefix makes the value too small
         // console.log(`Prefix makes thisValue too small`)
-        return options.type.div(options.type.conv(formatOptions.prefixMin), thisValue)
+        return options.type.div(options.type.conv(prefixOptions.prefixMin), thisValue)
       }
-      if (options.type.gt(thisValue, formatOptions.prefixMax)) {
+      if (options.type.gt(thisValue, prefixOptions.prefixMax)) {
         // prefix makes the value too large
         // console.log(`Prefix makes thisValue too large`)
-        return options.type.div(thisValue, options.type.conv(formatOptions.prefixMax))
+        return options.type.div(thisValue, options.type.conv(prefixOptions.prefixMax))
       }
 
       // The prefix is in range, but return a score that says how close it is to the original value.
@@ -1239,7 +1238,7 @@ let _config = function _config<T>(options: Options<T>): UnitFactory<T> {
     let bestScore = calcScore(bestPrefix)
     // console.log(`The score was ${bestScore}`)
 
-    let prefixes = piece.unit.formatPrefixes ?? (formatOptions.formatPrefixDefault === 'all' ? Object.keys(piece.unit.prefixGroup) : undefined)
+    let prefixes = piece.unit.formatPrefixes ?? (prefixOptions.formatPrefixDefault === 'all' ? Object.keys(piece.unit.prefixGroup) : undefined)
 
     if (!prefixes) {
       // Unit does not have any prefixes for formatting
@@ -1549,7 +1548,10 @@ for (const key of Object.keys(defaults) as (keyof typeof defaults)[]) {
   defaults[key][symIsDefaultFun] = true
 }
 
-const defaultOptions: Options<number> = <const>{
+const defaultFormatter: RequiredOptions<number>['formatter'] = (a: number) => a.toString()
+defaultFormatter[symIsDefaultFun] = true
+
+const defaultOptions: RequiredOptions<number> = {
   parentheses: false,
   precision: 15,
   prefix: 'auto',
@@ -1559,7 +1561,7 @@ const defaultOptions: Options<number> = <const>{
   simplify: 'auto',
   simplifyThreshold: 2,
   system: 'auto',
-  formatter: (a) => a.toString(),
+  formatter: defaultFormatter,
   // subsystem: 'auto',
   definitions: {
     skipBuiltIns: false,
@@ -1569,8 +1571,6 @@ const defaultOptions: Options<number> = <const>{
   },
   type: defaults
 }
-
-defaultOptions.formatter[symIsDefaultFun] = true
 
 const firstUnit = _config<number>(defaultOptions)
 

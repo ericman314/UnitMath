@@ -1,12 +1,12 @@
 import { createParser } from './Parser'
 import { normalize } from './utils'
 import * as builtIns from './BuiltIns'
-import { Options, ParsedUnit, Definitions, DefinitionsExtended, UnitProps, UnitPropsExtended, UnitStore, UnitSystems, UnitPropsWithQuantity } from './types';
+import { RequiredOptions, ParsedUnit, Definitions, DefinitionsExtended, UnitProps, UnitPropsExtended, UnitStore, UnitSystems, UnitPropsWithQuantity } from './types';
 
 /**
  * Creates a new unit store.
  */
-export function createUnitStore<T>(options: Options<T>): UnitStore<T> {
+export function createUnitStore<T>(options: RequiredOptions<T>): UnitStore<T> {
   /* Units are defined by these objects:
    * defs.prefixes
    * defs.units

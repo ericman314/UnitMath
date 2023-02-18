@@ -1,11 +1,11 @@
-import { FindUnitFn, Options, ParsedUnit } from "./types"
+import { FindUnitFn, RequiredOptions, ParsedUnit } from "./types"
 
 const ignoredCharacters = ' \t()*'
 
 /**
  * Returns a new Parser.
  */
-export function createParser<T>(options: Options<T>, findUnit: FindUnitFn<T>) {
+export function createParser<T>(options: RequiredOptions<T>, findUnit: FindUnitFn<T>) {
   // private variables and functions for the Unit parser
   let text: string, index: number, c: string
 

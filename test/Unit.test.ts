@@ -1,4 +1,4 @@
-import { NullableDefinitions, PartialOptions, TypeArithmetics, Unit, UnitFactory } from '../src/types'
+import { NullableDefinitions, Options, TypeArithmetics, Unit, UnitFactory } from '../src/types'
 import unit from '../src/Unit'
 import Decimal from 'decimal.js'
 import './approx'

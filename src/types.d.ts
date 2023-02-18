@@ -70,29 +70,41 @@ export interface AtomicUnit<T> {
 }
 
 export interface FormatOptions<T> {
-  simplify: 'never' | 'auto' | 'always'
-  simplifyThreshold: number
-  prefix: 'never' | 'auto' | 'always'
-  precision: number
-  prefixMin: T
-  prefixMax: T
-  parentheses: boolean
-  formatPrefixDefault: 'none' | 'all'
-  system: string
-  formatter: {
-    (a: T, ...options: any[]): string
+  precision?: number
+  parentheses?: boolean
+  formatter?: {
+    (a: T): string
     [symIsDefaultFun]?: boolean
   }
 }
 
-export interface Options<T>
-  extends FormatOptions<T> {
-  type: TypeArithmetics<T>
-  definitions: Definitions & { skipBuiltIns?: boolean }
+export interface PrefixOptions<T> {
+  prefix?: 'never' | 'auto' | 'always'
+  prefixMin?: T
+  prefixMax?: T
+  formatPrefixDefault?: 'none' | 'all'
 }
 
-export interface PartialOptions<T>
-  extends Partial<FormatOptions<T>> {
+export interface SimplifyOptions<T> {
+  simplify?: 'never' | 'auto' | 'always'
+  simplifyThreshold?: number
+  system?: string
+}
+
+export type RequiredOptions<T> =
+  & Required<FormatOptions<T>>
+  & Required<PrefixOptions<T>>
+  & Required<SimplifyOptions<T>>
+  & {
+    type: TypeArithmetics<T>
+    definitions: Definitions & { skipBuiltIns?: boolean }
+  }
+
+export type Options<T> =
+  & FormatOptions<T>
+  & PrefixOptions<T>
+  & SimplifyOptions<T>
+  & {
   type?: Partial<TypeArithmetics<T>>
   definitions?: Partial<NullableDefinitions> & { skipBuiltIns?: boolean }
 }
@@ -411,7 +423,7 @@ export interface Unit<T> {
    * @param {Object} [opts]  Formatting options.
    * @return {string}
    */
-  toString(formatOptions?: Partial<FormatOptions<T>>, ...userArgs: any[]): string
+  toString(formatOptions?: FormatOptions<T>, ...userArgs: any[]): string
 
   /**
    * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
@@ -421,16 +433,15 @@ export interface Unit<T> {
   /**
    * Get a string representation of the Unit, with optional formatting options.
    */
-  format(formatOptions?: Partial<FormatOptions<T>>, ...userArgs: any[]): string
+  format(formatOptions?: FormatOptions<T>, ...userArgs: any[]): string
 }
 
 export interface UnitFactory<T> {
   (): Unit<T>
   (str: string): Unit<T>
   (value: number | T | string | null, unitString?: string): Unit<T>
-  config<U>(newOptions: PartialOptions<U>): UnitFactory<U> // Creates a new unit factory with type U 
-  config(): Options<T>
-  // getConfig(): Options
+  config<U = number>(newOptions: Options<U>): UnitFactory<U> // Creates a new unit factory with type U 
+  getConfig(): Options<T>
   definitions(): Definitions
   add(a: Unit<T> | string | T, b: Unit<T> | string | T): Unit<T>
   sub(a: Unit<T> | string | T, b: Unit<T> | string | T): Unit<T>
