@@ -7,3 +7,4 @@ HOWTO.md
 coverage
 *.bash
 call-tree
+.vscode/settings.json

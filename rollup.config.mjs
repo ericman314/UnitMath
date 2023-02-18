@@ -1,9 +1,10 @@
-import babel from 'rollup-plugin-babel'
-import typescript from 'rollup-plugin-typescript2'
-import commonjs from 'rollup-plugin-commonjs'
-import { terser } from 'rollup-plugin-terser'
+import babel from '@rollup/plugin-babel'
+import typescript from '@rollup/plugin-typescript'
+import commonjs from '@rollup/plugin-commonjs'
+import terser from '@rollup/plugin-terser'
+import { defineConfig } from 'rollup'
 
-const teserOptions = {
+const terserOptions = {
   compress: {
     pure_getters: true,
     unsafe: true,
@@ -24,27 +25,10 @@ const babelOptions = {
   ]
 }
 
-const tsOptions = {
-  check: true,
-  abortOnError: true
-}
-
-const tsOptionsDeclaration = {
-  ...tsOptions,
-  useTsconfigDeclarationDir: true,
-  tsconfigOverride: {
-    compilerOptions: {
-      declaration: true,
-      emitDeclarationOnly: true,
-      outFile: 'es/UnitMath.d.ts'
-    }
-  }
-}
-
 const name = 'UnitMath'
 const input = 'src/Unit.ts'
 
-export default [
+const config = defineConfig([
   // UMD build
   {
     input,
@@ -54,7 +38,7 @@ export default [
       format: 'umd'
     },
     plugins: [
-      typescript(tsOptions),
+      typescript(),
       babel(babelOptions),
       commonjs()
     ]
@@ -69,10 +53,10 @@ export default [
       name
     },
     plugins: [
-      typescript(tsOptions),
+      typescript(),
       babel(babelOptions),
       commonjs(),
-      terser(teserOptions)
+      terser(terserOptions)
     ]
   },
   // minified UMD build
@@ -85,8 +69,8 @@ export default [
       name
     },
     plugins: [
-      typescript(tsOptions),
-      terser(teserOptions)
+      typescript(),
+      terser(terserOptions)
     ]
   },
   // es build
@@ -97,16 +81,27 @@ export default [
       format: 'es'
     },
     plugins: [
-      typescript(tsOptions)
+      typescript()
     ]
   },
   // d.ts build
-  {
-    input,
-    plugins: [
-      typescript(tsOptionsDeclaration)
-    ]
-  },
+  // TODO: Cannot quite figure out how to get this to work.
+  // {
+  //   input,
+  //   output: {
+  //     file: 'es/UnitMath.d.ts',
+  //     format: 'es'
+  //   },
+  //   plugins: [
+  //     typescript({
+  //       compilerOptions: {
+  //         declaration: true,
+  //         emitDeclarationOnly: true,
+  //         outFile: 'es/UnitMath.d.ts',
+  //       }
+  //     })
+  //   ]
+  // },
   // minified es build
   {
     input,
@@ -116,8 +111,10 @@ export default [
       indent: false
     },
     plugins: [
-      typescript(tsOptions),
-      terser(teserOptions)
+      typescript(),
+      terser(terserOptions)
     ]
   }
-]
+])
+
+export default config

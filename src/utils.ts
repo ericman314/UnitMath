@@ -48,7 +48,7 @@ export function denormalize<T>(unitList: AtomicUnit<T>[], value: T, type: TypeAr
   } else if (isCompound(unitList)) {
     // unit is a compound unit, so do not apply offsets.
     // For example, with J kg^-1 degC^-1 you would NOT want to apply the offset.
-    let result = value
+    let result: T = value
 
     for (let i = 0; i < unitList.length; i++) {
       unitValue = type.conv(unitList[i].unit.value)
