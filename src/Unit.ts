@@ -1,6 +1,6 @@
 import { createUnitStore } from './UnitStore'
 import { normalize, denormalize, isCompound as _isCompound, isBase as _isBase, isBase } from './utils'
-import { AtomicUnit, FormatOptions, RequiredOptions, ParsedUnit, PrefixOptions, TypeArithmetics, Unit, Options, UnitFactory } from './types'
+import { AtomicUnit, FormatOptions, RequiredOptions, ParsedUnit, TypeArithmetics, Unit, Options, UnitFactory, SimplifyOptions, PrefixOptions } from './types'
 
 // TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
 
@@ -14,19 +14,13 @@ export const symIsDefaultFun = Symbol('_IS_UNITMATH_DEFAULT_FUNCTION')
 let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFactory<T> {
   options = { ...options }
 
-  // Check to make sure options are valid
+ // Check to make sure options are valid
 
-  const validPrefix = ['never', 'auto', 'always']
-  if (options.prefix && !validPrefix.includes(options.prefix)) {
-    throw new Error(`Invalid option for prefix: '${options.prefix}'. Valid options are ${validPrefix.join(', ')}`)
+  const validFormatPrefixDefault = ['all', 'none']
+  if (options.formatPrefixDefault && !validFormatPrefixDefault.includes(options.formatPrefixDefault)) {
+    throw new Error(`Invalid option for formatPrefixDefault: '${options.formatPrefixDefault}'. Valid options are ${validFormatPrefixDefault.join(', ')}`)
   }
 
-  const validSimplify = <const>['never', 'auto', 'always']
-  if (options.simplify && !validSimplify.includes(options.simplify)) {
-    throw new Error(`Invalid option for simplify: '${options.simplify}'. Valid options are ${validSimplify.join(', ')}`)
-  }
-
-  // options.system will be checked in createUnitStore
 
   // Check to see if all required options.type functions have been set
   const requiredTypeFns = <const>['conv', 'clone', 'add', 'sub', 'mul', 'div', 'pow']
@@ -46,7 +40,7 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     }
 
     // Check type functions required for _choosePrefix
-    if (options.prefix !== 'never') {
+    if (options.autoPrefix) {
       const prefixRequiredTypeFns = <const>['lt', 'gt', 'le', 'ge', 'abs']
       let allPrefixRequiredTypeFnsPresent = true
       for (const fn of prefixRequiredTypeFns) {
@@ -55,7 +49,7 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
         }
       }
       if (!allPrefixRequiredTypeFnsPresent) {
-        throw new Error(`The following custom type functions are required when prefix is '${options.prefix}': ${prefixRequiredTypeFns.join(', ')}`)
+        throw new Error(`The following custom type functions are required when prefix is true: ${prefixRequiredTypeFns.join(', ')}`)
       }
     }
   }
@@ -344,9 +338,9 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
       for (let unit of this.unitList) {
         for (let system of Object.keys(unitStore.defs.systems)) {
           for (let systemUnit of unitStore.defs.systems[system]) {
-            if (!isBase(systemUnit.unitList)) {
-              continue
-            }
+            // if (!isBase(systemUnit.unitList)) {
+            //   continue
+            // }
             let systemUnitString = `${systemUnit.unitList[0].prefix}${systemUnit.unitList[0].unit.name}`
             let unitString = `${unit.prefix}${unit.unit.name}`
             if (systemUnitString === unitString) {
@@ -381,17 +375,18 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
      * The returned Unit will contain a list of the "best" units for formatting.
      * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
      */
-    simplify(system?: string) {
+    simplify(simplifyOptions: SimplifyOptions<T>) {
       // console.log(this)
-      const result = _clone(this)
 
-      let systemStr: string = system ?? options.system
+      let extendedOptions = _withDefaults(simplifyOptions)
+
+      let systemStr: string = extendedOptions.system
       if (systemStr === 'auto') {
         let inferredSystemStr = this.getInferredSystem()
         if (inferredSystemStr) {
           systemStr = inferredSystemStr
         }
-        // console.log(`Identified the following systems when examining unit ${result.clone().to().format()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
+        // console.log(`Identified the following systems when examining unit ${result.clone().to().toString()}`, ids.map(id => `${id}=${identifiedSystems[id]}`))
       }
 
       let unitsOfSystem = unitStore.defs.systems[systemStr] || []
@@ -439,14 +434,15 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
       }
 
       // 3. Search for a matching dimension in all units
-      if (!matchingUnit) {
-        for (let baseUnit of Object.keys(unitStore.defs.units)) {
-          if (this.equalsQuantity(baseUnit)) {
-            matchingUnit = new _Unit(baseUnit)
-            break
-          }
-        }
-      }
+      // if (!matchingUnit) {
+      //   for (let baseUnit of Object.keys(unitStore.defs.units)) {
+      //     if (this.equalsQuantity(baseUnit)) {
+      //       matchingUnit = new _Unit(baseUnit)
+      //       break
+      //     }
+      //   }
+      // }
+
 
       let ok = true
       if (matchingUnit) {
@@ -456,8 +452,8 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
         // Did not find a matching unit in the system
 
         // 4, 5. Build a representation from the base units of all defined units
-        for (let dim of Object.keys(result.dimension)) {
-          if (Math.abs(result.dimension[dim] || 0) > 1e-12) {
+        for (let dim of Object.keys(this.dimension)) {
+          if (Math.abs(this.dimension[dim] || 0) > 1e-12) {
             let found = false
             // 4. Look for a base unit in the system
             for (let unit of unitsOfSystem) {
@@ -465,7 +461,7 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
                 proposedUnitList.push({
                   unit: unit.unitList[0].unit,
                   prefix: unit.unitList[0].prefix,
-                  power: result.dimension[dim]
+                  power: this.dimension[dim]
                 })
                 found = true
                 break
@@ -479,7 +475,7 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
                   proposedUnitList.push({
                     unit,
                     prefix: unit.basePrefix || '',
-                    power: result.dimension[dim]
+                    power: this.dimension[dim]
                   })
                   found = true
                   break
@@ -491,18 +487,41 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
         }
       }
 
+
+      let simplifiedUnit = _clone(this)
       if (ok) {
         // Replace this baseUnit list with the proposed list
-        result.unitList = proposedUnitList
+        simplifiedUnit.unitList = proposedUnitList
         if (this.value !== null) {
-          result.value = denormalize(result.unitList, normalize(this.unitList, this.value, options.type), options.type)
+          simplifiedUnit.value = denormalize(simplifiedUnit.unitList, normalize(this.unitList, this.value, options.type), options.type)
         } else {
-          result.value = null
+          simplifiedUnit.value = null
         }
       }
 
-      Object.freeze(result)
-      return result
+
+      // Always simplify if the options system is not 'auto' and the inferred system is different
+      // if (extendedOptions.simplify === 'always' || simplifyDueToDifferentSystem) {
+      //   // Must simplify because extendedOptions.simplify is 'always' or the system is different
+      //   simp = simp.simplify(extendedOptions.system)
+      // } else if (extendedOptions.simplify === 'auto' && !this.fixed && this.value !== null) {
+      //   let simp2 = simp.simplify(extendedOptions.system)
+
+      //   // Determine if the simplified unit is simpler
+
+      //   // Is the proposed unit list "simpler" than the existing one?
+      //   if (simp2.getComplexity() <= simp.getComplexity() - extendedOptions.simplifyThreshold) {
+      //     simp = simp2
+      //   }
+      // }
+
+
+      if (extendedOptions.autoPrefix) {
+        return _choosePrefix(simplifiedUnit, extendedOptions)
+      } else {
+        Object.freeze(simplifiedUnit)
+        return simplifiedUnit
+      }
     }
 
     /**
@@ -690,20 +709,10 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     }
 
     /**
-     * Get a string representation of the Unit, with optional formatting options. Alias of `format`.
-     * @memberof Unit
-     * @param {Object} [opts]  Formatting options.
-     * @return {string}
-     */
-    toString(formatOptions?: FormatOptions<T>) {
-      return this.format(formatOptions)
-    }
-
-    /**
      * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
      */
     // valueOf() {
-    //   return this.format({
+    //   return this.toString({
     //     precision: 0, // 0 means do not round
     //     simplify: 'never',
     //     prefix: 'never',
@@ -717,53 +726,25 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
      * @param formatOptions Formatting options.
      * @return The formatted string.
      */
-    format(formatOptions?: FormatOptions<T>) {
+    toString(formatOptions?: FormatOptions<T>) {
       let simp = this.clone()
 
       // A bit of clarification:
       // options is the original options
       // userOpts is a user-supplied argument
-      // _opts is the original options, extended with opts if opts is an object
+      // extendedOptions is the original options, extended with opts if opts is an object
 
-      let _opts: Required<FormatOptions<T>> = Object.assign({}, options)
-      if (typeof formatOptions === 'object') {
-        _opts = Object.assign(_opts, formatOptions)
-      }
-
-      // Always simplify if the options system is not 'auto' and the inferred system is different
-      // let inferredSystem = this.getInferredSystem()
-      // let simplifyDueToDifferentSystem = _opts.system !== 'auto' && _opts.system !== inferredSystem
-      // if (_opts.system === 'auto' && inferredSystem) {
-      //   _opts.system = inferredSystem
-      // }
-
-      // if (_opts.simplify === 'always' || simplifyDueToDifferentSystem) {
-      //   // Must simplify because _opts.simplify is 'always' or the system is different
-      //   simp = simp.simplify(_opts.system)
-      // } else if (_opts.simplify === 'auto' && !this.fixed && this.value !== null) {
-      //   let simp2 = simp.simplify(_opts.system)
-
-      //   // Determine if the simplified unit is simpler
-
-      //   // Is the proposed unit list "simpler" than the existing one?
-      //   if (simp2.getComplexity() <= simp.getComplexity() - _opts.simplifyThreshold) {
-      //     simp = simp2
-      //   }
-      // }
-
-      // if (_opts.prefix === 'always' || (_opts.prefix === 'auto' && !this.fixed)) {
-      //   simp = _choosePrefix(simp, _opts)
-      // }
+      let extendedOptions = _withDefaults(formatOptions)
 
       let str = ''
-      if (typeof simp.value === 'number' && _opts.formatter[symIsDefaultFun] && _opts.precision > 0) {
+      if (typeof simp.value === 'number' && extendedOptions.formatter[symIsDefaultFun] && extendedOptions.precision > 0) {
         // Use default formatter
-        str += +simp.value.toPrecision(_opts.precision) // The extra + at the beginning removes trailing zeroes
+        str += +simp.value.toPrecision(extendedOptions.precision) // The extra + at the beginning removes trailing zeroes
       } else if (simp.value !== null) {
         // Use custom format method (which defaults to the toString(opts) method)
-        str += _opts.formatter(simp.value)
+        str += extendedOptions.formatter(simp.value)
       }
-      const unitStr = _formatUnits(simp, _opts)
+      const unitStr = _formatUnits(simp, extendedOptions)
       if (unitStr.length > 0 && str.length > 0) {
         str += ' '
       }
@@ -1302,7 +1283,7 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     //         power: result.dimension[i]
     //       })
     //     } else {
-    //       throw new Error(`Cannot express unit '${unit.format()}' in SI units. System 'si' does not contain a unit for base quantity '${baseDim}'`)
+    //       throw new Error(`Cannot express unit '${unit.toString()}' in SI units. System 'si' does not contain a unit for base quantity '${baseDim}'`)
     //     }
     //   }
     // }
@@ -1388,6 +1369,17 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     str += strDen
 
     return str
+  }
+
+  /**
+   * Extends the newOption argument with the default options set on the UnitMath namespace.
+   */
+  function _withDefaults<OptionType extends SimplifyOptions<T> | FormatOptions<T>>(newOptions?: OptionType): Required<OptionType> {
+    let extendedOptions: Required<OptionType> = { ...options } as unknown as Required<OptionType>
+    if (typeof newOptions === 'object') {
+      extendedOptions = Object.assign(extendedOptions, newOptions)
+    }
+    return extendedOptions
   }
 
   let unitStore = createUnitStore(options)
@@ -1553,12 +1545,11 @@ defaultFormatter[symIsDefaultFun] = true
 const defaultOptions: RequiredOptions<number> = {
   parentheses: false,
   precision: 15,
-  prefix: 'auto',
+  autoPrefix: true,
   prefixMin: 0.1,
   prefixMax: 1000,
   formatPrefixDefault: 'none',
-  simplify: 'auto',
-  simplifyThreshold: 2,
+  // simplifyThreshold: 2,
   system: 'auto',
   formatter: defaultFormatter,
   // subsystem: 'auto',

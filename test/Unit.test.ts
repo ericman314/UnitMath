@@ -3,10 +3,11 @@ import unit from '../src/Unit'
 import Decimal from 'decimal.js'
 import './approx'
 
-function configCustomUnits(units: NullableDefinitions['units']) {
+function configCustomUnits(units: NullableDefinitions['units'], systems?: NullableDefinitions['systems']) {
   return unit.config({
     definitions: {
-      units
+      units,
+      systems: systems ?? {}
     }
   })
 }
@@ -113,33 +114,21 @@ describe('unitmath', () => {
       let optionsToCheckEquality = {
         parentheses: false,
         precision: 15,
-        prefix: 'auto',
+        autoPrefix: true,
         prefixMin: 0.1,
         prefixMax: 1000,
         formatPrefixDefault: 'none',
-        simplify: 'auto',
-        simplifyThreshold: 2,
         system: 'auto',
-        // subsystem: 'auto',
         definitions: {
           skipBuiltIns: false,
           units: {},
           prefixGroups: {},
           systems: {}
         },
-        type: 42,
-        formatter: 42,
       }
       let actualOptions = unit.getConfig()
       // Ignore type and format
-      expect({
-        ...actualOptions,
-        type: 42,
-        formatter: 42
-      }).toEqual(optionsToCheckEquality)
-      // for (let key in optionsToCheckEquality) {
-      //   expect(optionsToCheckEquality[key]).toEqual(actualOptions[key])
-      // }
+      expect(actualOptions).toMatchObject(optionsToCheckEquality)
     })
   })
 
@@ -149,7 +138,7 @@ describe('unitmath', () => {
     })
 
     test('should clone the options argument', () => {
-      let options: Options<number> = { prefix: 'always' }
+      let options: Options<number> = { autoPrefix: true }
       let newUnit = unit.config(options)
       expect(options).not.toBe(newUnit.getConfig())
     })
@@ -157,21 +146,18 @@ describe('unitmath', () => {
     test('should freeze the options', () => {
       let newUnit = unit.config({})
       let options = newUnit.getConfig()
-      expect(() => { options.prefix = 'always' }).toThrow()
+      expect(() => { options.autoPrefix = false }).toThrow()
     })
 
     test('should set new config options', () => {
-      let newUnit = unit.config({ prefix: 'always' })
-      expect(unit.getConfig().prefix).toEqual('auto')
-      expect(newUnit.getConfig().prefix).toEqual('always')
-      expect(newUnit.getConfig().simplify).toEqual('auto')
+      let newUnit = unit.config({ autoPrefix: false })
+      expect(unit.getConfig().autoPrefix).toEqual(true)
+      expect(newUnit.getConfig().autoPrefix).toEqual(false)
     })
 
     test('should throw on invalid options', () => {
       // @ts-ignore: Intentionally testing an invalid option
-      expect(() => unit.config({ prefix: 'invalidOption' })).toThrow(/Invalid option for prefix: 'invalidOption'/)
-      // @ts-ignore: Intentionally testing an invalid option
-      expect(() => unit.config({ simplify: 'bad' })).toThrow(/Invalid option for simplify: 'bad'/)
+      expect(() => unit.config({ formatPrefixDefault: 'invalidOption' })).toThrow(/Invalid option for formatPrefixDefault: 'invalidOption'/)
     })
 
     describe('custom definitions', () => {
@@ -188,8 +174,8 @@ describe('unitmath', () => {
       test('should use custom units when simplifying', () => {
         let newUnit = configCustomUnits({
           mph: { value: '1 mi/hr' }
-        })
-        expect(newUnit('5 mi').div('2 hr').toString()).toEqual('2.5 mph')
+        }, { 'us': ['mph'] })
+        expect(newUnit('5 mi').div('2 hr').simplify().toString()).toEqual('2.5 mph')
       })
 
       test('should use custom units derived from other custom units when simplifying', () => {
@@ -198,16 +184,16 @@ describe('unitmath', () => {
           woggle: { value: '4 widget^2' },
           gadget: { value: '5 N/woggle' },
           whimsy: { value: '8 gadget hours' }
-        })
-        expect(newUnit(1000, 'N h kg^-2 bytes^-2').toString()).toEqual('2500 whimsy')
+        }, { whimsy_system: ['whimsy'] })
+        expect(newUnit(1000, 'N h kg^-2 bytes^-2').simplify({ system: 'whimsy_system' }).toString()).toEqual('2500 whimsy')
       })
 
       test('should apply prefixes and offset to custom units', () => {
         const newUnit = configCustomUnits({
           wiggle: { value: '4 rad^2/s', offset: 1, prefixGroup: 'LONG', formatPrefixes: ['', 'kilo'] }
-        })
+        }, { wiggle_system: ['wiggle'] })
         let unit1 = newUnit('8000 rad^2/s')
-        expect(unit1.toString()).toEqual('1.999 kilowiggle')
+        expect(unit1.simplify({ system: 'wiggle_system' }).toString()).toEqual('1.999 kilowiggle')
       })
 
       test('should only allow valid names for units', () => {
@@ -274,16 +260,17 @@ describe('unitmath', () => {
       })
 
       test('should create new prefixes', () => {
-        // TODO: Mutating individual units in the definitions can have bad side effects!
         let meter = { ...unit.definitions().units.meter }
-        meter.prefixGroup = 'FUNNY'
-        meter.formatPrefixes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
         let newUnit = unit.config({
           prefixMin: 1,
           prefixMax: 2,
           definitions: {
             units: {
-              meter
+              meter: {
+                ...meter,
+                prefixGroup: 'FUNNY',
+                formatPrefixes: ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
+              }
             },
             prefixGroups: {
               FUNNY: { '': 1, 'A': 2, 'B': 4, 'C': 8, 'D': 16, 'E': 32, 'F': 64, 'G': 128 }
@@ -291,8 +278,8 @@ describe('unitmath', () => {
           }
         })
 
-        expect(newUnit('6 meter').toString()).toEqual('1.5 Bmeter')
-        expect(newUnit('10 Cmeter').toString()).toEqual('1.25 Fmeter')
+        expect(newUnit('6 meter').simplify().toString()).toEqual('1.5 Bmeter')
+        expect(newUnit('10 Cmeter').to('Fmeter').toString()).toEqual('1.25 Fmeter')
       })
 
       test('should only allow common prefixes that are included in prefixes', () => {
@@ -314,13 +301,16 @@ describe('unitmath', () => {
               },
               fib: { value: '5 foo/hr' },
               flab: { value: '1 foo^3' }
+            },
+            systems: {
+              foo_system: ['foo', 'fib', 'flab', 's']
             }
           }
         })
 
         expect(newUnit('1 megafoo/s').simplify().toString()).toEqual('720000000 fib')
         expect(newUnit('1 megafoo/s').to('fib').toString()).toEqual('720000000 fib')
-        expect(newUnit('3 foo').pow(3).toString()).toEqual('27 flab')
+        expect(newUnit('3 foo').pow(3).simplify().toString()).toEqual('27 flab')
       })
 
       test('should prepend, but not replace, individual unit systems', () => {
@@ -338,10 +328,10 @@ describe('unitmath', () => {
             }
           }
         })
-        expect(newUnit('70 mi').div('60 min').toString()).toEqual('70 mph')
+        expect(newUnit('70 mi').div('60 min').simplify().toString()).toEqual('70 mph')
         expect(newUnit.definitions().systems.us.includes('lbm')).toBeTruthy()
 
-        expect(newUnit('3 fox').mul('1 hole').toString({ simplify: 'always' })).toEqual('3 farmer')
+        expect(newUnit('3 fox').mul('1 hole').simplify().toString()).toEqual('3 farmer')
       })
 
       test('should skip builtins if so desired', () => {
@@ -377,7 +367,7 @@ describe('unitmath', () => {
           }
         })
 
-        expect(newUnit('40 fib').format()).toEqual('1.6 FFfib')
+        expect(newUnit('40 fib').simplify().toString()).toEqual('1.6 FFfib')
       })
 
       test('should use base prefix', () => {
@@ -784,7 +774,7 @@ describe('unitmath', () => {
       expect(u7).toApproximatelyEqual(u8)
 
 
-      const u9 = unit(8.314, 'kg m^2 / s^2 K mol').fixUnits()
+      const u9 = unit(8.314, 'kg m^2 / s^2 K mol')
       const u10 = u9.clone()
       expect(u9).not.toBe(u10)
       expect(u9).toApproximatelyEqual(u10)
@@ -922,8 +912,8 @@ describe('unitmath', () => {
     })
 
     test('the alternate api syntax should also work', () => {
-      expect(unit.to('lbm', 'kg').format()).toEqual('0.45359237 kg')
-      expect(unit.to(unit('10 lbm'), unit('kg')).format()).toEqual('4.5359237 kg')
+      expect(unit.to('lbm', 'kg').toString()).toEqual('0.45359237 kg')
+      expect(unit.to(unit('10 lbm'), unit('kg')).toString()).toEqual('4.5359237 kg')
     })
 
     test('should throw an error when converting to an incompatible unit', () => {
@@ -954,135 +944,30 @@ describe('unitmath', () => {
 
   describe('toString', () => {
     test('should convert to string when no extra simplification is requested', () => {
-      expect(unit(5000, 'cm').fixUnits().toString()).toEqual('5000 cm')
-      expect(unit(5, 'kg').fixUnits().toString()).toEqual('5 kg')
-      expect(unit(2 / 3, 'm').fixUnits().toString()).toEqual('0.666666666666667 m')
-      expect(unit(5, 'N').fixUnits().toString()).toEqual('5 N')
-      expect(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').fixUnits().toString()).toEqual('5 kg m / s^2')
-      expect(unit(5, 's^-2').fixUnits().toString()).toEqual('5 s^-2')
-      expect(unit(5, 'm / s ^ 2').fixUnits().toString()).toEqual('5 m / s^2')
-      expect(unit(null, 'kg m^2 / s^2 mol').fixUnits().toString()).toEqual('kg m^2 / s^2 mol')
-      expect(unit(10, 'hertz').fixUnits().toString()).toEqual('10 hertz')
-      expect(unit('3.14 rad').fixUnits().toString()).toEqual('3.14 rad')
-      expect(unit('J / mol K').fixUnits().toString()).toEqual('J / mol K')
-      expect(unit(2).fixUnits().toString()).toEqual('2')
-      expect(unit().fixUnits().toString()).toEqual('')
+      expect(unit(5000, 'cm').toString()).toEqual('5000 cm')
+      expect(unit(5, 'kg').toString()).toEqual('5 kg')
+      expect(unit(2 / 3, 'm').toString()).toEqual('0.666666666666667 m')
+      expect(unit(5, 'N').toString()).toEqual('5 N')
+      expect(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString()).toEqual('5 kg m / s^2')
+      expect(unit(5, 's^-2').toString()).toEqual('5 s^-2')
+      expect(unit(5, 'm / s ^ 2').toString()).toEqual('5 m / s^2')
+      expect(unit(null, 'kg m^2 / s^2 mol').toString()).toEqual('kg m^2 / s^2 mol')
+      expect(unit(10, 'hertz').toString()).toEqual('10 hertz')
+      expect(unit('3.14 rad').toString()).toEqual('3.14 rad')
+      expect(unit('J / mol K').toString()).toEqual('J / mol K')
+      expect(unit(2).toString()).toEqual('2')
+      expect(unit().toString()).toEqual('')
     })
 
     test('should convert to string properly', () => {
       expect(unit(5, 'kg').toString()).toEqual('5 kg')
       expect(unit(2 / 3, 'm').toString()).toEqual('0.666666666666667 m')
       expect(unit(5, 'N').toString()).toEqual('5 N')
-      expect(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').fixUnits().toString()).toEqual('5 kg m / s^2')
+      expect(unit(5, 'kg^1.0e0 m^1.0e0 s^-2.0e0').toString()).toEqual('5 kg m / s^2')
       expect(unit(5, 's^-2').toString()).toEqual('5 s^-2')
       expect(unit(5, 'm / s ^ 2').toString()).toEqual('5 m / s^2')
       expect(unit(null, 'kg m^2 / s^2 mol').toString()).toEqual('kg m^2 / s^2 mol')
       expect(unit(10, 'hertz').toString()).toEqual('10 hertz')
-    })
-
-    test('should render with the best prefix', () => {
-      expect(unit(0.000001, 'm').format({ precision: 8 })).toEqual('1 um')
-      expect(unit(0.00001, 'm').format({ precision: 8 })).toEqual('10 um')
-      expect(unit(0.0001, 'm').format({ precision: 8 })).toEqual('0.1 mm')
-      expect(unit(0.0005, 'm').format({ precision: 8 })).toEqual('0.5 mm')
-      expect(unit(0.0006, 'm').toString()).toEqual('0.6 mm')
-      expect(unit(0.001, 'm').toString()).toEqual('0.1 cm')
-      expect(unit(0.01, 'm').toString()).toEqual('1 cm')
-      expect(unit(100000, 'm').toString()).toEqual('100 km')
-      expect(unit(300000, 'm').toString()).toEqual('300 km')
-      expect(unit(500000, 'm').toString()).toEqual('500 km')
-      expect(unit(600000, 'm').toString()).toEqual('600 km')
-      expect(unit(1000000, 'm').toString()).toEqual('1000 km')
-      expect(unit(10000000, 'm').toString()).toEqual('10000 km')
-      expect(unit(2000, 'ohm').toString()).toEqual('2 kohm')
-
-      expect(unit(-0.000001, 'm').format({ precision: 8 })).toEqual('-1 um')
-      expect(unit(-0.00001, 'm').format({ precision: 8 })).toEqual('-10 um')
-      expect(unit(-0.0001, 'm').format({ precision: 8 })).toEqual('-0.1 mm')
-      expect(unit(-0.0005, 'm').format({ precision: 8 })).toEqual('-0.5 mm')
-      expect(unit(-0.0006, 'm').toString()).toEqual('-0.6 mm')
-      expect(unit(-0.001, 'm').toString()).toEqual('-0.1 cm')
-      expect(unit(-0.01, 'm').toString()).toEqual('-1 cm')
-      expect(unit(-100000, 'm').toString()).toEqual('-100 km')
-      expect(unit(-300000, 'm').toString()).toEqual('-300 km')
-      expect(unit(-500000, 'm').toString()).toEqual('-500 km')
-      expect(unit(-600000, 'm').toString()).toEqual('-600 km')
-      expect(unit(-1000000, 'm').toString()).toEqual('-1000 km')
-      expect(unit(-10000000, 'm').toString()).toEqual('-10000 km')
-      expect(unit(-2000, 'ohm').toString()).toEqual('-2 kohm')
-    })
-
-    test('should keep the original prefix when in range', () => {
-      expect(unit(0.0999, 'm').toString()).toEqual('9.99 cm')
-      expect(unit(0.1, 'm').toString()).toEqual('0.1 m')
-      expect(unit(0.5, 'm').toString()).toEqual('0.5 m')
-      expect(unit(0.6, 'm').toString()).toEqual('0.6 m')
-      expect(unit(1, 'm').toString()).toEqual('1 m')
-      expect(unit(10, 'm').toString()).toEqual('10 m')
-      expect(unit(100, 'm').toString()).toEqual('100 m')
-      expect(unit(300, 'm').toString()).toEqual('300 m')
-      expect(unit(500, 'm').toString()).toEqual('500 m')
-      expect(unit(600, 'm').toString()).toEqual('600 m')
-      expect(unit(1000, 'm').toString()).toEqual('1000 m')
-      expect(unit(1001, 'm').toString()).toEqual('1.001 km')
-    })
-
-    test('should render best prefix for a single unit raised to integral power', () => {
-      expect(unit(3.2e7, 'm^2').toString()).toEqual('32 km^2')
-      expect(unit(3.2e-7, 'm^2').toString()).toEqual('0.32 mm^2')
-      expect(unit(15000, 'm^-1').toString()).toEqual('150 cm^-1')
-      expect(unit(3e-9, 'm^-2').toString()).toEqual('0.003 km^-2')
-      expect(unit(3e-9, 'm^-1.5').toString()).toEqual('3e-9 m^-1.5')
-      expect(unit(2, 'kg^0').toString()).toEqual('2')
-    })
-
-    test('should not change the prefix unless there is a `commonPrefixes` defined for the unit', () => {
-      // lumen has prefixes, but no commonPrefixes, so its prefixes should not change
-      expect(unit('4 microlumen').format()).toEqual('4 microlumen')
-      expect(unit('4e-6 lumen').format()).toEqual('0.000004 lumen')
-
-      // newton has prefixes and commonPrefixes so its prefix should change
-      expect(unit('4 micronewton').format()).toEqual('4 micronewton')
-      expect(unit('4e-6 newton').format()).toEqual('4 micronewton')
-    })
-
-    test('should use the formatPrefixDefault option', () => {
-      expect(unit('4 microlumen').format({ formatPrefixDefault: 'all' })).toEqual('4 microlumen')
-      expect(unit('4e-6 lumen').format({ formatPrefixDefault: 'all' })).toEqual('4 microlumen')
-      expect(unit('4 microlumen').format({ formatPrefixDefault: 'none' })).toEqual('4 microlumen')
-      expect(unit('4e-6 lumen').format({ formatPrefixDefault: 'none' })).toEqual('0.000004 lumen')
-
-      // Should have no effect if the unit has formatPrefixes defined
-      expect(unit('4e-6 micronewton').format({ formatPrefixDefault: 'all' })).toEqual('0.000004 micronewton')
-      expect(unit('4e-6 micronewton').format({ formatPrefixDefault: 'none' })).toEqual('0.000004 micronewton')
-    })
-
-    test('should avoid division by zero by not choosing a prefix for very small values', () => {
-      expect(unit('1e-40 m').format()).toEqual('1e-31 nm')
-      expect(unit('1e-60 m').format()).toEqual('1e-60 m')
-      expect(unit('0 m').format()).toEqual('0 m')
-      expect(unit('-1e-40 m').format()).toEqual('-1e-31 nm')
-      expect(unit('-1e-60 m').format()).toEqual('-1e-60 m')
-    })
-
-    test('should not render best prefix if "fixed" by the `to` method', () => {
-      const u = unit(5e-3, 'm')
-      expect(u.toString()).toEqual('0.5 cm')
-      const v = u.fixUnits()
-      expect(v.toString()).toEqual('0.005 m')
-    })
-
-    test('should not simplify if simplify and prefix are "never"', () => {
-      expect(unit('1e-10 m').format({ simplify: 'never', prefix: 'never' })).toEqual('1e-10 m')
-      expect(unit('1e+10 m').format({ simplify: 'never', prefix: 'never' })).toEqual('10000000000 m')
-      expect(unit('1e-10 km').format({ simplify: 'never', prefix: 'never' })).toEqual('1e-10 km')
-      expect(unit('1e+10 km').format({ simplify: 'never', prefix: 'never' })).toEqual('10000000000 km')
-      expect(unit('1e-10 N m').format({ simplify: 'never', prefix: 'never' })).toEqual('1e-10 N m')
-      expect(unit('1e+10 N m').format({ simplify: 'never', prefix: 'never' })).toEqual('10000000000 N m')
-      expect(unit('1e-10 m').format()).toEqual('0.1 nm')
-      expect(unit('1e+10 m').format()).toEqual('10000000 km')
-      expect(unit('1e-10 J / m').format()).toEqual('0.0001 uN')
-      expect(unit('1e+10 J / m').format()).toEqual('10000 MN')
     })
 
     test('should format a unit without value', () => {
@@ -1097,21 +982,14 @@ describe('unitmath', () => {
       expect(unit(null, 'N/m^2').to('lbf/inch^2').toString({ precision: 10 })).toEqual('0.0001450377377 lbf / inch^2')
     })
 
-    // test('should ignore properties in Object.prototype when finding the best prefix', () => {
-    //   Object.prototype.foo = 'bar' // eslint-disable-line no-extend-native
-
-    //   expect(unit(5e5, 'cm').format(), '5 km')
-
-    //   delete Object.prototype.foo
-    // })
   })
 
   describe('setValue', () => {
     test('should set a unit\'s value', () => {
-      expect(unit('10 lumen').setValue(20).format()).toEqual('20 lumen')
-      expect(unit('lumen').setValue(20).format()).toEqual('20 lumen')
-      expect(unit('10 lumen').setValue(null).format()).toEqual('lumen')
-      expect(unit('10 lumen').setValue().format()).toEqual('lumen')
+      expect(unit('10 lumen').setValue(20).toString()).toEqual('20 lumen')
+      expect(unit('lumen').setValue(20).toString()).toEqual('20 lumen')
+      expect(unit('10 lumen').setValue(null).toString()).toEqual('lumen')
+      expect(unit('10 lumen').setValue().toString()).toEqual('lumen')
     })
   })
 
@@ -1135,10 +1013,10 @@ describe('unitmath', () => {
 
   describe('setNormalizedValue', () => {
     test('should set a unit\'s normalized value', () => {
-      expect(unit('20 kg').setNormalizedValue(10).format()).toEqual('10 kg')
-      expect(unit('3 g').setNormalizedValue(5).format()).toEqual('5 kg')
-      expect(unit('40 mi/hr').setNormalizedValue(10).format()).toEqual('22.369362920544 mi / hr')
-      expect(unit('km/hr').setNormalizedValue(1).format()).toEqual('3.6 km / hr')
+      expect(unit('20 kg').setNormalizedValue(10).toString()).toEqual('10 kg')
+      expect(unit('3 g').setNormalizedValue(5).toString()).toEqual('5000 g')
+      expect(unit('40 mi/hr').setNormalizedValue(10).toString()).toEqual('22.369362920544 mi / hr')
+      expect(unit('km/hr').setNormalizedValue(1).toString()).toEqual('3.6 km / hr')
     })
   })
 
@@ -1166,29 +1044,26 @@ describe('unitmath', () => {
   })
 
   describe('simplify', () => {
-    test('should not simplify units fixed by the fix() method', () => {
-      const unit1 = unit(10, 'kg m/s^2').fixUnits()
-      expect(unit1.unitList[0].unit.name).toEqual('g')
-      expect(unit1.unitList[1].unit.name).toEqual('m')
-      expect(unit1.unitList[2].unit.name).toEqual('s')
-      expect(unit1.toString()).toEqual('10 kg m / s^2')
-    })
 
     test('should simplify units without values', () => {
-      expect(unit('kg m/s^2').simplify().format()).toEqual('N')
+      expect(unit('kg m/s^2').simplify().toString()).toEqual('N')
+      let unit1 = unit(null, 'kg m mol / s^2 mol')
+      expect(unit1.simplify().toString()).toEqual('N')
+      unit1 = unit1.mul(1)
+      expect(unit1.simplify().toString()).toEqual('1 N')
     })
 
     test('should simplify units when they cancel out', () => {
       const unit1 = unit(2, 'Hz')
       const unit2 = unit(2, 's')
       const unit3 = unit1.mul(unit2)
-      expect(unit3.toString()).toEqual('4')
+      expect(unit3.simplify().toString()).toEqual('4')
 
       const nounit = unit('40m').mul('40N').div('40J')
-      expect(nounit.toString()).toEqual('40')
+      expect(nounit.simplify().toString()).toEqual('40')
 
       const nounit2 = unit('2 hours').div('1 hour')
-      expect(nounit2.toString()).toEqual('2')
+      expect(nounit2.simplify().toString()).toEqual('2')
     })
 
     test('should simplify units according to chosen unit system', () => {
@@ -1200,33 +1075,33 @@ describe('unitmath', () => {
       expect(unit2.simplify().toString()).toEqual('1000 kdyn')
 
       // Reduce threshold to 0
-      let newUnit = unit.config({ simplifyThreshold: 0 })
+      let newUnit = unit.config({})
 
       let unit3 = newUnit.config({ system: 'us' })('10 N')
-      expect(unit3.toString()).toEqual('2.2480894309971 lbf')
+      expect(unit3.simplify().toString()).toEqual('2.2480894309971 lbf')
 
       let unit4 = newUnit.config({ system: 'cgs' })('10 N')
-      expect(unit4.toString()).toEqual('1000 kdyn')
+      expect(unit4.simplify().toString()).toEqual('1000 kdyn')
     })
 
     test('should format using base units in chosen system', () => {
       let _unit = unit.config({ system: 'us' })
       let a = _unit('5 m').div('2 s')
-      expect(a.format()).toEqual('8.20209973753281 ft / s')
-      expect(a.format({ system: 'si' })).toEqual('2.5 m / s')
+      expect(a.simplify().toString()).toEqual('8.20209973753281 ft / s')
+      expect(a.simplify({ system: 'si' }).toString()).toEqual('2.5 m / s')
     })
 
     test('should correctly simplify units when unit system is "auto"', () => {
       const unit1 = unit(5, 'lbf min / s')
       expect(unit1.simplify().toString()).toEqual('300 lbf')
-      expect(unit('150 lbf').div('10 in^2').toString()).toEqual('15 psi')
-      expect(unit('400 N').div('10 cm^2').toString()).toEqual('400 kPa')
+      expect(unit('150 lbf').div('10 in^2').simplify().toString()).toEqual('15 psi')
+      expect(unit('400 N').div('10 cm^2').simplify().toString()).toEqual('400 kPa')
     })
 
     test('should infer the unit system when using non-preferred units which are members of that system', () => {
       // mile and kip are not preferred, but are members of the 'us' system, therefore result should simplify to 'BTU'
       let unit1 = unit('10 mile').mul('10 kip')
-      expect(unit1.toString({ simplifyThreshold: 0 })).toEqual('0.678515620705073 MMBTU')
+      expect(unit1.simplify().toString()).toEqual('0.678515620705073 MMBTU')
     })
 
     test('it should correctly differentiate between si and cgs units when unit system is "auto"', () => {
@@ -1236,48 +1111,148 @@ describe('unitmath', () => {
       let unit2Si = unit('10 kg')
       let unit3 = unit('2 s')
 
-      expect(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).toString()).toEqual('12.5 dyn')
-      expect(unit2Si.mul(unit1Si).div(unit3.pow(2)).toString()).toEqual('12.5 N')
+      expect(unit2Cgs.mul(unit1Cgs).div(unit3.pow(2)).simplify().toString()).toEqual('12.5 dyn')
+      expect(unit2Si.mul(unit1Si).div(unit3.pow(2)).simplify().toString()).toEqual('12.5 N')
     })
 
     test('should try to use preexisting units in the simplified expression', () => {
       let unit1 = unit('10 ft hour / minute')
-      expect(unit1.toString()).toEqual('600 ft')
+      expect(unit1.simplify().toString()).toEqual('600 ft')
 
       unit1 = unit('10 mile hour / minute')
-      expect(unit1.toString()).toEqual('600 mile')
+      expect(unit1.simplify().toString()).toEqual('600 mile')
 
       unit1 = unit('10 mi hour / minute')
-      expect(unit1.toString()).toEqual('600 mi')
+      expect(unit1.simplify().toString()).toEqual('600 mi')
 
       unit1 = unit('10 m hour / minute')
-      expect(unit1.toString()).toEqual('600 m')
+      expect(unit1.simplify().toString()).toEqual('600 m')
 
       unit1 = unit('10 meter hour / minute')
-      expect(unit1.toString()).toEqual('600 meter')
+      expect(unit1.simplify().toString()).toEqual('600 meter')
     })
 
-    test('should not simplify unless complexity is reduced by the threshold', () => {
-      expect(unit('10 N m').toString()).toEqual('10 N m')
-      expect(unit('10 J / m').toString()).toEqual('10 N')
-      expect(unit('10 m^3 Pa').toString()).toEqual('10 J')
-      expect(unit('10 s^-1').toString()).toEqual('10 Hz')
-      expect(unit('10 C/s').toString()).toEqual('10 A')
+    // test('should not simplify unless complexity is reduced by the threshold', () => {
+    //   expect(unit('10 N m').toString()).toEqual('10 N m')
+    //   expect(unit('10 J / m').toString()).toEqual('10 N')
+    //   expect(unit('10 m^3 Pa').toString()).toEqual('10 J')
+    //   expect(unit('10 s^-1').toString()).toEqual('10 Hz')
+    //   expect(unit('10 C/s').toString()).toEqual('10 A')
 
-      let newUnit = unit.config({ simplifyThreshold: 10 })
-      expect(newUnit('10 N m').toString()).toEqual('10 N m')
-      expect(newUnit('10 J / m').toString()).toEqual('10 J / m')
-      expect(newUnit('10 m^3 Pa').toString()).toEqual('10 m^3 Pa')
+    //   let newUnit = unit.config({ simplifyThreshold: 10 })
+    //   expect(newUnit('10 N m').toString()).toEqual('10 N m')
+    //   expect(newUnit('10 J / m').toString()).toEqual('10 J / m')
+    //   expect(newUnit('10 m^3 Pa').toString()).toEqual('10 m^3 Pa')
 
-      newUnit = newUnit.config({ simplifyThreshold: 0 })
-      expect(newUnit('10 N m').toString()).toEqual('10 J')
-      expect(newUnit('10 J / m').toString()).toEqual('10 N')
-      expect(newUnit('10 m^3 Pa').toString()).toEqual('10 J')
+    //   newUnit = newUnit.config({ simplifyThreshold: 0 })
+    //   expect(newUnit('10 N m').toString()).toEqual('10 J')
+    //   expect(newUnit('10 J / m').toString()).toEqual('10 N')
+    //   expect(newUnit('10 m^3 Pa').toString()).toEqual('10 J')
 
-      expect(unit('8 kg m / s^2').format({ simplifyThreshold: 5 })).toEqual('8 N')
-      expect(unit('8 kg m / s^2').format({ simplifyThreshold: 6 })).toEqual('8 kg m / s^2')
+    //   expect(unit('8 kg m / s^2').simplify({ simplifyThreshold: 5 }).toString()).toEqual('8 N')
+    //   expect(unit('8 kg m / s^2').simplify({ simplifyThreshold: 6 }).toString()).toEqual('8 kg m / s^2')
 
+    // })
+
+    test('should use the formatPrefixDefault option', () => {
+      expect(unit('4 microlumen').simplify({ formatPrefixDefault: 'all' }).toString()).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').simplify({ formatPrefixDefault: 'all' }).toString()).toEqual('4 microlumen')
+      expect(unit('4 microlumen').simplify({ formatPrefixDefault: 'none' }).toString()).toEqual('0.000004 lumen')
+      expect(unit('4e-6 lumen').simplify({ formatPrefixDefault: 'none' }).toString()).toEqual('0.000004 lumen')
+
+      // Should have no effect if the unit has formatPrefixes defined
+      expect(unit('4e-6 micronewton').simplify({ formatPrefixDefault: 'all' }).toString()).toEqual('0.000004 micronewton')
+      expect(unit('4e-6 micronewton').simplify({ formatPrefixDefault: 'none' }).toString()).toEqual('0.000004 micronewton')
     })
+
+    test('should not use a prefix if prefix is false', () => {
+      expect(unit('1e-10 m').simplify({ autoPrefix: false }).toString()).toEqual('1e-10 m')
+      expect(unit('1e+10 m').simplify({ autoPrefix: false }).toString()).toEqual('10000000000 m')
+      expect(unit('1e-10 km').simplify({ autoPrefix: false }).toString()).toEqual('1e-7 m')
+      expect(unit('1e+10 km').simplify({ autoPrefix: false }).toString()).toEqual('10000000000000 m')
+      expect(unit('1e-10 N m').simplify({ autoPrefix: false }).toString()).toEqual('1e-10 J')
+      expect(unit('1e+10 N m').simplify({ autoPrefix: false }).toString()).toEqual('10000000000 J')
+      expect(unit('1e-10 m').simplify().toString()).toEqual('0.1 nm')
+      expect(unit('1e+10 m').simplify().toString()).toEqual('10000000 km')
+      expect(unit('1e-10 J / m').simplify().toString()).toEqual('0.0001 uN')
+      expect(unit('1e+10 J / m').simplify().toString()).toEqual('10000 MN')
+    })
+
+    test('should render with the best prefix', () => {
+      expect(unit(0.000001, 'm').simplify().toString({ precision: 8 })).toEqual('1 um')
+      expect(unit(0.00001, 'm').simplify().toString({ precision: 8 })).toEqual('10 um')
+      expect(unit(0.0001, 'm').simplify().toString({ precision: 8 })).toEqual('0.1 mm')
+      expect(unit(0.0005, 'm').simplify().toString({ precision: 8 })).toEqual('0.5 mm')
+      expect(unit(0.0006, 'm').simplify().toString()).toEqual('0.6 mm')
+      expect(unit(0.001, 'm').simplify().toString()).toEqual('0.1 cm')
+      expect(unit(0.01, 'm').simplify().toString()).toEqual('1 cm')
+      expect(unit(100000, 'm').simplify().toString()).toEqual('100 km')
+      expect(unit(300000, 'm').simplify().toString()).toEqual('300 km')
+      expect(unit(500000, 'm').simplify().toString()).toEqual('500 km')
+      expect(unit(600000, 'm').simplify().toString()).toEqual('600 km')
+      expect(unit(1000000, 'm').simplify().toString()).toEqual('1000 km')
+      expect(unit(10000000, 'm').simplify().toString()).toEqual('10000 km')
+      expect(unit(2000, 'ohm').simplify().toString()).toEqual('2 kohm')
+
+      expect(unit(-0.000001, 'm').simplify().toString({ precision: 8 })).toEqual('-1 um')
+      expect(unit(-0.00001, 'm').simplify().toString({ precision: 8 })).toEqual('-10 um')
+      expect(unit(-0.0001, 'm').simplify().toString({ precision: 8 })).toEqual('-0.1 mm')
+      expect(unit(-0.0005, 'm').simplify().toString({ precision: 8 })).toEqual('-0.5 mm')
+      expect(unit(-0.0006, 'm').simplify().toString()).toEqual('-0.6 mm')
+      expect(unit(-0.001, 'm').simplify().toString()).toEqual('-0.1 cm')
+      expect(unit(-0.01, 'm').simplify().toString()).toEqual('-1 cm')
+      expect(unit(-100000, 'm').simplify().toString()).toEqual('-100 km')
+      expect(unit(-300000, 'm').simplify().toString()).toEqual('-300 km')
+      expect(unit(-500000, 'm').simplify().toString()).toEqual('-500 km')
+      expect(unit(-600000, 'm').simplify().toString()).toEqual('-600 km')
+      expect(unit(-1000000, 'm').simplify().toString()).toEqual('-1000 km')
+      expect(unit(-10000000, 'm').simplify().toString()).toEqual('-10000 km')
+      expect(unit(-2000, 'ohm').simplify().toString()).toEqual('-2 kohm')
+    })
+
+    test('should keep the original prefix when in range', () => {
+      expect(unit(0.0999, 'm').simplify().toString()).toEqual('9.99 cm')
+      expect(unit(0.1, 'm').simplify().toString()).toEqual('0.1 m')
+      expect(unit(0.5, 'm').simplify().toString()).toEqual('0.5 m')
+      expect(unit(0.6, 'm').simplify().toString()).toEqual('0.6 m')
+      expect(unit(1, 'm').simplify().toString()).toEqual('1 m')
+      expect(unit(10, 'm').simplify().toString()).toEqual('10 m')
+      expect(unit(100, 'm').simplify().toString()).toEqual('100 m')
+      expect(unit(300, 'm').simplify().toString()).toEqual('300 m')
+      expect(unit(500, 'm').simplify().toString()).toEqual('500 m')
+      expect(unit(600, 'm').simplify().toString()).toEqual('600 m')
+      expect(unit(1000, 'm').simplify().toString()).toEqual('1000 m')
+      expect(unit(1001, 'm').simplify().toString()).toEqual('1.001 km')
+    })
+
+    test('should render best prefix for a single unit raised to integral power', () => {
+      expect(unit(3.2e7, 'm^2').simplify().toString()).toEqual('32 km^2')
+      expect(unit(3.2e-7, 'm^2').simplify().toString()).toEqual('0.32 mm^2')
+      expect(unit(15000, 'm^-1').simplify().toString()).toEqual('150 cm^-1')
+      expect(unit(3e-9, 'm^-2').simplify().toString()).toEqual('0.003 km^-2')
+      expect(unit(3e-9, 'm^-1.5').simplify().toString()).toEqual('3e-9 m^-1.5')
+      expect(unit(2, 'kg^0').simplify().toString()).toEqual('2')
+    })
+
+    test('should not change the prefix unless there is a `formatPrefixes` defined for the unit', () => {
+      // lumen has prefixes, but no formatPrefixes, so it should be simplified with no prefix
+      expect(unit('4 microlumen').simplify().toString()).toEqual('0.000004 lumen')
+      expect(unit('4e-6 lumen').simplify().toString()).toEqual('0.000004 lumen')
+
+      // newton has prefixes and formatPrefixes so it should be simplified with a prefix
+      expect(unit('4 micronewton').simplify().toString()).toEqual('4 micronewton')
+      expect(unit('4e-6 newton').simplify().toString()).toEqual('4 micronewton')
+    })
+
+
+    test('should avoid division by zero by not choosing a prefix for very small values', () => {
+      expect(unit('1e-40 m').simplify().toString()).toEqual('1e-31 nm')
+      expect(unit('1e-60 m').simplify().toString()).toEqual('1e-60 m')
+      expect(unit('0 m').simplify().toString()).toEqual('0 m')
+      expect(unit('-1e-40 m').simplify().toString()).toEqual('-1e-31 nm')
+      expect(unit('-1e-60 m').simplify().toString()).toEqual('-1e-60 m')
+    })
+
   })
 
   describe('precision', () => {
@@ -1291,35 +1266,14 @@ describe('unitmath', () => {
 
   describe('format', () => {
     test('should accept formatting options as argument to the function', () => {
-      expect(unit('1 lb').to('kg').format({ prefix: 'always', prefixMin: 1, precision: 4 })).toEqual('453.6 g')
+      expect(unit('1 lb').to('kg').toString({ precision: 4 })).toEqual('0.4536 kg')
     })
 
     test('should render parentheses if desired', () => {
-      expect(unit('kg m / s^2').fixUnits().format({ parentheses: true })).toEqual('(kg m) / s^2')
-      expect(unit('8.314 J / mol K').fixUnits().format({ parentheses: true })).toEqual('8.314 J / (mol K)')
+      expect(unit('kg m / s^2').toString({ parentheses: true })).toEqual('(kg m) / s^2')
+      expect(unit('8.314 J / mol K').toString({ parentheses: true })).toEqual('8.314 J / (mol K)')
     })
 
-    test('should only simplify units with values', () => {
-      let unit1 = unit(null, 'kg m mol / s^2 mol')
-      expect(unit1.format()).toEqual('kg m / s^2')
-      unit1 = unit1.mul(1)
-      expect(unit1.format()).toEqual('1 N')
-    })
-
-    test('should respect the `simplify` option', () => {
-      expect(unit('1 kg m / s^2').format()).toEqual('1 N')
-      expect(unit('1 kg m / s^2').format({ simplify: 'never' })).toEqual('1 kg m / s^2')
-      expect(unit('1 N m').format()).toEqual('1 N m')
-      expect(unit('1 N m').format({ simplify: 'always' })).toEqual('1 J')
-    })
-  })
-
-  describe('valueOf', () => {
-    test('should output a raw, unsimplified string representation of this unit', () => {
-      expect(unit('8.314 J / mol K').valueOf()).toEqual('8.314 J / mol K')
-      expect(unit('10 h / s').valueOf()).toEqual('10 h / s')
-      expect(unit('10 h / s').format()).toEqual('36000')
-    })
   })
 
   describe('parse', () => {
@@ -1493,7 +1447,7 @@ describe('unitmath', () => {
     })
 
 
-    it('should parse NaN and +/- Infinity', () => {
+    test('should parse NaN and +/- Infinity', () => {
       expect(unit('NaN').value).toBeNaN()
       expect(unit('NaN kg').value).toBeNaN()
       expect(unit('NaN kg').unitList[0].unit.name).toEqual('g')
@@ -1646,7 +1600,7 @@ describe('unitmath', () => {
       expect(unit('4 kg').mul('kg')).toEqual(unit('4 kg^2'))
       expect(unit('kg').mul('4 kg')).toEqual(unit('4 kg^2'))
       expect(unit('m/s').mul('h/m').toString()).toEqual('h / s')
-      expect(unit('1 m/s').mul('h/m').toString()).toEqual('3600')
+      expect(unit('1 m/s').mul('h/m').simplify().toString()).toEqual('3600')
     })
 
     test('should convert parameter to unit', () => {
@@ -1709,7 +1663,7 @@ describe('unitmath', () => {
     })
 
     test('should work with units without values', () => {
-      expect(unit('V/m').pow(2).format()).toEqual('V^2 / m^2')
+      expect(unit('V/m').pow(2).toString()).toEqual('V^2 / m^2')
       expect(unit('1 V/m').pow(2).equals(unit('1 V^2/m^2'))).toBeTruthy()
     })
 
@@ -1725,7 +1679,7 @@ describe('unitmath', () => {
       expect(unit('16 kg').sqrt().equals(unit('4 kg^0.5'))).toBeTruthy()
       expect(unit('16').sqrt().equals(unit('4'))).toBeTruthy()
       expect(unit('16 m^2/s^2').sqrt().equals(unit('4 m/s'))).toBeTruthy()
-      expect(unit('-16 m^2/s^2').sqrt().format()).toEqual('NaN m / s')
+      expect(unit('-16 m^2/s^2').sqrt().toString()).toEqual('NaN m / s')
     })
 
     test('the alternate api syntax should also work', () => {
@@ -1737,17 +1691,17 @@ describe('unitmath', () => {
 
   describe('abs', () => {
     test('should return the absolute value of a unit', () => {
-      expect(unit('5 m').abs().format()).toEqual('5 m')
-      expect(unit('-5 m/s').abs().format()).toEqual('5 m / s')
-      expect(unit('-283.15 degC').abs().format()).toEqual('-263.15 degC')
+      expect(unit('5 m').abs().toString()).toEqual('5 m')
+      expect(unit('-5 m/s').abs().toString()).toEqual('5 m / s')
+      expect(unit('-283.15 degC').abs().toString()).toEqual('-263.15 degC')
     })
 
     test('the alternate api syntax should also work', () => {
-      expect(unit.abs('5 m').format()).toEqual('5 m')
-      expect(unit.abs('-5 m/s').format()).toEqual('5 m / s')
-      expect(unit.abs(unit('-5 m/s')).format()).toEqual('5 m / s')
-      expect(unit.abs(-5).format()).toEqual('5')
-      expect(unit.abs('-283.15 degC').format()).toEqual('-263.15 degC')
+      expect(unit.abs('5 m').toString()).toEqual('5 m')
+      expect(unit.abs('-5 m/s').toString()).toEqual('5 m / s')
+      expect(unit.abs(unit('-5 m/s')).toString()).toEqual('5 m / s')
+      expect(unit.abs(-5).toString()).toEqual('5')
+      expect(unit.abs('-283.15 degC').toString()).toEqual('-263.15 degC')
     })
 
     test('should return valueless units unchanged', () => {
@@ -1838,10 +1792,6 @@ describe('unitmath', () => {
         }
       })
     })
-
-    it.skip('should not reprocess units if only the formatting options have changed', () => {
-
-    })
   })
 
   describe('angles', () => {
@@ -1855,7 +1805,7 @@ describe('unitmath', () => {
 
       expect(unit(1, 'radian').to('rad').equals(unit(1, 'rad'))).toBeTruthy()
       expect(unit(1, 'radians').to('rad').equals(unit(1, 'rad'))).toBeTruthy()
-      expect(unit(1, 'deg').to('rad')).toEqual(unit(2 * Math.PI / 360, 'rad').fixUnits())
+      expect(unit(1, 'deg').to('rad')).toEqual(unit(2 * Math.PI / 360, 'rad'))
       expect(unit(1, 'degree').to('rad').equals(unit(2 * Math.PI / 360, 'rad'))).toBeTruthy()
       expect(unit(1, 'degrees').to('rad').equals(unit(2 * Math.PI / 360, 'rad'))).toBeTruthy()
       expect(unit(1, 'gradian').to('rad').equals(unit(Math.PI / 200, 'rad'))).toBeTruthy()
@@ -1863,13 +1813,13 @@ describe('unitmath', () => {
     })
 
     test('should have correct long/short prefixes', () => {
-      expect(unit(0.02, 'rad').toString()).toEqual('20 mrad')
-      expect(unit(0.02, 'radian').toString()).toEqual('20 milliradian')
-      expect(unit(0.02, 'radians').toString()).toEqual('20 milliradians')
+      expect(unit(0.02, 'rad').simplify().toString()).toEqual('20 mrad')
+      expect(unit(0.02, 'radian').simplify().toString()).toEqual('20 milliradian')
+      expect(unit(0.02, 'radians').simplify().toString()).toEqual('20 milliradians')
 
-      expect(unit(0.02, 'grad').toString()).toEqual('2 cgrad')
-      expect(unit(0.02, 'gradian').toString()).toEqual('2 centigradian')
-      expect(unit(0.02, 'gradians').toString()).toEqual('2 centigradians')
+      expect(unit(0.02, 'grad').simplify().toString()).toEqual('2 cgrad')
+      expect(unit(0.02, 'gradian').simplify().toString()).toEqual('2 centigradian')
+      expect(unit(0.02, 'gradians').simplify().toString()).toEqual('2 centigradians')
     })
   })
 
@@ -1909,22 +1859,22 @@ describe('unitmath', () => {
     })
 
     test('should return the unit in SI units', () => {
-      expect(unit('4 ft').toBaseUnits()).toApproximatelyEqual(unit('1.2192 m').fixUnits())
-      expect(unit('0.111 ft^2').toBaseUnits()).toApproximatelyEqual(unit('0.01031223744 m^2').fixUnits())
+      expect(unit('4 ft').toBaseUnits()).toApproximatelyEqual(unit('1.2192 m'))
+      expect(unit('0.111 ft^2').toBaseUnits()).toApproximatelyEqual(unit('0.01031223744 m^2'))
     })
 
     test('should return SI units for valueless units', () => {
-      expect(unit('ft/minute').toBaseUnits()).toApproximatelyEqual(unit('m / s').fixUnits())
+      expect(unit('ft/minute').toBaseUnits()).toApproximatelyEqual(unit('m / s'))
     })
 
     test('alterate api syntax should work too', () => {
-      expect(unit.toBaseUnits(unit('4 ft'))).toApproximatelyEqual(unit('1.2192 m').fixUnits())
-      expect(unit.toBaseUnits('4 ft')).toApproximatelyEqual(unit('1.2192 m').fixUnits())
+      expect(unit.toBaseUnits(unit('4 ft'))).toApproximatelyEqual(unit('1.2192 m'))
+      expect(unit.toBaseUnits('4 ft')).toApproximatelyEqual(unit('1.2192 m'))
     })
 
     test('should return SI units for custom units defined from other units', () => {
       let newUnit = configCustomUnits({ foo: { value: '3 kW' } })
-      expect(newUnit('42 foo').toBaseUnits().format()).toEqual('126000 kg m^2 / s^3')
+      expect(newUnit('42 foo').toBaseUnits().toString()).toEqual('126000 kg m^2 / s^3')
     })
   })
 
@@ -1936,11 +1886,11 @@ describe('unitmath', () => {
 
       test('should throw if failed to include conditionally required functions', () => {
         expect(() => unit.config({ type: typeNoGt })).toThrow(/The following custom type functions are required when prefix is/)
-        expect(() => unit.config({ type: typeNoGt, prefix: 'never' })).not.toThrow()
+        expect(() => unit.config({ type: typeNoGt, autoPrefix: false })).not.toThrow()
       })
 
       test('should throw if attempting to call a method that depends on a custom type function that was not provided', () => {
-        let unitDecNoComp = unit.config({ type: typeNoComp, prefix: 'never' })
+        let unitDecNoComp = unit.config({ type: typeNoComp, autoPrefix: false })
         let unitDecNoRound = unit.config({ type: typeNoRound })
         expect(() => unitDecNoComp('3 m').equals('4 m')).toThrow(/When using custom types, equals requires a type.eq function/)
         expect(() => unitDecNoComp('3 m').compare('4 m')).toThrow(/When using custom types, compare requires a type.gt and a type.lt function/)
@@ -2017,8 +1967,8 @@ describe('unitmath', () => {
       })
 
       test('should do sqrt', () => {
-        expect(unitDec('64 m^2/s^2').sqrt().format()).toEqual('8 m / s')
-        expect(unitDec('2 W').sqrt().format()).toEqual('1.4142135623730950488016887242097 W^0.5')
+        expect(unitDec('64 m^2/s^2').sqrt().toString()).toEqual('8 m / s')
+        expect(unitDec('2 W').sqrt().toString()).toEqual('1.4142135623730950488016887242097 W^0.5')
       })
 
       test('should do split', () => {
@@ -2069,31 +2019,31 @@ describe('unitmath', () => {
       })
 
       test('should do setValue', () => {
-        expect(unitDec('64 m^2/s^2').setValue(new Decimal(10)).format()).toEqual('10 m^2 / s^2')
-        expect(unitDec('64 m^2/s^2').setValue('1.4142135623730950488016887242097').format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
-        // expect(unitDec('64 m^2/s^2').setValue(new Decimal('1.4142135623730950488016887242097')).format()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
+        expect(unitDec('64 m^2/s^2').setValue(new Decimal(10)).toString()).toEqual('10 m^2 / s^2')
+        expect(unitDec('64 m^2/s^2').setValue('1.4142135623730950488016887242097').toString()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
+        // expect(unitDec('64 m^2/s^2').setValue(new Decimal('1.4142135623730950488016887242097')).toString()).toEqual('1.4142135623730950488016887242097 m^2 / s^2')
       })
 
       // TODO: Test all other custom functions
     })
 
-    describe('formatting', () => {
+    describe('simplify', () => {
       test('should choose the best prefix', () => {
-        expect(unitDec('0.000001 m').format({ precision: 8 })).toEqual('1 um')
-        expect(unitDec('0.00001 m').format({ precision: 8 })).toEqual('10 um')
-        expect(unitDec('0.0001 m').format({ precision: 8 })).toEqual('0.1 mm')
-        expect(unitDec('0.0005 m').format({ precision: 8 })).toEqual('0.5 mm')
-        expect(unitDec('0.0006 m').toString()).toEqual('0.6 mm')
-        expect(unitDec('0.001 m').toString()).toEqual('0.1 cm')
-        expect(unitDec('0.01 m').toString()).toEqual('1 cm')
-        expect(unitDec('100000 m').toString()).toEqual('100 km')
-        expect(unitDec('300000 m').toString()).toEqual('300 km')
-        expect(unitDec('500000 m').toString()).toEqual('500 km')
-        expect(unitDec('600000 m').toString()).toEqual('600 km')
-        expect(unitDec('1000000 m').toString()).toEqual('1000 km')
-        expect(unitDec('10000000 m').toString()).toEqual('10000 km')
-        expect(unitDec('1232123212321232123212321 m').toString()).toEqual('1.232123212321232123212321e+21 km')
-        expect(unitDec('2000 ohm').toString()).toEqual('2 kohm')
+        expect(unitDec('0.000001 m').simplify().toString({ precision: 8 })).toEqual('1 um')
+        expect(unitDec('0.00001 m').simplify().toString({ precision: 8 })).toEqual('10 um')
+        expect(unitDec('0.0001 m').simplify().toString({ precision: 8 })).toEqual('0.1 mm')
+        expect(unitDec('0.0005 m').simplify().toString({ precision: 8 })).toEqual('0.5 mm')
+        expect(unitDec('0.0006 m').simplify().toString()).toEqual('0.6 mm')
+        expect(unitDec('0.001 m').simplify().toString()).toEqual('0.1 cm')
+        expect(unitDec('0.01 m').simplify().toString()).toEqual('1 cm')
+        expect(unitDec('100000 m').simplify().toString()).toEqual('100 km')
+        expect(unitDec('300000 m').simplify().toString()).toEqual('300 km')
+        expect(unitDec('500000 m').simplify().toString()).toEqual('500 km')
+        expect(unitDec('600000 m').simplify().toString()).toEqual('600 km')
+        expect(unitDec('1000000 m').simplify().toString()).toEqual('1000 km')
+        expect(unitDec('10000000 m').simplify().toString()).toEqual('10000 km')
+        expect(unitDec('1232123212321232123212321 m').simplify().toString()).toEqual('1.232123212321232123212321e+21 km')
+        expect(unitDec('2000 ohm').simplify().toString()).toEqual('2 kohm')
       })
 
 
@@ -2102,12 +2052,12 @@ describe('unitmath', () => {
 
   describe('custom formatter', () => {
     test('should use custom formatter', () => {
-      // Undocumented feature
-      let funnyFormatFunction = (a: number, b: string, c: string) => b + a.toString().split('').reverse().join(c)
-      let unitFunny = unit.config({ formatter: funnyFormatFunction })
-      expect(unitFunny('3.14159 rad').toString({}, '$', '_')).toEqual('$9_5_1_4_1_._3 rad')
 
-      expect(unit('3.14159 rad').toString({ formatter: funnyFormatFunction }, '$', '_')).toEqual('$9_5_1_4_1_._3 rad')
+      let funnyFormatFunction = (a: number) => '$' + a.toString().split('').reverse().join('_')
+      let unitFunny = unit.config({ formatter: funnyFormatFunction })
+      expect(unitFunny('3.14159 rad').toString()).toEqual('$9_5_1_4_1_._3 rad')
+
+      expect(unit('3.14159 rad').toString({ formatter: funnyFormatFunction })).toEqual('$9_5_1_4_1_._3 rad')
 
       // Custom formatter
       let formatter = new Intl.NumberFormat('en-US', {
@@ -2123,18 +2073,45 @@ describe('unitmath', () => {
 
   describe('readme', () => {
 
-    test('examples should be correct, otherwise that would be embarrassing', () => {
+    test('Getting Started', () => {
       let a = unit('5 m').div('2 s')
       expect(a.toString()).toEqual('2.5 m / s')
       let b = unit('40 km').to('mile')
       expect(b.toString()).toEqual('24.8548476894934 mile')
-      expect(b.format({ precision: 4 }).toString()).toEqual('24.85 mile')
+      expect(b.toString({ precision: 4 }).toString()).toEqual('24.85 mile')
 
+    })
+
+    test('Creating Units', () => {
+      let u
+      // String
+      u = unit('40 mile')
+      u = unit('hour')
+
+      // Number and string
+      u = unit(9.8, 'm/s^2')
+      u = unit(19.6, 'm')
+
+      // Valid units
+      u = unit("2 in")
+      u = unit("60/s")
+      u = unit("8.314 * kg * m^2 / (s^2 * mol * K)") // Parentheses and asterisk are ignored
+      u = unit("6.022e-23 mol^-1")
+      u = unit("kW / kg K")
+      u = unit("3.1415926535897932384626433832795 rad") // This works if using a custom type
+
+      expect(u).toBeDefined()
+
+      // Invalid units
+      expect(() => { u = unit("2 in + 3 in") }).toThrow(/Unexpected "\+"/)
+      expect(() => { u = unit("60 / s / s") }).toThrow(/Unexpected additional "\/"/)
+      expect(() => { u = unit("0x123 kg") }).toThrow(/Unit "x123" not found/) // Only floating-point numbers can be parsed
+    })
+
+    test('Unit Conversion', () => {
+      expect(unit('40 km').to('mile').toString()).toEqual('24.8548476894934 mile')
       expect(unit('kg').to('lbm').toString()).toEqual('2.20462262184878 lbm')
       expect(() => unit(5000, 'kg').to('N s')).toThrow(/Cannot convert 5000 kg to N s: dimensions do not match/)
-
-      expect(unit('10 / s').simplify().toString()).toEqual('10 Hz')
-      expect(unit('J / m').simplify().toString()).toEqual('N')
 
       expect(unit('10 km').split(['mi', 'ft', 'in']).map(u => u.toString())).toEqual([
         '6 mi',
@@ -2147,7 +2124,9 @@ describe('unitmath', () => {
         '29 arcmin',
         '36.24 arcsec'
       ])
+    })
 
+    test('Arithmetic', () => {
       let g = unit(9.8, 'm/s^2')
       let h = unit(19.6, 'm')
       expect(h.mul(2).div(g).sqrt().toString()).toEqual('2 s')
@@ -2155,28 +2134,48 @@ describe('unitmath', () => {
       expect(unit('3 ft').add('6 in').mul(2).toString()).toEqual('7 ft')
 
       expect(unit.mul(unit.add('3 ft', '6 in'), 2).toString()).toEqual('7 ft')
+    })
 
-      expect(unit('1 lb').to('kg').format({ precision: 4 })).toEqual('0.4536 kg')
+    test('Simplify', () => {
+      expect(unit('10 / s').simplify().toString()).toEqual('10 Hz')
+      expect(unit('J / m').simplify().toString()).toEqual('N')
 
-      expect(unit('180 deg').to('rad').format({ precision: 6 })).toEqual('3.14159 rad')
+      // expect(unit('8 kg m / s^2').simplify({ simplifyThreshold: 5 }).toString()).toEqual('8 N')
+      // expect(unit('8 kg m / s^2').simplify({ simplifyThreshold: 6 }).toString()).toEqual('8 kg m / s^2')
 
-      expect(unit('1.5 kg m / s^2').format()).toEqual('1.5 N')
-      expect(unit('1.5 kg m / s^2').fixUnits().format()).toEqual('1.5 kg m / s^2')
-      expect(unit('1.5 N').to('kg m / s^2').format()).toEqual('1.5 kg m / s^2')
+      expect(unit('8 kg m / s^2').simplify({ system: 'si' }).toString()).toEqual('8 N')
+      expect(unit('8 kg m / s^2').simplify({ system: 'cgs' }).toString()).toEqual('800 kdyn')
+      expect(unit('8 kg m / s^2').simplify({ system: 'us' }).toString()).toEqual('1.79847154479768 lbf')
 
-      expect(unit('8 kg m / s^2').format({ simplifyThreshold: 5 })).toEqual('8 N')
-      expect(unit('8 kg m / s^2').format({ simplifyThreshold: 6 })).toEqual('8 kg m / s^2')
+      expect(unit('150 lbf').div('10 in^2').simplify().toString()).toEqual('15 psi')
+      expect(unit('400 N').div('10 cm^2').simplify().toString()).toEqual('400 kPa')
 
-      expect(unit('150 lbf').div('10 in^2').toString()).toEqual('15 psi')
-      expect(unit('400 N').div('10 cm^2').toString()).toEqual('400 kPa')
       {
         let _unit = unit.config({ system: 'us' })
         let a = _unit('5 m').div('2 s')
-        expect(a.format()).toEqual('8.20209973753281 ft / s')
-        expect(a.format({ system: 'si' })).toEqual('2.5 m / s')
+        expect(a.simplify().toString()).toEqual('8.20209973753281 ft / s')
+        expect(a.simplify({ system: 'si' }).toString()).toEqual('2.5 m / s')
       }
 
-      expect(unit('45 W / m K').format({ parentheses: true })).toEqual('45 W / (m K)')
+      expect(unit('1e-10 kg m / s^2').simplify().toString()).toEqual('0.0001 uN')
+      expect(unit('1e-10 kg m / s^2').simplify({ autoPrefix: false }).toString()).toEqual('1e-10 N')
+
+      expect(unit('0.005 m').simplify().toString()).toEqual('0.5 cm')
+      expect(unit('0.005 m').simplify({ prefixMin: 0.001 }).toString()).toEqual('0.005 m')
+
+      expect(unit('1000001 lumen').simplify().toString()).toEqual('1000001 lumen')
+      expect(unit('1000001 lumen').simplify({ formatPrefixDefault: 'all' }).toString()).toEqual('1.000001 megalumen')
+
+    })
+
+    test('Formatting', () => {
+
+      expect(unit('1 lb').to('kg').toString()).toEqual('0.45359237 kg')
+
+      expect(unit('180 deg').to('rad').toString({ precision: 6 })).toEqual('3.14159 rad')
+      expect(unit('1 lb').to('kg').toString({ precision: 4 })).toEqual('0.4536 kg')
+
+      expect(unit('45 W / m K').toString({ parentheses: true })).toEqual('45 W / (m K)')
 
       {
         // Custom formatter
@@ -2194,6 +2193,13 @@ describe('unitmath', () => {
         })
         expect(unitMoney('25000 / ton').toString()).toEqual('$25,000.00 ton^-1')
       }
+
+      expect(unit('10 / s').simplify().toString()).toEqual('10 Hz')
+      expect(unit('10 / s').toString()).toEqual('10 s^-1')
+
+    })
+
+    test('Configuring', () => {
 
       // Configuring
       {
@@ -2221,6 +2227,10 @@ describe('unitmath', () => {
         expect(myUnit('1 lightyear').to('mile').toString()).toEqual('5878625373183.61 mile')
       }
 
+    })
+
+    test('Custom types', () => {
+
       {
         const unit2 = unit.config<Decimal>({
           type: {
@@ -2246,6 +2256,10 @@ describe('unitmath', () => {
         expect(u.toString()).toEqual('2.74518864784926316174649567946 m')
       }
 
+    })
+
+    test('API Reference', () => {
+
       {
         let a = unit('20 kW')
         let b = unit('300 W')
@@ -2270,7 +2284,7 @@ describe('unitmath', () => {
       {
         let a = unit('64 kJ')
         let b = unit('16 s')
-        let quotient = a.div(b) // 4 kW
+        let quotient = a.div(b).simplify() // 4 kW
         expect(quotient.toString()).toEqual('4 kW')
       }
 
@@ -2280,7 +2294,6 @@ describe('unitmath', () => {
       }
 
     })
-
 
   })
 

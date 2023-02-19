@@ -41,12 +41,12 @@ const unit = require('unitmath')
 
 let a = unit('5 m').div('2 s')   // 2.5 m / s
 let b = unit('40 km').to('mile')  // 24.8548476894934 mile
-b.format({ precision: 4 })          // "24.85 mile"
+b.toString({ precision: 4 })          // "24.85 mile"
 ```
 
 ## Creating Units
 
-To create a unit, use the `unit` factory function, passing either a single string, or a number and a string:
+To create a unit, call `unit` with either a single string, or a number and a string:
 
 ```js
 // String
@@ -56,21 +56,56 @@ let b = unit('hour')
 // Number and string
 let g = unit(9.8, 'm/s^2')
 let h = unit(19.6, 'm')
-
-// Two strings
-let k = unit('45', 'W / m K')
 ```
 
-Units can be simple (`4 kg`) or compound (`8.314 J/mol K`). They may also be valueless (`hour`). Below are more examples of creating units:
+Units can be simple (`4 kg`) or compound (`8.314 J/mol K`). They may also be valueless (`hour`). 
+
+### Parsing Rules
+
+Parsing rules are different than typical JavaScript syntax. For instance:
+  - The string may only contain one `"/"`. Units appearing before the `/` will be in the numerator of the resulting unit, and units appearing after the `/` will be in the denominator.
+  - Parentheses `()` and asterisk `*` are ignored: multiplication is implicit.
+  - Extra whitespace is allowed.
+ 
+The following all form valid units:
 
 ```js
-unit('2in')
-unit('60/s')
-unit('8.314 kg m^2 / s^2 mol K')
-unit('kW / kg K')
+unit("2 in")
+unit("60/s")
+unit("8.314 * kg * m^2 / (s^2 * mol * K)") // Parentheses and asterisk are ignored
+unit("6.022e-23 mol^-1")
+unit("kW / kg K")
+unit("3.1415926535897932384626433832795 rad") // This works if using a custom type
 ```
 
-The string portion of a unit must not contain more than one `"/"`. Units appearing before the `/` will be in the numerator of the resulting unit, and units appearing after the `/` will be in the denominator. Parentheses and `*`'s are ignored.
+But these are invalid:
+
+```js
+// Error! 
+unit("2 in + 3 in") // Unexpected "+" (Use .add() instead)
+unit("60 / s / s") // Unexpected additional "/"
+unit("0x123 kg") // Unit "x123" not found
+```
+
+The exact syntax is as follows:
+
+``` 
+[value][numerator][/denominator]
+
+numerator, denominator:
+atomicUnit [atomicUnit ...]
+
+atomicUnit:
+[prefix]unit[^power]
+
+value, power:
+Any floating-point number
+
+unit, prefix:
+Any built-in or user-defined unit or prefix
+
+```
+
 
 ## Unit Conversion
 
@@ -80,13 +115,6 @@ The `to` method converts from one unit to another. The two units must have the s
 unit('40 km').to('mile') // 24.8548476894934 mile
 unit('kg').to('lbm') // 2.20462262184878 lbm
 unit(5000, 'kg').to('N s') // Cannot convert 5000 kg to N s: dimensions do not match
-```
-
-The `simplify` method will attempt to convert the unit to a simpler form.
-
-```js
-unit('10 / s').simplify() // 10 Hz
-unit('J / m').simplify() // N
 ```
 
 The `split` method will convert one unit into an array of units like so:
@@ -120,54 +148,47 @@ unit.mul(unit.add('3 ft', '6 in'), 2)   // 7 ft
 
 Units are immutable, so every operation on a unit creates a new unit.
 
-## Formatting
+## Simplify
 
-Use the `format` method to format a unit as a string. `toString` is an alias for `format`.
+UnitMath has a `simplify` method that will attempt to simplify a unit:
 
 ```js
-unit('1 lb').to('kg').format({ precision: 4 }) // '0.4536 kg'
+unit('10 / s').simplify() // 10 Hz
+unit('J / m').simplify() // N
 ```
 
-The `format` and `toString` methods can accept a configuration object. The following options are available:
+Because units are immutable, `simplify` always returns a *new* unit with the simplified units. It does not modify the original unit.
 
-- `precision` -- *Default:* `15`. The number of significant figures to output when converting a unit to a string. Reducing this can help reduce the appearance of round-off errors. Set to 0 to disable rounding.
+In the `simplify` method, simplification is performed in two steps:
+1. Attempting to simplify a compound unit into a single unit in the desired unit system
+2. Choosing an appropriate prefix (if `options.autoPrefix` is true)
 
-  ```js
-  unit('180 deg').to('rad').format({ precision: 6 }) // 3.14159 rad
-  ```
+Here are the options available for the `simplify` method:
 
-- `prefix` -- *Default:* `'auto'`. When formatting a unit, this option will specify whether the `toString` and `format` methods are allowed to choose an appropriately sized prefix in case of very small or very large quantities. Possible values are `'auto'`, `'always'`, or `'never'`. If `'auto'` is chosen, then a prefix is always chosen unless the `unit` was constructed using the `to()` or `fixUnits()` methods.
-
-- `prefixMin` -- *Default:* `0.1`. When choosing a prefix, the smallest formatted value of a `unit` that is allowed.
-
-- `prefixMax` -- *Default:* `1000`. When choosing a prefix, the largest formatted value of a `unit` that is allowed.
-
-- `formatPrefixDefault` -- *Default:* `none`. Sets the default behavior for units without a `formatPrefixes` property. `'all'` will cause the formatter to use all prefixes in that unit's prefix group, while `'none'` will not use any prefixes to format the unit.
-
-- `simplify` -- *Default:* `'auto'`. Specifies if UnitMath should attempt to simplify the units before formatting as a string. Possible values are `'auto'`, `'always'`, or `'never'`. If set to `'auto'` or `'always'`, then `u.toString()` becomes equivalent to `u.simplify().toString()`. The original `u` is never modified. When `'auto'` is used, simplification is skipped if the unit is valueless or was constructed using the `to()` or `fixUnits()` methods.
-
-  *Note: You can also use the `.to()` or `.fixUnits()` methods to prevent UnitMath from simplifying a unit:*
+<!--
+- `simplifyThreshold` - *Default:* `2`. A setting that affects how aggressively compound units are simplified. A compound unit will only be simplified if its "complexity" is reduced by at least this much. The complexity of a unit is equal to the number of symbols that are required to output the unit. A lower value of `simplifyThreshold` results in more units being simplified, while a higher value results in fewer units being simplified. 
 
   ```js
-  unit('1.5 kg m / s^2').format() // 1.5 N
-  unit('1.5 kg m / s^2').fixUnits().format() // 1.5 kg m / s^2
-  unit('1.5 N').to('kg m / s^2').format() // 1.5 kg m / s^2
+  unit('8 kg m / s^2').simplify({ simplifyThreshold: 5 }) // 8 N
+  unit('8 kg m / s^2').simplify({ simplifyThreshold: 6 }) // 8 kg m / s^2
   ```
+-->
 
-- `simplifyThreshold` -- *Default:* `2`. A setting that affects whether the `format` method will output the original unit or a simplified version. The unit will be simplified only if the complexity is reduced by an amount equal to or greater than the `simplifyThreshold`. The complexity of a unit is equal to the number of symbols that are required to output the unit. A lower value of `simplifyThreshold` results in more units being simplified, while a higher value results in fewer units being simplified. 
+- `system` - *Default:* `'auto'`. The unit system to use when simplifying a `unit`. Available systems are `si`, `cgs`, `us`, and `auto`.
 
   ```js
-  unit('8 kg m / s^2').format({ simplifyThreshold: 5 }) // 8 N
-  unit('8 kg m / s^2').format({ simplifyThreshold: 6 }) // 8 kg m / s^2
+  unit('8 kg m / s^2').simplify({ system: 'si' }) // 8 N
+  unit('8 kg m / s^2').simplify({ system: 'cgs' }) // 800 kdyn
+  unit('8 kg m / s^2').simplify({ system: 'us' }) // 1.79847154479768 lbf
   ```
 
-- `system` -- *Default:* `'auto'`. The unit system to use when simplifying a `unit`. Available systems are `si`, `cgs`, `us`, and `auto`. When `system === 'auto'`, UnitMath will try to infer the unit system from the individual units that make up that `unit`.
+  When `system` is `'auto'` (the default), UnitMath will try to infer the unit system from the individual units that make up that `unit`. This is not guaranteed to succeed in all cases, so whenever possible, the system should be specified explicitly.
 
   ```js
   unit = unit.config({ system: 'auto' })
 
-  unit('150 lbf').div('10 in^2').toString()  // 15 psi
-  unit('400 N').div('10 cm^2').toString()  // 400 kPa
+  unit('150 lbf').div('10 in^2').simplify()  // 15 psi
+  unit('400 N').div('10 cm^2').simplify()  // 400 kPa
   ```
 
   Specifying a unit system other than `'auto'` will force UnitMath to use the specified system. Use the `config` function to apply the system everywhere, or use the `format` function to apply to a single statement:
@@ -177,18 +198,56 @@ The `format` and `toString` methods can accept a configuration object. The follo
 
   let a = unit('5 m').div('2 s')
 
-  a.format() // 8.202099737532809 ft / s
-  a.format({ system: 'si'}) // 2.5 m / s
+  a.simplify() // 8.202099737532809 ft / s
+  a.simplify({ system: 'si'}) // 2.5 m / s
 
   ```
 
-- `parentheses` -- *Default:* `false`. When formatting a unit, group the numerator and/or denominator in parentheses if multiple units are present.
+- `autoPrefix` - *Default:* `true`. This option specifies whether `simplify` will try to choose an appropriate prefix in case of very small or very large quantities. 
+  
+    ```js
+    unit('1e-10 kg m / s^2').simplify() // 0.0001 uN
+    unit('1e-10 kg m / s^2').simplify({ autoPrefix: false }) // 1e-10 N
+    ```
+
+- `prefixMin` and `prefixMax` - *Defaults:* `0.1` and `1000`. Sets the threshold for choosing a different prefix when `autoPrefix` is true.
 
   ```js
-  unit('45 W / m K').format({ parentheses: true }) // 45 W / (m K)
+  unit('0.005 m').simplify() // 0.5 cm
+  unit('0.005 m').simplify({ prefixMin: 0.001 }) // 0.005 m
   ```
 
-- `formatter`. Define a custom formatter for the numeric portion of the unit. The formatter will be passed the numeric value of the unit. For example:
+- `formatPrefixDefault` - *Default:* `none`. By default, certain units are never assigned a new prefix (this is controlled by the `formatPrefixes` property of the unit definition.) By setting `formatPrefixDefault` to `"all"`, this behavior can be changed. 
+
+  ```js
+  unit('1000001 lumen').simplify() // 1000001 lumen
+  unit('1000001 lumen').simplify({ formatPrefixDefault: 'all' }) // 1.000001 megalumen
+  ```
+
+## Formatting
+
+Use `toString` to output a unit as a string:
+
+```js
+unit('1 lb').to('kg').toString() // "0.45359237 kg"
+```
+
+The `toString` method accepts a configuration object. The following options are available:
+
+- `precision` - *Default:* `15`. The number of significant figures to output when converting a unit to a string. Reducing this can help reduce the appearance of round-off errors. Setting a value of 0 will disable rounding.
+
+  ```js
+  unit('180 deg').to('rad').toString({ precision: 6 }) // 3.14159 rad
+  unit('1 lb').to('kg').toString({ precision: 4 }) // "0.4536 kg"
+  ```
+
+- `parentheses` - *Default:* `false`. When formatting a unit, group the numerator and/or denominator in parentheses if multiple units are present. This is useful when the resulting string will be used in a mathematical expression.
+
+  ```js
+  unit('45 W / m K').toString({ parentheses: true }) // 45 W / (m K)
+  ```
+
+- `formatter`. Define a custom formatter for the _numeric_ portion of the unit. The formatter will be passed the numeric value of the unit. For example:
 
   ```js
   let unit = require('unitmath')
@@ -200,14 +259,21 @@ The `format` and `toString` methods can accept a configuration object. The follo
   });
 
   // Specify formatter in argument to toString
-  unit('25000 / ton').toString({ formatter: formatter.format }) // '$25,000.00 ton^-1'
+  unit('25000 / ton').toString({ formatter: formatter.format }) // "$25,000.00 ton^-1"
 
   // Specify formatter in config
   let unitMoney = unit.config({
     formatter: formatter.format
   })
-  unitMoney('25000 / ton').toString() // '$25,000.00 ton^-1'
+  unitMoney('25000 / ton').toString() // "$25,000.00 ton^-1"
   ```
+
+The `toString` method outputs a unit exactly as it is represented internally. It does _not_ automatically simplify a unit. This means you will usually want to call `simplify` before calling `toString`. How and when to simplify a unit is very subjective. UnitMath cannot anticipate all needs, so the user must explicitly call `simplify` when needed.
+
+```js
+unit('10 / s').toString() // "10 s^-1"
+unit('10 / s').simplify().toString() // "10 Hz"
+```
 
 
   
@@ -221,7 +287,11 @@ const unit = require('unitmath').config({ system: 'us' })
 
 Available options are:
 
+- Any of the [simplify options](#simplify).
+
 - Any of the [formatting options](#formatting).
+
+- `type`. An object that allows UnitMath to work with custom numeric types. See [Custom Types](#custom-types) for complete details and examples.
 
 - `definitions`. An object that allows you to add to, modify, or remove the built-in units. See [User-Defined Units](#user-defined-units) for complete details.
 
@@ -238,7 +308,6 @@ Available options are:
   unit('6 furlong/fortnight').to('m/s') // 0.000997857142857143 m / s
   ```
 
-- `type`. An object that allows UnitMath to work with custom numeric types. See [Custom Types](#custom-types) for complete details and examples.
 
 
 Because `unit.config(options)` returns a new instance of UnitMath, is is technically possible to perform operations between units created from different instances. The resulting behavior is undefined, however, so it is probably best to avoid doing this.
@@ -248,7 +317,7 @@ Because `unit.config(options)` returns a new instance of UnitMath, is is technic
 ```js
 let unit = require('unitmath')
 
-unit.config(options) // Incorrect, has no effect
+unit.config(options) // Incorrect, has no effect!
 
 unit = unit.config(options) // Correct
 ```
@@ -332,7 +401,7 @@ Here are all the options you can specify:
   }
   ```
 
-- `prefixGroup` -- *Default:* `'NONE'`. Specifies which prefix group will be used when parsing and formatting the unit.
+- `prefixGroup` - *Default:* `'NONE'`. Specifies which prefix group will be used when parsing and formatting the unit.
 
   ```js
   units: {
@@ -384,7 +453,7 @@ Here are all the options you can specify:
   }
   ```
 
-- `offset` -- *Default:* `0`: Used when the zero-value of this unit is different from the zero-value of the base unit.
+- `offset` - *Default:* `0`: Used when the zero-value of this unit is different from the zero-value of the base unit.
 
   ```js
   units: {
@@ -533,11 +602,11 @@ Function | Description | Required?
 `mul: (a: T, b: T) => T` | Multiply two custom types. | Always
 `div: (a: T, b: T) => T` | Divide two custom types. | Always
 `pow: (a: T, b: number) => T` | Raise a custom type to a power. | Always
-`abs: (a: T) => T` | Return the absolute value of a custom type. | For prefix: 'auto' or 'always'
-`lt: (a: T, b: T) => boolean` | Compare two custom types for less than. | For prefix: 'auto' or 'always'
-`le: (a: T, b: T) => boolean` | Compare two custom types for less than or equal. | For prefix: 'auto' or 'always'
-`gt: (a: T, b: T) => boolean` | Compare two custom types for greater than. | For prefix: 'auto' or 'always'
-`ge: (a: T, b: T) => boolean` | Compare two custom types for greater than or equal. | For prefix: 'auto' or 'always'
+`abs: (a: T) => T` | Return the absolute value of a custom type. | For autoPrefix: true
+`lt: (a: T, b: T) => boolean` | Compare two custom types for less than. | For autoPrefix: true
+`le: (a: T, b: T) => boolean` | Compare two custom types for less than or equal. | For autoPrefix: true
+`gt: (a: T, b: T) => boolean` | Compare two custom types for greater than. | For autoPrefix: true
+`ge: (a: T, b: T) => boolean` | Compare two custom types for greater than or equal. | For autoPrefix: true
 `eq: (a: T, b: T) => boolean` | Compare two custom types for equality. | For the `equals` function
 `round: (a: T) => T` | Round a custom type to the nearest integer. | For the `split` function
 `trunc: (a: T) => T` | Truncate a custom type to the nearest integer. | For the `split` function
@@ -687,8 +756,8 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
 
   ```js
   let r = unit('10 kg / m^2 s^3 A^2')
-  r.format() // 10 ohm
-  r.to('kohm').format() // 0.01 kohm
+  r.toString() // 10 ohm
+  r.to('kohm').toString() // 0.01 kohm
   ```
 
 - `fixUnits()`
@@ -697,8 +766,8 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
 
   ```js
   let r = unit('10 kg / m^2 s^3 A^2')
-  r.format() // 10 ohm
-  r.fixUnits().format() // 10 kg m^2 / s^3 A^2
+  r.toString() // 10 ohm
+  r.fixUnits().toString() // 10 kg m^2 / s^3 A^2
   ```
 
   Using `fixUnits()` is faster than calling `to()` with the original units:
@@ -707,8 +776,8 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   let r = unit('10 kg / m^2 s^3 A^2')
   
   // These are equivalent, but fixUnits() is shorter and faster:
-  r.fixUnits().format() // 10 kg m^2 / s^3 A^2
-  r.to(r.getUnits()).format() // 10 kg m^2 / s^3 A^2
+  r.fixUnits().toString() // 10 kg m^2 / s^3 A^2
+  r.to(r.getUnits()).toString() // 10 kg m^2 / s^3 A^2
 
   ```
 

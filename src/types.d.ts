@@ -79,21 +79,19 @@ export interface FormatOptions<T> {
 }
 
 export interface PrefixOptions<T> {
-  prefix?: 'never' | 'auto' | 'always'
+  autoPrefix?: boolean
   prefixMin?: T
   prefixMax?: T
-  formatPrefixDefault?: 'none' | 'all'
+  formatPrefixDefault?: 'all' | 'none'
 }
 
-export interface SimplifyOptions<T> {
-  simplify?: 'never' | 'auto' | 'always'
-  simplifyThreshold?: number
+export interface SimplifyOptions<T> extends PrefixOptions<T> {
+  // simplifyThreshold?: number
   system?: string
 }
 
 export type RequiredOptions<T> =
   & Required<FormatOptions<T>>
-  & Required<PrefixOptions<T>>
   & Required<SimplifyOptions<T>>
   & {
     type: TypeArithmetics<T>
@@ -102,7 +100,6 @@ export type RequiredOptions<T> =
 
 export type Options<T> =
   & FormatOptions<T>
-  & PrefixOptions<T>
   & SimplifyOptions<T>
   & {
   type?: Partial<TypeArithmetics<T>>
@@ -324,7 +321,7 @@ export interface Unit<T> {
    * The returned Unit will contain a list of the "best" units for formatting.
    * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
    */
-  simplify(system?: string): Unit<T>
+  simplify(options?: SimplifyOptions<T> & PrefixOptions<T>): Unit<T>
 
   /**
    * Returns this unit without a value.
@@ -425,15 +422,6 @@ export interface Unit<T> {
    */
   toString(formatOptions?: FormatOptions<T>, ...userArgs: any[]): string
 
-  /**
-   * Returns a raw string representation of this Unit, without simplifying or rounding. Could be useful for debugging.
-   */
-  // valueOf(): string
-
-  /**
-   * Get a string representation of the Unit, with optional formatting options.
-   */
-  format(formatOptions?: FormatOptions<T>, ...userArgs: any[]): string
 }
 
 export interface UnitFactory<T> {

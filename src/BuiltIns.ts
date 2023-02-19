@@ -71,11 +71,11 @@ import { UnitProps } from "./types"
 // // A unit system is a set of units that are by convention used with the unit system.
 // // Units listed here will be treated as belonging to the specified system.
 // // TODO: We need a better way to add all of the units which possibly might show up and need to be parsed.
-export const systems = <const>{
+export const systems = {
   si: ['m', 'meter', 's', 'A', 'kg', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'J', 'N', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'W', 'Pa', 'ohm', 'sr'],
   cgs: ['cm', 's', 'A', 'g', 'K', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'erg', 'dyn', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'Pa', 'ohm', 'sr'],
-  us: ['ft', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp', 'mi', 'mile']
-}
+  us: ['ft', 'mi', 'mile', 'in', 'inch', 's', 'A', 'lbm', 'degF', 'mol', 'rad', 'b', 'F', 'C', 'S', 'V', 'BTU', 'lbf', 'Hz', 'ohm', 'H', 'cd', 'lm', 'lx', 'Wb', 'T', 'psi', 'ohm', 'sr', 'hp']
+} as const
 
 // Units may or may not use one of the prefix groups (SHORT, LONG, etc).
 export const prefixes = {
@@ -131,56 +131,6 @@ export const prefixes = {
     'atto': 1e-18,
     'zepto': 1e-21,
     'yocto': 1e-24
-  },
-  SQUARED: {
-    '': 1,
-
-    'da': 1e2,
-    'h': 1e4,
-    'k': 1e6,
-    'M': 1e12,
-    'G': 1e18,
-    'T': 1e24,
-    'P': 1e30,
-    'E': 1e36,
-    'Z': 1e42,
-    'Y': 1e48,
-
-    'd': 1e-2,
-    'c': 1e-4,
-    'm': 1e-6,
-    'u': 1e-12,
-    'n': 1e-18,
-    'p': 1e-24,
-    'f': 1e-30,
-    'a': 1e-36,
-    'z': 1e-42,
-    'y': 1e-48
-  },
-  CUBIC: {
-    '': 1,
-
-    'da': 1e3,
-    'h': 1e6,
-    'k': 1e9,
-    'M': 1e18,
-    'G': 1e27,
-    'T': 1e36,
-    'P': 1e45,
-    'E': 1e54,
-    'Z': 1e63,
-    'Y': 1e72,
-
-    'd': 1e-3,
-    'c': 1e-6,
-    'm': 1e-9,
-    'u': 1e-18,
-    'n': 1e-27,
-    'p': 1e-36,
-    'f': 1e-45,
-    'a': 1e-54,
-    'z': 1e-63,
-    'y': 1e-72
   },
   BINARY_SHORT_SI: {
     '': 1,
@@ -302,11 +252,6 @@ export const units: Record<string, UnitProps> = {
   },
 
   // Area
-  m2: {
-    prefixGroup: 'SQUARED',
-    formatPrefixes: ['m', 'c', '', 'k'],
-    value: '1 m^2'
-  },
   sqin: { value: '1 in^2' },
   sqft: { value: '1 ft^2' },
   sqyd: { value: '1 yd^2' },
@@ -318,11 +263,6 @@ export const units: Record<string, UnitProps> = {
   hectare: { value: '1e4 m^2' },
 
   // Volume
-  m3: {
-    prefixGroup: 'CUBIC',
-    formatPrefixes: ['m', 'c', '', 'k'],
-    value: '1 m^3'
-  },
   L: {
     prefixGroup: 'SHORT',
     formatPrefixes: ['n', 'u', 'm', ''],
