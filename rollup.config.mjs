@@ -2,6 +2,7 @@ import babel from '@rollup/plugin-babel'
 import typescript from '@rollup/plugin-typescript'
 import commonjs from '@rollup/plugin-commonjs'
 import terser from '@rollup/plugin-terser'
+import dts from 'rollup-plugin-dts'
 import { defineConfig } from 'rollup'
 
 const terserOptions = {
@@ -84,24 +85,6 @@ const config = defineConfig([
       typescript()
     ]
   },
-  // d.ts build
-  // TODO: Cannot quite figure out how to get this to work.
-  // {
-  //   input,
-  //   output: {
-  //     file: 'es/UnitMath.d.ts',
-  //     format: 'es'
-  //   },
-  //   plugins: [
-  //     typescript({
-  //       compilerOptions: {
-  //         declaration: true,
-  //         emitDeclarationOnly: true,
-  //         outFile: 'es/UnitMath.d.ts',
-  //       }
-  //     })
-  //   ]
-  // },
   // minified es build
   {
     input,
@@ -114,7 +97,30 @@ const config = defineConfig([
       typescript(),
       terser(terserOptions)
     ]
-  }
+  },
+  // d.ts build (outputs individual files)
+  {
+    input,
+    output: {
+      dir: 'types',
+      format: 'es'
+    },
+    plugins: [
+      typescript({
+        compilerOptions: {
+          declaration: true,
+          declarationDir: 'types',
+          emitDeclarationOnly: true,
+        }
+      })
+    ]
+  },
+  // d.ts bundle (outputs a single file)
+  {
+    input: 'types/Unit.d.ts',
+    output: [{ file: 'es/UnitMath.d.ts', format: 'es' }],
+    plugins: [dts()]
+  },
 ])
 
 export default config

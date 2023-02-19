@@ -1,4 +1,6 @@
-import { symIsDefaultFun } from "./Unit"
+
+export const symIsDefaultFun = Symbol('_IS_UNITMATH_DEFAULT_FUNCTION')
+
 export interface TypeArithmetics<T> {
   conv: {
     (a: any): T
@@ -102,9 +104,9 @@ export type Options<T> =
   & FormatOptions<T>
   & SimplifyOptions<T>
   & {
-  type?: Partial<TypeArithmetics<T>>
-  definitions?: Partial<NullableDefinitions> & { skipBuiltIns?: boolean }
-}
+    type?: Partial<TypeArithmetics<T>>
+    definitions?: Partial<NullableDefinitions> & { skipBuiltIns?: boolean }
+  }
 
 
 export interface PrefixGroups {
@@ -460,4 +462,4 @@ export interface ParsedUnit<T> {
   value: T | null
 }
 
-type FindUnitFn<T> = (unitString: string) => { unit: UnitPropsExtended<T>, prefix: string } | null
+export type FindUnitFn<T> = (unitString: string) => { unit: UnitPropsExtended<T>, prefix: string } | null

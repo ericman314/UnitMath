@@ -1,10 +1,6 @@
 import { createUnitStore } from './UnitStore'
 import { normalize, denormalize, isCompound as _isCompound, isBase as _isBase, isBase } from './utils'
-import { AtomicUnit, FormatOptions, RequiredOptions, ParsedUnit, TypeArithmetics, Unit, Options, UnitFactory, SimplifyOptions, PrefixOptions } from './types'
-
-// TODO: Make things behave nicely when performing operations between units that exist in different namespaces (ahhhhh!)
-
-export const symIsDefaultFun = Symbol('_IS_UNITMATH_DEFAULT_FUNCTION')
+import { AtomicUnit, FormatOptions, RequiredOptions, ParsedUnit, TypeArithmetics, Unit, Options, UnitFactory, SimplifyOptions, PrefixOptions, symIsDefaultFun } from './types'
 
 /**
  * Create a clone of the this unit factory function, but with the specified options.
