@@ -1,5 +1,11 @@
 # History
 
+## 2023-02-19, v1.0.0-rc.2
+- `toString` no longer simplifies units. The user must now explicitly call `simplify` for the unit to be simplified.
+- Removed `simplifyThreshold` option, since units are now only simplified when calling `simplify`.
+- Many updates to the README.
+- Many tests had to be altered to reflect the changes to `toString` and `simplify`.
+
 ## 2020-11-20, v1.0.0-rc.1
 - Convert to TypeScript
 - Removed concept of "quantities" and "base quantities"
