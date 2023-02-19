@@ -2209,10 +2209,11 @@ describe('unitmath', () => {
               furlong: { value: '220 yards' },
               fortnight: { value: '2 weeks' }
             }
-          }
+          },
+          precision: 6
         })
 
-        expect(myUnit('6 furlong/fortnight').to('m/s').toString()).toEqual('0.000997857142857143 m / s')
+        expect(myUnit('6 furlong/fortnight').to('m/s').toString()).toEqual('0.000997857 m / s')
       }
 
       {
@@ -2292,6 +2293,115 @@ describe('unitmath', () => {
         let result = unit('10 m').pow(3) // 1000 m^3
         expect(result.toString()).toEqual('1000 m^3')
       }
+
+      {
+        let result = unit('1 hectare').sqrt().simplify() // 100 m
+        expect(result.toString()).toEqual('100 m')
+      }
+
+      {
+        let result = unit('-5 m / s').abs()
+        expect(result.toString()).toEqual('5 m / s')
+        result = unit('-293.15 degC').abs()
+        expect(result.toString()).toEqual('-253.15 degC')
+      }
+
+      {
+        let r = unit('10 kg m^2 / s^3 A^2')
+        expect(r.simplify().toString()).toEqual('10 ohm')
+        expect(r.to('kohm').toString()).toEqual('0.01 kohm')
+      }
+
+      expect(unit('10 ft/s').toBaseUnits().toString()).toEqual('3.048 m / s')
+
+      expect(unit('70 mile/hour').getValue()).toBe(70)
+      expect(unit('km / hour').getValue()).toBeNull()
+
+      expect(unit('10 m').setValue(20).toString()).toEqual('20 m')
+      expect(unit('m').setValue(20).toString()).toEqual('20 m')
+      expect(unit('10 ft').setValue(20).toString()).toEqual('20 ft')
+      expect(unit('10 ft').setValue().toString()).toEqual('ft')
+
+      expect(unit('10 ft/s').getNormalizedValue()).toApproximatelyEqual(3.048)
+
+      expect(unit('ft / s').setNormalizedValue(3.048).toString()).toEqual('10 ft / s')
+
+      expect(unit('10 N m').simplify().toString()).toEqual('10 J')
+
+      expect(unit('51.4934 deg').split(['deg', 'arcmin', 'arcsec']).map(u => u.toString({ precision: 6 }))).toEqual(
+        ['51 deg', '29 arcmin', '36.24 arcsec']
+      )
+
+      expect(unit('8.314 J / mol K').getUnits().toString()).toEqual('J / mol K')
+
+      expect(unit('34 kg').isCompound()).toEqual(false)
+      expect(unit('34 kg/s').isCompound()).toEqual(true)
+      expect(unit('34 kg^2').isCompound()).toEqual(true)
+      expect(unit('34 N').isCompound()).toEqual(false)
+      expect(unit('34 kg m / s^2').isCompound()).toEqual(true)
+
+      {
+        let unit2 = unit.config({
+          definitions: {
+            units: {
+              myUnit: { quantity: 'MY_NEW_BASE', value: 1 },
+              anotherUnit: { value: '4 myUnit' }
+            }
+          }
+        })
+
+        expect(unit2('34 kg').isBase()).toBe(true)
+        expect(unit2('34 kg/s').isBase()).toBe(false)
+        expect(unit2('34 kg^2').isBase()).toBe(false)
+        expect(unit2('34 N').isBase()).toBe(false)
+        expect(unit2('34 myUnit').isBase()).toBe(true)
+        expect(unit2('34 anotherUnit').isBase()).toBe(true)
+      }
+
+      expect(unit('10 N m').getInferredSystem()).toBe('si')
+      expect(unit('10 J / m').getInferredSystem()).toBe('si')
+      expect(unit('10 m^3 Pa').getInferredSystem()).toBe('si')
+      expect(unit('10 dyne/cm').getInferredSystem()).toBe('cgs')
+      expect(unit('10 ft/s').getInferredSystem()).toBe('us')
+      expect(unit('10').getInferredSystem()).toBeNull()
+
+      expect(unit('5 m/s^2').equalsQuantity(unit('4 ft/s^2'))).toBe(true)
+
+      expect(unit('3 ft').equals('1 yard')).toBe(true)
+
+      expect(unit('30 min').compare('1 hour')).toBe(-1)
+      expect(unit('60 min').compare('1 hour')).toBe(0)
+      expect(unit('90 min').compare('1 hour')).toBe(1)
+
+      expect(unit('80 cm').lessThan('1 m')).toBe(true)
+      expect(unit('100 cm').lessThan('1 m')).toBe(false)
+      expect(unit('120 cm').lessThan('1 m')).toBe(false)
+
+      expect(unit('80 cm').lessThanOrEqual('1 m')).toBe(true)
+      expect(unit('100 cm').lessThanOrEqual('1 m')).toBe(true)
+      expect(unit('120 cm').lessThanOrEqual('1 m')).toBe(false)
+
+      expect(unit('80 cm').greaterThan('1 m')).toBe(false)
+      expect(unit('100 cm').greaterThan('1 m')).toBe(false)
+      expect(unit('120 cm').greaterThan('1 m')).toBe(true)
+
+      expect(unit('80 cm').greaterThanOrEqual('1 m')).toBe(false)
+      expect(unit('100 cm').greaterThanOrEqual('1 m')).toBe(true)
+      expect(unit('120 cm').greaterThanOrEqual('1 m')).toBe(true)
+
+      expect(unit.add('20 kW', '300 W').toString()).toEqual('20.3 kW')
+      expect(unit.sub('4 ft', '1 yd').toString()).toEqual('1 ft')
+      expect(unit.mul('8 m/s', '200 N').simplify().toString()).toEqual('1.6 kW')
+      expect(unit.div('64 kJ', '16 s').simplify().toString()).toEqual('4 kW')
+      expect(unit.pow('10 m', 3).toString()).toEqual('1000 m^3')
+      expect(unit.sqrt('1 hectare').simplify().toString()).toEqual('100 m')
+      expect(unit.abs('-5 m / s').toString()).toEqual('5 m / s')
+      expect(unit.abs('-293.15 degC').toString()).toEqual('-253.15 degC')
+      expect(unit.to('10 kg m^2 / s^3 A^2', 'kohm').toString()).toEqual('0.01 kohm')
+
+      expect(unit.getConfig()).toBeDefined()
+
+      expect(unit.exists('km')).toBe(true)
 
     })
 
