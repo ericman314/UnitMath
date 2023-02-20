@@ -67,7 +67,9 @@
   "standard": {
     "ignore": [
       "*.test-compiled.js",
-      "*.test-bundle.js"
+      "*.test-bundle.js",
+      "types/*",
+      "docs/*"
     ]
   }
 }

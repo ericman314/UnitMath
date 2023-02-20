@@ -2405,6 +2405,11 @@ describe('unitmath', () => {
 
     })
 
+    test('Migration Guide', () => {
+      expect(unit('4 ft').mul('3 in').toString()).toEqual('12 ft in')
+      expect(unit('4 ft').mul('3 in').simplify().toString()).toEqual('1 ft^2')
+    })
+
   })
 
   describe('built-in units', () => {

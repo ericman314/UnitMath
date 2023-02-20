@@ -110,7 +110,7 @@ const config = defineConfig([
         compilerOptions: {
           declaration: true,
           declarationDir: 'types',
-          emitDeclarationOnly: true,
+          emitDeclarationOnly: true
         }
       })
     ]
@@ -120,7 +120,7 @@ const config = defineConfig([
     input: 'types/Unit.d.ts',
     output: [{ file: 'es/UnitMath.d.ts', format: 'es' }],
     plugins: [dts()]
-  },
+  }
 ])
 
 export default config

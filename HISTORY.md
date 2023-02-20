@@ -1,5 +1,18 @@
 # History
 
+## 2023-02-20, v1.0.0
+
+V1 is a major rewrite of UnitMath in TypeScript. While most of the API remains the same, V1 does introduce several breaking changes from v0.8.7. See [Migrating to v1](migrating-to-v1.md) for details.
+
+- `toString` no longer simplifies units. You must now explicitly call `simplify` for the unit to be simplified.
+- Removed `simplify` and `simplifyThreshold` options.
+- Removed `definitions.quantities` and `definitions.baseQuantities`.
+- Renaned `definitions.unitSystems` to `definitions.systems`
+- Renamed `definitions.prefixes` to `definitions.prefixGroups`
+- Each system defined in `definitions.systems` is now just a string array of units assigned to that system.
+- Removed `autoAddToSystem` option, since it is now much easier to add units to a system.
+- Customer formatters no longer accept additional user arguments.
+
 ## 2023-02-19, v1.0.0-rc.2
 - `toString` no longer simplifies units. The user must now explicitly call `simplify` for the unit to be simplified.
 - Removed `simplifyThreshold` option, since units are now only simplified when calling `simplify`.
