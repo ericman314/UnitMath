@@ -934,6 +934,12 @@ describe('unitmath', () => {
       // @ts-ignore: Intentionally passing an invalid type
       expect(() => { u1.to(new Date()) }).toThrow(/Parameter must be a Unit or a string./)
     })
+
+    test('should throw if no argument provided', () => {
+      const u1 = unit(5000, 'cm')
+      // @ts-ignore: Intentionally passing no argument
+      expect(() => { u1.to() }).toThrow(/to\(\) requires a unit as a parameter/)
+    })
   })
 
   describe('getUnits', () => {
