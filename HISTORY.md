@@ -6,6 +6,9 @@
 - Many updates to the README.
 - Many tests had to be altered to reflect the changes to `toString` and `simplify`.
 
+## 2021-09-28, v0.8.7
+- Parse strings `NaN`, `Infinity`, and `-Infinity`
+
 ## 2020-11-20, v1.0.0-rc.1
 - Convert to TypeScript
 - Removed concept of "quantities" and "base quantities"

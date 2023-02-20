@@ -721,6 +721,13 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   unit() // Empty unit
   ```
 
+  `unit()` will parse the special strings `"NaN"`, `"Infinity"`, and `"-Infinity"` as the corresponding numeric values:
+
+  ```js
+  const unit = require('unitmath')
+  unit('Infinity kg') // Infinity kg
+  ```
+
   The string used to specify the unit (`valueAndUnitString` or `unitString`) must be in the following format:
 
   ``` 
@@ -732,7 +739,10 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   atomicUnit:
   [prefix]unit[^power]
 
-  value, power:
+  value:
+  Any floating-point number, or the strings "NaN", "Infinity", or "-Infinity" (without the quotes).
+  
+  power:
   Any floating-point number
 
   ```

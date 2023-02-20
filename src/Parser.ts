@@ -201,7 +201,6 @@ export function createParser<T>(options: RequiredOptions<T>, findUnit: FindUnitF
     next()
     skipIgnored()
 
-
     // Optional number or non-finite string at the start of the string
     const valueStr = parseNonFinite() || parseNumber()
     // console.log(`valueStr = "${valueStr}"`)
