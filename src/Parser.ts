@@ -1,21 +1,25 @@
+import { FindUnitFn, RequiredOptions, ParsedUnit } from "./types"
+
+const ignoredCharacters = ' \t()*'
+
 /**
  * Returns a new Parser.
  */
-export default function createParser (options, findUnit, nBaseQuantities) {
+export function createParser<T>(options: RequiredOptions<T>, findUnit: FindUnitFn<T>) {
   // private variables and functions for the Unit parser
-  let text, index, c
+  let text: string, index: number, c: string
 
-  function skipWhitespace () {
-    while (c === ' ' || c === '\t') {
+  function skipIgnored() {
+    while (c && ignoredCharacters.includes(c)) {
       next()
     }
   }
 
-  function isDigitDot (c) {
+  function isDigitDot(c: string) {
     return ((c >= '0' && c <= '9') || c === '.')
   }
 
-  function isDigit (c) {
+  function isDigit(c: string) {
     return ((c >= '0' && c <= '9'))
   }
 
@@ -24,7 +28,7 @@ export default function createParser (options, findUnit, nBaseQuantities) {
     c = text.charAt(index)
   }
 
-  function revert (oldIndex) {
+  function revert(oldIndex: number) {
     index = oldIndex
     c = text.charAt(index)
   }
@@ -93,6 +97,7 @@ export default function createParser (options, findUnit, nBaseQuantities) {
       tentativeNumber += c
       next()
 
+      // @ts-ignore: Typescript does not realize that c has changed
       if (c === '+' || c === '-') {
         tentativeNumber += c
         next()
@@ -139,7 +144,7 @@ export default function createParser (options, findUnit, nBaseQuantities) {
     }
   }
 
-  function parseCharacter (toFind) {
+  function parseCharacter(toFind: string) {
     if (c === toFind) {
       next()
       return toFind
@@ -157,7 +162,7 @@ export default function createParser (options, findUnit, nBaseQuantities) {
    * @param {string} str        A string like "5.2 inch", "4e2 cm/s^2"
    * @return {Object} { value, unitArray }
    */
-  function parse (str) {
+  function parse(str: string): ParsedUnit<T> {
     // console.log(`parse("${str}")`)
 
     text = str
@@ -168,15 +173,13 @@ export default function createParser (options, findUnit, nBaseQuantities) {
       throw new TypeError('Invalid argument in parse, string expected')
     }
 
-    const unit = {}
-
-    unit.units = []
-
-    // Initialize this unit's dimension array
-    unit.dimension = []
-    for (let i = 0; i < nBaseQuantities; i++) {
-      unit.dimension[i] = 0
+    const unit: ParsedUnit<T> = {
+      type: 'Unit',
+      value: null,
+      unitList: [],
+      dimension: {}
     }
+
 
     let powerMultiplierCurrent = 1
     let expectingUnit = false
@@ -196,7 +199,7 @@ export default function createParser (options, findUnit, nBaseQuantities) {
     //   4erg
 
     next()
-    skipWhitespace()
+    skipIgnored()
 
     // Optional number or non-finite string at the start of the string
     const valueStr = parseNonFinite() || parseNumber()
@@ -205,24 +208,22 @@ export default function createParser (options, findUnit, nBaseQuantities) {
     if (valueStr) {
       unit.value = options.type.conv(valueStr)
 
-      skipWhitespace() // Whitespace is not required here
+      skipIgnored() // Whitespace is not required here
 
       // handle multiplication or division right after the value, like '1/s'
-      if (parseCharacter('*')) {
-        // Ignore
-      } else if (parseCharacter('/')) {
+      if (parseCharacter('/')) {
         powerMultiplierCurrent = -1
         expectingUnit = true
       }
     }
 
     while (true) {
-      skipWhitespace()
+      skipIgnored()
 
       // Parentheses are not allowed
-      if (c === '(' || c === ')') {
-        throw new SyntaxError(`Unexpected "${c}" in "${text}" at index ${index}`)
-      }
+      // if (c === '(' || c === ')') {
+      //   throw new SyntaxError(`Unexpected "${c}" in "${text}" at index ${index}`)
+      // }
 
       // Is there something here?
       let uStr
@@ -246,37 +247,35 @@ export default function createParser (options, findUnit, nBaseQuantities) {
 
       let power = powerMultiplierCurrent
       // Is there a "^ number"?
-      skipWhitespace()
+      skipIgnored()
       if (parseCharacter('^')) {
-        skipWhitespace()
+        skipIgnored()
         const p = parseNumber()
         if (p === null) {
           // No valid number found for the power!
           throw new SyntaxError('In "' + str + '", "^" must be followed by a floating-point number')
         }
-        power *= p
+        power *= +p
       }
 
       // Add the unit to the list
-      unit.units.push({
+      unit.unitList.push({
         unit: found.unit,
         prefix: found.prefix,
         power: power
       })
 
-      for (let i = 0; i < unit.dimension.length; i++) {
-        unit.dimension[i] += (found.unit.dimension[i] || 0) * power
+      for (let dim of Object.keys(found.unit.dimension)) {
+        unit.dimension[dim] = (unit.dimension[dim] || 0) + (found.unit.dimension[dim] || 0) * power
       }
 
-      skipWhitespace()
+      skipIgnored()
 
       // "/" means we are expecting something to come next.
       // Is there a forward slash? If so, set powerMultiplierCurrent to -1. All remaining units will be in the denominator.
       expectingUnit = false
 
-      if (parseCharacter('*')) {
-        // Ignore
-      } else if (parseCharacter('/')) {
+      if (parseCharacter('/')) {
         if (powerMultiplierCurrent === -1) {
           throw new SyntaxError(`Unexpected additional "/" in "${text}" at index ${index}`)
         }

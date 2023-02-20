@@ -1,0 +1,73 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UnitMath Demo</title>
+  <script type="module" src="js/demo.js"></script>
+  <link rel="stylesheet" href="css/index.css" />
+</head>
+
+<body>
+  <div class="container">
+
+    <h1>UnitMath Demo</h1>
+
+    <h2>Calculator</h2>
+    <div class="thingies">
+      <code id="lastExpression"></code>
+      <code id="operand1"></code>
+      <code id="operator"></code>
+    </div>
+    <div class="field">
+      <input type="text" id="operand2" />
+    </div>
+    <div class="buttonWrapper">
+      <button id="add">+</button>
+      <button id="sub">−</button>
+      <button id="mul">×</button>
+      <button id="div">÷</button>
+    </div>
+    <div class="buttonWrapper">
+      <button id="pow">^</button>
+      <button id="to">to</button>
+      <button id="equals">=</button>
+      <button id="clear">C</button>
+    </div>
+
+    <h3>Keyboard shortcuts</h3>
+    <ul>
+      <li><code>&lt;Enter&gt;</code>: equals</li>
+      <li><code>&lt;Escape&gt;</code>: clear</li>
+      <li><code>+</code> (followed by space): add</li>
+      <li><code>-</code> (followed by space): subtract</li>
+      <li><code>*</code> (followed by space): multiply</li>
+      <li><code>/</code> (followed by space): divide</li>
+      <li><code>^</code> (followed by space): exponent</li>
+      <li><code>to</code> (sourrounded by spaces): convert to</li>
+    </ul>
+
+    <h3>Examples</h3>
+    <ul>
+      <li><code>1.5 m</code> <code>to</code> <code>ft</code></li>
+      <li><code>5 degC</code> <code>to</code> <code>degF</code></li>
+      <li><code>1.5 m</code> <code>+</code> <code>2 ft</code></li>
+      <li><code>8 ft</code> <code>*</code> <code>14 inch</code></li>
+      <li><code>110 km/hr</code> <code>*</code> <code>30 min</code></li>
+      <li><code>9.8 m/s^2</code> <code>*</code> <code>3 s</code></li>
+    </ul>
+
+    <h3>Note</h3>
+    <p>This calculator cannot parse complicated grammar. It is just to highlight some of the capabilities of the
+      UnitMath
+      library. For a fully-featured math library with a parser that supports unit conversion and arithmetic, try <a
+        href="https://mathjs.org/" target="_blank">Math.js</a>.</p>
+
+    <a href="https://github.com/ericman314/UnitMath/tree/v1/docs" target="_blank">View Calculator Source</a>
+
+    <h3>UnitMath Documentation</h3>
+    <a href="https://github.com/ericman314/UnitMath" target="_blank">https://github.com/ericman314/UnitMath</a>
+  </div>
+</body>
+
+</html>
