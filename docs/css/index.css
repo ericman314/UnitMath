@@ -1,0 +1,51 @@
+body {
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.container{
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+div.thingies{
+  height:30px;
+}
+
+.field {
+  font-size:120%;
+  margin-bottom:1em;
+  max-width:400px;
+}
+
+.field label {
+  display:block;
+}
+
+.field input {
+  width:100%;
+  font-size: 1em;
+  padding:8px;
+  border:1px solid #ccc;
+  border-radius:4px;
+}
+
+code {
+  background:#eee;
+  padding:4px;
+  border-radius:4px;
+}
+
+.buttonWrapper{
+  display:flex;
+}
+
+.buttonWrapper button {
+  font-size: 24px;
+  display:inline-block;
+  width: 40px;
+  height: 40px;
+}
+
+ul li {
+  line-height: 1.8;
+}
