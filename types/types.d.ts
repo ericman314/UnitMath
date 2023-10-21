@@ -214,7 +214,7 @@ export interface Unit<T> {
      * @param {string | Unit} valuelessUnit   A unit without value. Can have prefix, like "cm".
      * @returns {Unit} Returns a clone of the unit converted to the specified unit.
      */
-    to(valuelessUnit?: string | Unit<T>): Unit<T>;
+    to(valuelessUnit: string | Unit<T>): Unit<T>;
     /**
      * Fix the units and prevent them from being automatically simplified.
      * @memberof Unit

@@ -1,22 +1,23 @@
 {
   "name": "unitmath",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JavaScript library for unit conversion and arithmetic",
   "main": "index.js",
-  "module": "src/Unit.js",
+  "module": "./es/UnitMath.js",
   "files": [
     "dist",
     "lib",
     "es",
     "src"
   ],
+  "types": "./es/UnitMath.d.ts",
   "scripts": {
     "build": "rollup -c && cp es/* docs/js/.",
     "clean": "rm -rf dist es",
     "toc": "markdown-toc -i README.md",
     "prepublishOnly": "npm test",
     "test": "npm run lint && npm run test:src",
-    "test:src": "jest --watch",
+    "test:src": "jest --all",
     "test:bundle": "npm run build && jest --testMatch '**/test/**/*.test-bundle.js'",
     "test:compiled": "npm run build && jest --testMatch '**/test/**/*.test-compiled.js'",
     "lint": "standard --env=jest --env=worker --verbose",
