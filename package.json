@@ -1,9 +1,15 @@
 {
   "name": "unitmath",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "JavaScript library for unit conversion and arithmetic",
   "main": "index.js",
   "module": "./es/UnitMath.js",
+  "exports": {
+    ".": {
+      "import": "./dist/UnitMath.js",
+      "require": "./dist/UnitMath.js"
+    }
+  },
   "files": [
     "dist",
     "lib",

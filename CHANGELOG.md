@@ -1,6 +1,10 @@
 # Changelog
 
-## [1.0.1] - 2020-10-21
+## [1.0.2] - 2023-11-24
+
+- Set `exports` in `package.json`, which fixes imports in Node and Deno when using `require` or `import()`
+
+## [1.0.1] - 2023-10-21
 
 _This is an attempt to correctly export types._
 
