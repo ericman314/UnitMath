@@ -1261,6 +1261,124 @@ describe('unitmath', () => {
 
   })
 
+  describe('applyBestPrefix', () => {
+
+    test('should use the formatPrefixDefault option', () => {
+      expect(unit('4 microlumen').applyBestPrefix({ formatPrefixDefault: 'all' }).toString()).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').applyBestPrefix({ formatPrefixDefault: 'all' }).toString()).toEqual('4 microlumen')
+      expect(unit('4 microlumen').applyBestPrefix({ formatPrefixDefault: 'none' }).toString()).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').applyBestPrefix({ formatPrefixDefault: 'none' }).toString()).toEqual('0.000004 lumen')
+
+      // Should have no effect if the unit has formatPrefixes defined
+      expect(unit('4e-6 micronewton').applyBestPrefix({ formatPrefixDefault: 'all' }).toString()).toEqual('0.000004 micronewton')
+      expect(unit('4e-6 micronewton').applyBestPrefix({ formatPrefixDefault: 'none' }).toString()).toEqual('0.000004 micronewton')
+    })
+
+    test('should ignore autoPrefix option', () => {
+      expect(unit('1e-10 m').applyBestPrefix({ autoPrefix: false }).toString()).toEqual('0.1 nm')
+      expect(unit('1e+10 m').applyBestPrefix({ autoPrefix: false }).toString()).toEqual('10000000 km')
+      expect(unit('1e-10 km').applyBestPrefix({ autoPrefix: false }).toString()).toEqual('0.1 um')
+      expect(unit('1e+10 km').applyBestPrefix({ autoPrefix: false }).toString()).toEqual('10000000000 km')
+      expect(unit('1e-10 N m').applyBestPrefix({ autoPrefix: false }).toString()).toEqual('1e-10 N m')
+      expect(unit('1e+10 N m').applyBestPrefix({ autoPrefix: false }).toString()).toEqual('10000000000 N m')
+      expect(unit('1e-10 m').applyBestPrefix().toString()).toEqual('0.1 nm')
+      expect(unit('1e+10 m').applyBestPrefix().toString()).toEqual('10000000 km')
+      expect(unit('1e-10 J / m').applyBestPrefix().toString()).toEqual('1e-10 J / m')
+      expect(unit('1e+10 J / m').applyBestPrefix().toString()).toEqual('10000000000 J / m')
+    })
+
+    test('should render with the best prefix', () => {
+      expect(unit(0.000001, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('1 um')
+      expect(unit(0.00001, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('10 um')
+      expect(unit(0.0001, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('0.1 mm')
+      expect(unit(0.0005, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('0.5 mm')
+      expect(unit(0.0006, 'm').applyBestPrefix().toString()).toEqual('0.6 mm')
+      expect(unit(0.001, 'm').applyBestPrefix().toString()).toEqual('0.1 cm')
+      expect(unit(0.01, 'm').applyBestPrefix().toString()).toEqual('1 cm')
+      expect(unit(100000, 'm').applyBestPrefix().toString()).toEqual('100 km')
+      expect(unit(300000, 'm').applyBestPrefix().toString()).toEqual('300 km')
+      expect(unit(500000, 'm').applyBestPrefix().toString()).toEqual('500 km')
+      expect(unit(600000, 'm').applyBestPrefix().toString()).toEqual('600 km')
+      expect(unit(1000000, 'm').applyBestPrefix().toString()).toEqual('1000 km')
+      expect(unit(10000000, 'm').applyBestPrefix().toString()).toEqual('10000 km')
+      expect(unit(2000, 'ohm').applyBestPrefix().toString()).toEqual('2 kohm')
+
+      expect(unit(-0.000001, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('-1 um')
+      expect(unit(-0.00001, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('-10 um')
+      expect(unit(-0.0001, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('-0.1 mm')
+      expect(unit(-0.0005, 'm').applyBestPrefix().toString({ precision: 8 })).toEqual('-0.5 mm')
+      expect(unit(-0.0006, 'm').applyBestPrefix().toString()).toEqual('-0.6 mm')
+      expect(unit(-0.001, 'm').applyBestPrefix().toString()).toEqual('-0.1 cm')
+      expect(unit(-0.01, 'm').applyBestPrefix().toString()).toEqual('-1 cm')
+      expect(unit(-100000, 'm').applyBestPrefix().toString()).toEqual('-100 km')
+      expect(unit(-300000, 'm').applyBestPrefix().toString()).toEqual('-300 km')
+      expect(unit(-500000, 'm').applyBestPrefix().toString()).toEqual('-500 km')
+      expect(unit(-600000, 'm').applyBestPrefix().toString()).toEqual('-600 km')
+      expect(unit(-1000000, 'm').applyBestPrefix().toString()).toEqual('-1000 km')
+      expect(unit(-10000000, 'm').applyBestPrefix().toString()).toEqual('-10000 km')
+      expect(unit(-2000, 'ohm').applyBestPrefix().toString()).toEqual('-2 kohm')
+    })
+
+    test('should keep the original prefix when in range', () => {
+      expect(unit(0.0999, 'm').applyBestPrefix().toString()).toEqual('9.99 cm')
+      expect(unit(0.1, 'm').applyBestPrefix().toString()).toEqual('0.1 m')
+      expect(unit(0.5, 'm').applyBestPrefix().toString()).toEqual('0.5 m')
+      expect(unit(0.6, 'm').applyBestPrefix().toString()).toEqual('0.6 m')
+      expect(unit(1, 'm').applyBestPrefix().toString()).toEqual('1 m')
+      expect(unit(10, 'm').applyBestPrefix().toString()).toEqual('10 m')
+      expect(unit(100, 'm').applyBestPrefix().toString()).toEqual('100 m')
+      expect(unit(300, 'm').applyBestPrefix().toString()).toEqual('300 m')
+      expect(unit(500, 'm').applyBestPrefix().toString()).toEqual('500 m')
+      expect(unit(600, 'm').applyBestPrefix().toString()).toEqual('600 m')
+      expect(unit(1000, 'm').applyBestPrefix().toString()).toEqual('1000 m')
+      expect(unit(1001, 'm').applyBestPrefix().toString()).toEqual('1.001 km')
+    })
+
+    test('should render best prefix for a single unit raised to integral power', () => {
+      expect(unit(3.2e7, 'm^2').applyBestPrefix().toString()).toEqual('32 km^2')
+      expect(unit(3.2e-7, 'm^2').applyBestPrefix().toString()).toEqual('0.32 mm^2')
+      expect(unit(15000, 'm^-1').applyBestPrefix().toString()).toEqual('150 cm^-1')
+      expect(unit(3e-9, 'm^-2').applyBestPrefix().toString()).toEqual('0.003 km^-2')
+      expect(unit(3e-9, 'm^-1.5').applyBestPrefix().toString()).toEqual('3e-9 m^-1.5')
+      expect(unit(2, 'kg^0').applyBestPrefix().toString()).toEqual('2')
+    })
+
+    test('should not change the prefix if there is no `formatPrefixes` defined for the unit', () => {
+      // lumen has prefixes, but no formatPrefixes, so it should be simplified with no prefix
+      expect(unit('4 microlumen').applyBestPrefix().toString()).toEqual('4 microlumen')
+      expect(unit('4e-6 lumen').applyBestPrefix().toString()).toEqual('0.000004 lumen')
+
+      // newton has prefixes and formatPrefixes so it should be simplified with a prefix
+      expect(unit('4 micronewton').applyBestPrefix().toString()).toEqual('4 micronewton')
+      expect(unit('4e-6 newton').applyBestPrefix().toString()).toEqual('4 micronewton')
+    })
+
+
+    test('should avoid division by zero by not choosing a prefix for very small values', () => {
+      expect(unit('1e-40 m').applyBestPrefix().toString()).toEqual('1e-31 nm')
+      expect(unit('1e-60 m').applyBestPrefix().toString()).toEqual('1e-60 m')
+      expect(unit('0 m').applyBestPrefix().toString()).toEqual('0 m')
+      expect(unit('-1e-40 m').applyBestPrefix().toString()).toEqual('-1e-31 nm')
+      expect(unit('-1e-60 m').applyBestPrefix().toString()).toEqual('-1e-60 m')
+    })
+
+    test('should have no effect on valueless units', () => {
+      expect(unit('nm').applyBestPrefix().toString()).toEqual('nm')
+      expect(unit('mm').applyBestPrefix().toString()).toEqual('mm')
+      expect(unit('m').applyBestPrefix().toString()).toEqual('m')
+      expect(unit('km').applyBestPrefix().toString()).toEqual('km')
+      expect(unit('Gm').applyBestPrefix().toString()).toEqual('Gm')
+    })
+
+    test('should not (currently) work on compound units', () => {
+      expect(unit('1000000 N m').applyBestPrefix().toString()).toEqual('1000000 N m')
+      expect(unit('1000000 J / m').applyBestPrefix().toString()).toEqual('1000000 J / m')
+      expect(unit('1000000 m^3 Pa').applyBestPrefix().toString()).toEqual('1000000 m^3 Pa')
+      expect(unit('1000000 C / s').applyBestPrefix().toString()).toEqual('1000000 C / s')
+    })
+
+  })
+
   describe('precision', () => {
     test('should format units with given precision', () => {
       expect(unit.config({ precision: 3 })(2 / 3, 'm').toString()).toEqual('0.667 m')
@@ -2333,6 +2451,10 @@ describe('unitmath', () => {
       expect(unit('ft / s').setNormalizedValue(3.048).toString()).toEqual('10 ft / s')
 
       expect(unit('10 N m').simplify().toString()).toEqual('10 J')
+
+      expect(unit('0.0001 m').applyBestPrefix().toString()).toEqual('0.1 mm')
+      expect(unit('0.1 m').applyBestPrefix().toString()).toEqual('0.1 m')
+      expect(unit('10000 m').applyBestPrefix().toString()).toEqual('10 km')
 
       expect(unit('51.4934 deg').split(['deg', 'arcmin', 'arcsec']).map(u => u.toString({ precision: 6 }))).toEqual(
         ['51 deg', '29 arcmin', '36.24 arcsec']
