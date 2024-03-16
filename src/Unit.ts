@@ -367,10 +367,10 @@ let _config = function _config<T = number>(options: RequiredOptions<T>): UnitFac
     }
 
     /**
-     * Automatically choose the best prefix for the Unit.
-     * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
+     * Choose the best prefix for the Unit.
+     * @returns A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
      */
-    autoPrefix(prefixOptions: Required<PrefixOptions<T>>) {
+    applyBestPrefix(prefixOptions?: PrefixOptions<T>) {
       const extendedOptions = _withDefaults(prefixOptions);
       return _choosePrefix(this, extendedOptions);
     }
