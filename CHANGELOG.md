@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2024-03-16
+
+- Add `applyBestPrefix` method to choose and apply the best prefix for a Unit. Thank you @adrfantini for the contribution.
+
 ## [1.0.2] - 2023-11-24
 
 - Set `exports` in `package.json`, which fixes imports in Node and Deno when using `require` or `import()`

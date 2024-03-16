@@ -261,6 +261,11 @@ export interface Unit<T> {
      */
     simplify(options?: SimplifyOptions<T> & PrefixOptions<T>): Unit<T>;
     /**
+     * Choose the best prefix for the Unit.
+     * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
+     */
+    applyBestPrefix(prefixOptions?: PrefixOptions<T>): Unit<T>;
+    /**
      * Returns this unit without a value.
      * @memberof Unit
      * @returns {Unit} A new unit formed by removing the value from this unit.

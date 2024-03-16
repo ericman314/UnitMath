@@ -169,6 +169,8 @@ In the `simplify` method, simplification is performed in two steps:
 1. Attempting to simplify a compound unit into a single unit in the desired unit system
 2. Choosing an appropriate prefix (if `options.autoPrefix` is true)
 
+*Note: To choose the best prefix without automatically simplifying the Unit, use the `applyBestPrefix` method.*
+
 Here are the options available for the `simplify` method:
 
 <!--
@@ -887,6 +889,16 @@ The functions `clone`, `conv`, `add`, `sub`, `mul`, `div`, and `pow` are always 
   unit('10 N m').simplify() // 10 J
   ```
 
+- `applyBestPrefix(PrefixOptions)`
+
+  Chooses a prefix for this unit so that its value is between `prefixMin` and `prefixMax`, and returns a new unit with the prefix applied. If the value is already within the range, the unit is returned unchanged. The prefix is chosen from the unit's `formatPrefixes` property.
+
+  ```js
+  unit('0.0001 m').applyBestPrefix() // 0.1 mm
+  unit('0.1 m').applyBestPrefix() // 10 cm
+  unit('10000 m').applyBestPrefix() // 10 km
+  ```
+
 - `split(Array(string | unit))`
 
   Returns an array of units that result from splitting this unit into the given units. The sum of the resulting units is equal to this unit, and each of the returned units is the result of truncating this unit to an integer, and then passing the remainder to the next unit, until the final unit, which takes up all the remainder.
@@ -1131,6 +1143,7 @@ Many thanks to Jos de Jong (@josdejong), the original author of `Unit.js`, who s
 - Harry Sarson (https://github.com/harrysarson)
 - Nick Ewing (https://github.com/nickewing)
 - Michal Grňo (https://github.com/m93a)
+- Adriano Fantini (https://github.com/adrfantini)
 
 ## License
 

@@ -1695,6 +1695,14 @@ let _config = function _config(options) {
             return systemStr;
         }
         /**
+         * Choose the best prefix for the Unit.
+         * @returns A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
+         */
+        applyBestPrefix(prefixOptions) {
+            const extendedOptions = _withDefaults(prefixOptions);
+            return _choosePrefix(this, extendedOptions);
+        }
+        /**
          * Simplify this Unit's unit list and return a new Unit with the simplified list.
          * The returned Unit will contain a list of the "best" units for formatting.
          * @returns {Unit} A simplified unit if possible, or the original unit if it could not be simplified.
