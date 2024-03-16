@@ -1695,10 +1695,10 @@ let _config = function _config(options) {
             return systemStr;
         }
         /**
-         * Automatically choose the best prefix for the Unit.
-         * @returns {Unit} A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
+         * Choose the best prefix for the Unit.
+         * @returns A new unit that contains the "best" prefix, or, if no better prefix was found, returns the same unit unchanged.
          */
-        autoPrefix(prefixOptions) {
+        applyBestPrefix(prefixOptions) {
             const extendedOptions = _withDefaults(prefixOptions);
             return _choosePrefix(this, extendedOptions);
         }
