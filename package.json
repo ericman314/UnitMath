@@ -6,7 +6,7 @@
   "module": "./es/UnitMath.js",
   "exports": {
     ".": {
-      "import": "./dist/UnitMath.js",
+      "import": "./es/UnitMath.js",
       "require": "./dist/UnitMath.js"
     }
   },
