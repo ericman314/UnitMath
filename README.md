@@ -31,6 +31,10 @@ UnitMath is a JavaScript library for unit conversion and arithmetic.
 
 <!-- tocstop -->
 
+## Demo
+
+https://ericman314.github.io/UnitMath/
+
 ## Install
 
 ```
