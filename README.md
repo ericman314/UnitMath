@@ -1148,6 +1148,7 @@ Many thanks to Jos de Jong (@josdejong), the original author of `Unit.js`, who s
 - Nick Ewing (https://github.com/nickewing)
 - Michal Grňo (https://github.com/m93a)
 - Adriano Fantini (https://github.com/adrfantini)
+- Ben Chidlow (https://github.com/fezproof)
 
 ## License
 
