@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2024-10-5
+
+- Fix package.json so that when using `import`, it imports the correct ES module. Thank you @fezproof!
+
 ## [1.1.0] - 2024-03-16
 
 - Add `applyBestPrefix` method to choose and apply the best prefix for a Unit. Thank you @adrfantini for the contribution.
